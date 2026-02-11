@@ -23,6 +23,7 @@ export const BackgroundMusic: React.FC = () => {
     return settings.bgm;
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
 
   // Listen for storage changes to sync with settings panel
   useEffect(() => {
@@ -41,14 +42,36 @@ export const BackgroundMusic: React.FC = () => {
 
   // Handle BGM enable/disable
   useEffect(() => {
-    if (!isBgmEnabled && audioRef.current && isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else if (isBgmEnabled && audioRef.current && !isPlaying && currentTrack) {
-      audioRef.current.play().catch(e => console.debug("BGM auto-resume failed", e));
-      setIsPlaying(true);
-    }
-  }, [isBgmEnabled, currentTrack]);
+    const handlePlay = async () => {
+      if (!audioRef.current) return;
+
+      if (!isBgmEnabled && isPlaying) {
+        // Wait for any pending play to finish before pausing
+        if (playPromiseRef.current) {
+          try {
+            await playPromiseRef.current;
+          } catch (e) {
+            // Ignore play errors when we're about to pause
+          }
+        }
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else if (isBgmEnabled && !isPlaying && currentTrack) {
+        try {
+          playPromiseRef.current = audioRef.current.play();
+          await playPromiseRef.current;
+          setIsPlaying(true);
+        } catch (e) {
+          console.debug("BGM auto-resume failed", e);
+          setIsPlaying(false);
+        } finally {
+          playPromiseRef.current = null;
+        }
+      }
+    };
+
+    handlePlay();
+  }, [isBgmEnabled, currentTrack, isPlaying]);
 
   // Pick a random track that is different from the current one (unless there's only 1)
   const pickRandomTrack = useCallback((exclude?: string) => {
@@ -79,29 +102,34 @@ export const BackgroundMusic: React.FC = () => {
 
   useEffect(() => {
     // Play when track changes
-    if (currentTrack && audioRef.current && isBgmEnabled) {
-      const base = import.meta.env.BASE_URL;
-      const trackPath = `${base}bgm/${currentTrack}`;
-      audioRef.current.src = trackPath;
-      audioRef.current.volume = volume;
-      
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch(err => {
-            if (err.name === 'NotAllowedError') {
-              console.log("Autoplay blocked. User interaction required.");
-            } else {
-              console.warn("Playback failed:", err);
-            }
-            setIsPlaying(false);
-          });
+    const startPlayback = async () => {
+      if (currentTrack && audioRef.current && isBgmEnabled) {
+        const base = import.meta.env.BASE_URL;
+        const trackPath = `${base}bgm/${currentTrack}`;
+        audioRef.current.src = trackPath;
+        audioRef.current.volume = volume;
+        
+        try {
+          playPromiseRef.current = audioRef.current.play();
+          await playPromiseRef.current;
+          setIsPlaying(true);
+        } catch (err: any) {
+          if (err.name === 'NotAllowedError') {
+            console.log("Autoplay blocked. User interaction required.");
+          } else if (err.name === 'AbortError') {
+            console.debug("Playback aborted (interrupted by source change or pause)");
+          } else {
+            console.warn("Playback failed:", err);
+          }
+          setIsPlaying(false);
+        } finally {
+          playPromiseRef.current = null;
+        }
       }
-    }
-  }, [currentTrack, isBgmEnabled]); // Added isBgmEnabled to dependencies
+    };
+
+    startPlayback();
+  }, [currentTrack, isBgmEnabled, volume]);
 
   useEffect(() => {
     if (audioRef.current) {

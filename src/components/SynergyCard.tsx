@@ -130,7 +130,7 @@ export const SynergyCardComponent: React.FC<Props> = ({
         <div className="absolute inset-0 backface-hidden bg-stone-900 flex items-center justify-center overflow-hidden"
              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
           <img 
-            src="/cards/synergy/synergy-card-back.png" 
+            src="cards/synergy/synergy-card-back.png" 
             alt="Synergy Card Back" 
             className="w-full h-full object-cover"
             onError={(e) => {
