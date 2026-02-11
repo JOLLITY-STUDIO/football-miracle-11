@@ -31,9 +31,9 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
     { id: 'expansions' as TabType, label: 'Expansions', icon: '📦' },
   ];
 
-  const rulePagesCN = Array.from({ length: 9 }, (_, i) => `/images/rules/page_${i + 1}.webp`);
-  const rulePagesJP = Array.from({ length: 16 }, (_, i) => `/images/rules_jp/page_${i + 1}.png`);
-  const gkExpansionImages = ['/images/gk_expansion_1.webp', '/images/gk_expansion_2.webp'];
+  const rulePagesCN = Array.from({ length: 9 }, (_, i) => `images/rules/page_${i + 1}.webp`);
+  const rulePagesJP = Array.from({ length: 16 }, (_, i) => `images/rules_jp/page_${i + 1}.png`);
+  const gkExpansionImages = ['images/gk_expansion_1.webp', 'images/gk_expansion_2.webp'];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 text-white">

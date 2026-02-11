@@ -9,12 +9,12 @@ interface AssetWeight {
 }
 
 const SYNERGY_ASSETS: AssetWeight[] = [
-  { stars: 1, type: 'tackle',  weight: 2, imageUrl: '/cards/synergy/synergy-card-1-trackle.png', name: 'Tackle +1' },
-  { stars: 1, type: 'special', weight: 1, imageUrl: '/cards/synergy/synergy-card-1.png',          name: 'Power +1' },
-  { stars: 2, type: 'special', weight: 5, imageUrl: '/cards/synergy/synergy-card-2.png',          name: 'Power +2' },
-  { stars: 3, type: 'special', weight: 10, imageUrl: '/cards/synergy/synergy-card-3.png',         name: 'Power +3' },
-  { stars: 4, type: 'special', weight: 5, imageUrl: '/cards/synergy/synergy-card-4.png',          name: 'Power +4' },
-  { stars: 5, type: 'special', weight: 2, imageUrl: '/cards/synergy/synergy-card-5.png',          name: 'Power +5' },
+  { stars: 1, type: 'tackle',  weight: 2, imageUrl: 'cards/synergy/synergy-card-1-trackle.png', name: 'Tackle +1' },
+  { stars: 1, type: 'special', weight: 1, imageUrl: 'cards/synergy/synergy-card-1.png',          name: 'Power +1' },
+  { stars: 2, type: 'special', weight: 5, imageUrl: 'cards/synergy/synergy-card-2.png',          name: 'Power +2' },
+  { stars: 3, type: 'special', weight: 10, imageUrl: 'cards/synergy/synergy-card-3.png',         name: 'Power +3' },
+  { stars: 4, type: 'special', weight: 5, imageUrl: 'cards/synergy/synergy-card-4.png',          name: 'Power +4' },
+  { stars: 5, type: 'special', weight: 2, imageUrl: 'cards/synergy/synergy-card-5.png',          name: 'Power +5' },
 ];
 
 export function getSynergyDeckFixed(): SynergyCard[] {

@@ -29,7 +29,7 @@ export const SynergyPanel: React.FC<Props> = ({
         <div className="absolute top-[4px] left-[4px] w-full h-full bg-stone-900 rounded border border-white/10 shadow-xl" style={{ transform: 'translateZ(-4px)' }} />
         <div className="absolute top-[6px] left-[6px] w-full h-full bg-stone-950 rounded border border-white/5 shadow-xl" style={{ transform: 'translateZ(-6px)' }} />
         <div className={`absolute top-0 left-0 w-full h-full ${isOpponent ? 'bg-gradient-to-br from-indigo-900 via-slate-800 to-stone-950' : 'bg-gradient-to-br from-green-900 via-emerald-800 to-teal-950'} rounded border border-white/40 shadow-2xl flex flex-col items-center justify-center overflow-hidden`}>
-          <div className="absolute inset-0 opacity-40 bg-[url('/images/pattern_dot.png')] mix-blend-overlay" />
+          <div className="absolute inset-0 opacity-40 bg-[url('images/pattern_dot.png')] mix-blend-overlay" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="relative w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center mb-2 bg-white/5 backdrop-blur-sm">
             <span className="text-2xl filter drop-shadow-md">⚽</span>

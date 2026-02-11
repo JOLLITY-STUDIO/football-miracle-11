@@ -90,7 +90,7 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
             {/* Goalkeeper Placeholder */}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-24 h-40 bg-contain bg-no-repeat bg-center z-10 transition-all duration-500"
                  style={{ 
-                   backgroundImage: "url('/images/player_card_2.webp')", // Placeholder keeper
+                   backgroundImage: "url('images/player_card_2.webp')", // Placeholder keeper
                    filter: 'grayscale(1) brightness(0.5)',
                    transform: phase === 'result' && aiDefenseCard 
                      ? `translateX(${(aiDefenseCard.coverage[0] - 3) * 60}px) translateY(20px) rotate(${aiDefenseCard.id.includes('left') ? -20 : aiDefenseCard.id.includes('right') ? 20 : 0}deg)` 

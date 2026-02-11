@@ -59,9 +59,9 @@ export const SynergyCardComponent: React.FC<Props> = ({
   };
 
   const frontImage = card.stars === 1 
-    ? (isTackle ? '/cards/synergy/synergy-card-1-trackle.png' : '/cards/synergy/synergy-card-1.png')
+    ? (isTackle ? 'cards/synergy/synergy-card-1-trackle.png' : 'cards/synergy/synergy-card-1.png')
     : undefined;
-  const frontImageStars2 = card.stars === 2 ? '/cards/synergy/synergy-card-2.png' : undefined;
+  const frontImageStars2 = card.stars === 2 ? 'cards/synergy/synergy-card-2.png' : undefined;
   const frontImageResolved = frontImage || frontImageStars2;
   const typeLabel = isTackle ? 'TACKLE!' : isAttack ? 'ATTACK!' : isDefense ? 'DEFENSE!' : isSetPiece ? 'SET PIECE' : isSpecial ? 'SPECIAL' : '';
 

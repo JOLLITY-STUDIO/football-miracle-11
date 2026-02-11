@@ -46,7 +46,7 @@ export const TurnTransition: React.FC<TurnTransitionProps> = ({ turn, onComplete
           >
             {/* Background Effects */}
             <div className={`absolute inset-0 bg-gradient-to-r ${secondaryColor} to-black opacity-80`} />
-            <div className="absolute inset-0 bg-[url('/images/pattern_dot.png')] opacity-20 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-[url('images/pattern_dot.png')] opacity-20 mix-blend-overlay" />
             
             {/* Animated Stripes */}
             <motion.div 
