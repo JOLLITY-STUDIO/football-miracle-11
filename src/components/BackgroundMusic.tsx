@@ -100,6 +100,36 @@ export const BackgroundMusic: React.FC = () => {
     }
   }, [pickRandomTrack, currentTrack]);
 
+  // Handle first user interaction to resume audio if blocked
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (isBgmEnabled && !isPlaying && audioRef.current) {
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+            window.removeEventListener('click', handleFirstInteraction);
+            window.removeEventListener('keydown', handleFirstInteraction);
+            window.removeEventListener('touchstart', handleFirstInteraction);
+          })
+          .catch(() => {
+            // Still blocked or other error
+          });
+      }
+    };
+
+    if (isBgmEnabled && !isPlaying) {
+      window.addEventListener('click', handleFirstInteraction);
+      window.addEventListener('keydown', handleFirstInteraction);
+      window.addEventListener('touchstart', handleFirstInteraction);
+    }
+
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, [isBgmEnabled, isPlaying]);
+
   useEffect(() => {
     // Play when track changes
     const startPlayback = async () => {
