@@ -5,12 +5,13 @@ interface Props {
   className?: string;
 }
 
-const PlayerAvatar: React.FC<Props> = ({ seed, className }) => {
+const PlayerAvatar: React.FC<Props> = ({ seed = 'default', className }) => {
   // Deterministic random number generator based on seed string
-  const getRandom = (str: string) => {
+  const getRandom = (str: string = 'default') => {
     let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    const safeStr = str || 'default';
+    for (let i = 0; i < safeStr.length; i++) {
+      hash = safeStr.charCodeAt(i) + ((hash << 5) - hash);
     }
     return (max: number) => Math.abs(hash % max);
   };

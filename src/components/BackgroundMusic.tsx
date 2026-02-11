@@ -18,7 +18,37 @@ export const BackgroundMusic: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.2); // Lowered default volume slightly
   const [currentTrack, setCurrentTrack] = useState<string>('');
+  const [isBgmEnabled, setIsBgmEnabled] = useState(() => {
+    const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true}');
+    return settings.bgm;
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Listen for storage changes to sync with settings panel
+  useEffect(() => {
+    const handleStorage = () => {
+      const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true}');
+      setIsBgmEnabled(settings.bgm);
+    };
+    window.addEventListener('storage', handleStorage);
+    // Custom event for same-window updates
+    window.addEventListener('audioSettingsChanged', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('audioSettingsChanged', handleStorage);
+    };
+  }, []);
+
+  // Handle BGM enable/disable
+  useEffect(() => {
+    if (!isBgmEnabled && audioRef.current && isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else if (isBgmEnabled && audioRef.current && !isPlaying && currentTrack) {
+      audioRef.current.play().catch(e => console.debug("BGM auto-resume failed", e));
+      setIsPlaying(true);
+    }
+  }, [isBgmEnabled, currentTrack]);
 
   // Pick a random track that is different from the current one (unless there's only 1)
   const pickRandomTrack = useCallback((exclude?: string) => {
@@ -49,8 +79,10 @@ export const BackgroundMusic: React.FC = () => {
 
   useEffect(() => {
     // Play when track changes
-    if (currentTrack && audioRef.current) {
-      audioRef.current.src = `/bgm/${currentTrack}`;
+    if (currentTrack && audioRef.current && isBgmEnabled) {
+      const base = import.meta.env.BASE_URL;
+      const trackPath = `${base}bgm/${currentTrack}`;
+      audioRef.current.src = trackPath;
       audioRef.current.volume = volume;
       
       const playPromise = audioRef.current.play();
@@ -60,12 +92,16 @@ export const BackgroundMusic: React.FC = () => {
             setIsPlaying(true);
           })
           .catch(err => {
-            console.log("Autoplay blocked or playback failed", err);
+            if (err.name === 'NotAllowedError') {
+              console.log("Autoplay blocked. User interaction required.");
+            } else {
+              console.warn("Playback failed:", err);
+            }
             setIsPlaying(false);
           });
       }
     }
-  }, [currentTrack]); // Intentionally not including volume here to avoid restarting track on volume change
+  }, [currentTrack, isBgmEnabled]); // Added isBgmEnabled to dependencies
 
   useEffect(() => {
     if (audioRef.current) {
@@ -78,14 +114,15 @@ export const BackgroundMusic: React.FC = () => {
       if (isPlaying) {
         audioRef.current.pause();
       } else {
+        const base = import.meta.env.BASE_URL;
         if (!audioRef.current.src || audioRef.current.src === window.location.href) {
             // If no source is set yet, set it
             if (currentTrack) {
-                audioRef.current.src = `/bgm/${currentTrack}`;
+                audioRef.current.src = `${base}bgm/${currentTrack}`;
             } else if (PLAYLIST.length > 0) {
                 const track = pickRandomTrack();
                 setCurrentTrack(track);
-                audioRef.current.src = `/bgm/${track}`;
+                audioRef.current.src = `${base}bgm/${track}`;
             }
         }
         audioRef.current.play().catch(e => console.error("Play failed", e));

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import type { PlayerCard as PlayerCardType, TacticalIcon } from '../data/cards';
 import PlayerAvatar from './PlayerAvatar';
+import { BaseCard } from './BaseCard';
 
 interface Props {
   card: PlayerCardType;
@@ -76,20 +77,13 @@ export const PlayerCardComponent: React.FC<Props> = ({
   disabled = false,
   variant = 'home'
 }) => {
-  const sizeClasses = {
-    tiny: 'w-48 h-28 text-sm',
-    small: 'w-48 h-28 text-sm',
-    medium: 'w-48 h-28 text-sm',
-    large: 'w-48 h-28 text-sm',
-  };
-
   const roleName = getRoleName(card.type);
   const koreanRoleName = getKoreanRoleName(card.positionLabel);
   const roleBg = getRoleColor(card.type);
 
   return (
     <div 
-      className={clsx("relative perspective-1000", sizeClasses[size])}
+      className="relative perspective-1000"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -98,107 +92,81 @@ export const PlayerCardComponent: React.FC<Props> = ({
         initial={false}
         animate={{ 
           rotateY: faceDown ? 180 : 0,
-          y: selected ? -30 : 0,
-          scale: selected ? 1.15 : 1,
-          zIndex: selected ? 100 : 0
+          scale: selected ? 1.05 : 1,
+          y: selected ? -10 : 0
         }}
-        transition={{ duration: 0.4, type: "spring", stiffness: 260, damping: 20 }}
-        whileHover={!disabled && !faceDown && !selected ? { scale: 1.05, y: -5, zIndex: 10 } : {}}
-        whileTap={!disabled && !faceDown ? { scale: 0.95 } : {}}
-        onClick={!disabled ? onClick : undefined}
-        drag={draggable}
-        dragSnapToOrigin
-        onDragStart={() => onDragStart?.(card)}
-        onDragEnd={() => onDragEnd?.()}
+        whileHover={!disabled && !faceDown ? { y: -5, scale: 1.02 } : {}}
         className={clsx(
-          'w-full h-full relative preserve-3d cursor-pointer shadow-xl rounded-[2rem] overflow-hidden border-[6px] border-[#1a1a1a]',
-          disabled ? 'opacity-50 cursor-not-allowed' : '',
-          selected ? 'ring-4 ring-yellow-400 ring-offset-2' : ''
+          "relative preserve-3d cursor-pointer transition-shadow",
+          selected ? "z-20 shadow-[0_20px_40px_rgba(0,0,0,0.4)]" : "z-10 shadow-xl",
+          disabled && "opacity-50 grayscale cursor-not-allowed"
         )}
-        style={{ transformStyle: 'preserve-3d' }}
+        onClick={disabled ? undefined : onClick}
+        draggable={draggable}
+        onDragStart={() => onDragStart?.(card)}
+        onDragEnd={onDragEnd}
       >
-        {/* Front Face */}
-        <div 
-          className="absolute inset-0 backface-hidden bg-white rounded-[1.5rem] overflow-hidden"
-          style={{ backfaceVisibility: 'hidden' }}
+        <BaseCard 
+          size={size} 
+          className={clsx(
+            "border-[3px] border-stone-800",
+            selected ? "ring-4 ring-yellow-400" : ""
+          )}
         >
-          {/* Background Pattern - Blue Vertical Bars */}
-          <div className="absolute inset-0 flex justify-around opacity-80">
-            <div className="w-[15%] h-full bg-[#3498db]/20"></div>
-            <div className="w-[40%] h-full bg-[#3498db]/40"></div>
-            <div className="w-[15%] h-full bg-[#3498db]/20"></div>
-          </div>
-
-          <div className="absolute inset-0 flex">
-            {/* Character Illustration Area (Left) */}
-            <div className="w-[50%] h-full relative z-10">
-              <div className="w-full h-full transform scale-150 translate-y-6 -translate-x-2">
-                <PlayerAvatar seed={card.id} className="w-full h-full" />
-              </div>
-            </div>
-
-            {/* Info Area (Right) */}
-            <div className="w-[50%] h-full flex flex-col items-center justify-center pr-4 z-20">
-              {/* Position Code Box */}
-              <div className="bg-[#3498db] text-white px-2 py-0.5 rounded text-[0.6rem] font-black italic mb-1">
-                {card.positionLabel}
-              </div>
-              
-              {/* Position Name (Large Bold) */}
-              <div className="text-[#3498db] font-black text-lg leading-none tracking-tighter text-center uppercase drop-shadow-[0_2px_0_rgba(255,255,255,1)]">
-                {roleName}
-              </div>
-              
-              {/* Korean Position Name */}
-              <div className="text-[#3498db] font-bold text-[0.7rem] text-center mt-0.5">
-                {koreanRoleName}
+          {/* Front Face */}
+          <div className={clsx(
+            "absolute inset-0 backface-hidden flex flex-col overflow-hidden",
+            variant === 'home' ? "bg-[#f8f9fa]" : "bg-[#2c3e50]"
+          )}
+          style={{ backfaceVisibility: 'hidden' }}>
+            {/* Header: Role Strip */}
+            <div className={clsx("h-1.5 w-full", roleBg)} />
+            
+            <div className="flex-1 flex flex-col p-1.5">
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col">
+                  <span className={clsx("text-[9px] font-black leading-none", variant === 'home' ? "text-stone-800" : "text-white")}>{card.name}</span>
+                  <span className="text-[7px] text-stone-500 font-bold leading-tight">{roleName}</span>
+                </div>
+                <div className={clsx("w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shadow-sm border", 
+                  variant === 'home' ? "bg-white text-stone-900 border-stone-200" : "bg-stone-800 text-white border-stone-700")}>
+                  {card.value}
+                </div>
               </div>
 
-              {/* Stats Compact */}
-              <div className="flex gap-2 mt-2">
-                 <div className="flex flex-col items-center">
-                   <div className="w-6 h-6 rounded-full bg-[#E74C3C] flex items-center justify-center text-white text-[0.6rem] shadow-md border-2 border-white">
-                     ⚔️
-                   </div>
-                   <span className="text-[0.6rem] font-black text-gray-800">{card.attack}</span>
-                 </div>
-                 <div className="flex flex-col items-center">
-                   <div className="w-6 h-6 rounded-full bg-[#3498db] flex items-center justify-center text-white text-[0.6rem] shadow-md border-2 border-white">
-                     🛡️
-                   </div>
-                   <span className="text-[0.6rem] font-black text-gray-800">{card.defense}</span>
-                 </div>
+              <div className="flex-1 flex gap-1.5 mt-1 overflow-hidden">
+                <div className="w-14 h-14 flex-shrink-0 bg-stone-100 rounded-lg overflow-hidden border border-stone-200 shadow-inner">
+                  <PlayerAvatar seed={card.id || card.name} />
+                </div>
+                
+                <div className="flex-1 flex flex-col justify-between py-0.5 overflow-hidden">
+                  <div className="flex flex-wrap gap-0.5">
+                    {card.icons.map((icon, idx) => (
+                      <div key={idx} className="w-4 h-4 rounded-md bg-stone-100 flex items-center justify-center text-[8px] border border-stone-200 shadow-sm" title={icon}>
+                        {getIconSymbol(icon)}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[7px] text-stone-400 font-bold truncate pr-1">{koreanRoleName}</span>
+                    <span className="text-[8px] font-black text-stone-800 bg-stone-100 px-1 rounded-sm border border-stone-200">{card.positionLabel}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Top Left Icon (Medical/Special) */}
-          <div className="absolute top-2 left-2 z-30">
-            <div className="w-8 h-8 rounded-full bg-[#27AE60] border-2 border-white flex items-center justify-center shadow-lg">
-               <span className="text-white text-xs font-black">+</span>
+          {/* Back Face */}
+          <div 
+            className="absolute inset-0 backface-hidden bg-stone-800 flex items-center justify-center overflow-hidden"
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+          >
+            <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+            <div className="w-16 h-16 rounded-full border-4 border-white/10 flex items-center justify-center">
+              <span className="text-3xl grayscale opacity-20">⚽</span>
             </div>
           </div>
-
-          {/* Bottom Icons (Shields/Tactical) */}
-          <div className="absolute bottom-2 left-4 right-4 flex justify-between px-2 z-30">
-            {card.icons.slice(0, 2).map((icon, idx) => (
-              <div key={idx} className="w-7 h-7 rounded-full bg-[#3498db] border-2 border-white flex items-center justify-center shadow-md text-[0.6rem]">
-                {getIconSymbol(icon)}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Back Face */}
-        <div 
-          className="absolute inset-0 backface-hidden rounded-[1.5rem] bg-[#1a1a1a] flex items-center justify-center"
-          style={{ 
-            backfaceVisibility: 'hidden', 
-            transform: 'rotateY(180deg)' 
-          }}
-        >
-          <div className="text-[#3498db] font-black italic text-xl">MAGIC 11</div>
-        </div>
+        </BaseCard>
       </motion.div>
     </div>
   );

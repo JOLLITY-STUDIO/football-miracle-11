@@ -8,7 +8,11 @@ import type { PlayerCard, SynergyCard } from '../data/cards';
 import { GameField } from './GameField';
 import { PlayerCardComponent } from './PlayerCard';
 import { SynergyCardComponent } from './SynergyCard';
+import { DrawArea } from './DrawArea';
 import { PenaltyModal } from './PenaltyModal';
+import { LeftPanel } from './LeftPanel';
+import { CenterField } from './CenterField';
+import { RightPanel } from './RightPanel';
 import StarCardDraft from './StarCardDraft';
 import PhaseBanner from './PhaseBanner';
 import { TurnTransition } from './TurnTransition';
@@ -72,11 +76,25 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
   const [viewingPile, setViewingPile] = useState<'deck' | 'discard' | null>(null);
   const [shownStoppageTime, setShownStoppageTime] = useState(false);
   
+  // Audio Settings
+  const [audioSettings, setAudioSettings] = useState(() => {
+    return JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true}');
+  });
+
+  const toggleAudioSetting = (key: 'bgm' | 'sfx') => {
+    const newSettings = { ...audioSettings, [key]: !audioSettings[key] };
+    setAudioSettings(newSettings);
+    localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
+    // Dispatch custom event for BackgroundMusic component in the same window
+    window.dispatchEvent(new Event('audioSettingsChanged'));
+    playSound('click');
+  };
+
   // Camera/View Control State
   const [viewSettings, setViewSettings] = useState({
-    pitch: 55, // Increased default pitch for more obvious 3D effect
+    pitch: 0,
     rotation: 0,
-    zoom: 1,
+    zoom: 0.9,
     height: 0
   });
   const [showViewControls, setShowViewControls] = useState(false);
@@ -381,7 +399,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     const controlState = getControlState(gameState.controlPosition);
     if (controlState === 'defense') return;
     
-    const maxHandCards = controlState === 'attack' ? 2 : 1;
+    const maxSynergy = getMaxSynergyCardsForAttack(controlState);
+    const maxHandCards = Math.max(0, maxSynergy - 1);
     const isSelected = gameState.selectedSynergyCards.some(c => c.id === card.id);
     
     if (isSelected) {
@@ -503,11 +522,15 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
       {/* 0. 3D Environment Background (Void) */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000000_100%)]">
       </div>
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 opacity-[0.35] mix-blend-multiply" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #3b2f2f 0px, #3b2f2f 6px, #4b3833 6px, #4b3833 12px)' }} />
+        <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.05), transparent 40%), radial-gradient(circle at 70% 80%, rgba(0,0,0,0.3), transparent 50%)' }} />
+      </div>
 
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
       <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
         <div 
-          className="relative w-full max-w-[90vw] aspect-[16/9] transition-transform duration-700 ease-out transform-style-3d transform-gpu"
+          className="relative w-full max-w-[90vw] aspect-[1134/792] transition-transform duration-700 ease-out transform-style-3d transform-gpu"
           style={{
             transform: `rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height - 50}px) scale(${viewSettings.zoom})`,
           }}
@@ -524,6 +547,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
 
              {/* Board Container (Includes Side Panels) */}
              <div className="absolute inset-0 flex flex-row items-stretch justify-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-xl overflow-visible bg-stone-900 border-[12px] border-stone-800 transform-style-3d perspective-2000">
+                <div className="absolute inset-[-20px] rounded-[28px] bg-[radial-gradient(circle_at_50%_40%,_rgba(16,99,39,0.8),_rgba(0,0,0,0.9))] blur-[8px]" style={{ transform: 'translateZ(-60px)' }} />
                 
                 {/* 3D Thickness/Volume Layer - Full Width Unified Board */}
                 <div className="absolute inset-[-4px] bg-stone-950 rounded-xl transform-style-3d shadow-2xl border-4 border-stone-900" 
@@ -534,285 +558,82 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                 <div className="absolute inset-0 border-t border-l border-white/10 rounded-xl pointer-events-none" />
                 <div className="absolute inset-0 border-b border-r border-black/50 rounded-xl pointer-events-none" />
 
-                {/* Left Panel (Benches: Opponent Top / Player Bottom) */}
-                <div 
-                  className="w-48 relative flex flex-col justify-between py-4 z-20 transform-style-3d border-r border-white/5 bg-stone-900/40"
-                  style={{ 
-                    transform: 'translateZ(0px)', 
-                  }}
-                >
-                  {/* Panel Background with Fade */}
-                  <div className="absolute inset-y-0 left-[-100px] right-0 bg-gradient-to-r from-stone-900 via-stone-900/90 to-transparent pointer-events-none" />
-                  
-                  {/* AI Bench (Top Left - Mirror of Player Bench) */}
-                  <div className="relative flex flex-col items-start w-full pl-0 mt-6">
-                      <div className="relative z-10 text-[10px] text-red-400 font-bold uppercase tracking-widest mb-2 w-full text-left pl-4 border-b border-red-500/20 pb-1 flex items-center gap-2">
-                        <span>OPP BENCH</span>
-                        <span className="text-[8px] opacity-50">({gameState.aiBench.length})</span>
-                      </div>
-                      <div className="flex flex-col gap-3 w-full items-start perspective-[1000px] mt-2">
-                        {gameState.aiBench.slice(0, 3).map((card, i) => (
-                          <div 
-                            key={i} 
-                            className="relative w-48 aspect-[3/2] transition-all duration-300 ease-out z-10 hover:z-50 shadow-xl group cursor-help -ml-16 hover:ml-0"
-                            style={{
-                              transform: 'rotateY(-20deg) rotateX(-10deg)', // Mirrored for top position
-                              transformStyle: 'preserve-3d'
-                            }}
-                          >
-                            <div className="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-300 rounded-lg z-20 pointer-events-none" />
-                            <PlayerCardComponent 
-                              card={card} 
-                              size="tiny" 
-                              variant="away"
-                              disabled={true}
-                              onMouseEnter={() => handleHoverEnterCard(card)}
-                              onMouseLeave={handleHoverLeaveCard}
-                            />
-                            {/* Visibility Tab */}
-                            <div className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center bg-stone-800/95 border-l border-red-500/30 rounded-r-md group-hover:opacity-0 transition-opacity pointer-events-none">
-                              <span className="text-[8px] text-red-400 -rotate-90 whitespace-nowrap font-mono">BENCH</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                  </div>
-                  
-                  {/* Player Bench (Bottom Left) */}
-                  <div className="relative flex flex-col items-start w-full pl-0 mt-auto">
-                    <div className="relative z-10 text-[10px] text-green-400 font-bold uppercase tracking-widest mb-2 w-full text-left pl-4 border-t border-green-500/20 pt-1 flex items-center gap-2">
-                      <span>YOUR BENCH</span>
-                      <span className="text-[8px] opacity-50">({gameState.playerSubstitutionsLeft} Subs)</span>
-                    </div>
-                    <div className="flex flex-col gap-3 w-full items-start perspective-[1000px]">
-                      {gameState.playerBench.slice(0, 3).map((card) => (
-                        <div 
-                          key={card.id} 
-                          className="relative w-48 aspect-[3/2] transition-all duration-300 ease-out z-10 hover:z-50 shadow-xl group cursor-pointer -ml-16 hover:ml-0"
-                          style={{
-                            transform: 'rotateY(-20deg) rotateX(10deg)',
-                            transformStyle: 'preserve-3d'
-                          }}
-                          onClick={() => handleSubstituteSelect(card)}
-                        >
-                          <PlayerCardComponent 
-                            card={card} 
-                            size="tiny" 
-                            variant="home"
-                            disabled={gameState.playerSubstitutionsLeft <= 0}
-                            selected={substitutionMode?.incomingCard.id === card.id}
-                            onMouseEnter={() => handleHoverEnterCard(card)}
-                            onMouseLeave={handleHoverLeaveCard}
-                          />
-                          
-                          {/* Selection Indicator */}
-                          {substitutionMode?.incomingCard.id === card.id && (
-                            <div className="absolute inset-0 ring-2 ring-green-400 rounded-lg animate-pulse z-30 pointer-events-none" />
-                          )}
+                <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ left: '14px', top: '14px' }} />
+                <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ right: '14px', top: '14px' }} />
+                <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ left: '14px', bottom: '14px' }} />
+                <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ right: '14px', bottom: '14px' }} />
 
-                          {/* Visibility Tab */}
-                          <div className={clsx(
-                            "absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center bg-stone-800/95 border-l rounded-r-md group-hover:opacity-0 transition-opacity",
-                            substitutionMode?.incomingCard.id === card.id ? "border-green-400 bg-green-900/50" : "border-green-500/30"
-                          )}>
-                            <span className="text-[8px] text-green-400 -rotate-90 whitespace-nowrap font-mono">SUB</span>
-                          </div>
-                        </div>
-                      ))}
-                      {gameState.playerBench.length === 0 && (
-                        <div className="pl-4 text-[10px] text-white/20 uppercase py-4">Empty</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <LeftPanel
+                  aiBench={gameState.aiBench}
+                  playerBench={gameState.playerBench}
+                  playerSubstitutionsLeft={gameState.playerSubstitutionsLeft}
+                  substitutionSelectedId={substitutionMode?.incomingCard.id}
+                  onHoverEnter={handleHoverEnterCard}
+                  onHoverLeave={handleHoverLeaveCard}
+                  onSubstituteSelect={handleSubstituteSelect}
+                />
 
-                {/* Center Field (Green Checkered) */}
-                <div className="flex-1 relative bg-green-600 shadow-inner overflow-visible">
-                    {/* ... Field content ... */}
-                    {/* Checkered Pattern CSS - 8x8 Grid (8x4 per half) */}
-                    <div 
-                      className="absolute inset-0 pointer-events-none opacity-30"
-                      style={{
-                        backgroundImage: `
-                          conic-gradient(
-                            #14532d 90deg, 
-                            transparent 90deg 180deg, 
-                            #14532d 180deg 270deg, 
-                            transparent 270deg
-                          )
-                        `,
-                        backgroundSize: '25% 25%'
-                      }}
-                    />
-                    
-                    {/* Field Lines */}
-                    <div className="absolute inset-0 border-[6px] border-white/40 m-4 rounded-sm pointer-events-none" />
-                    <div className="absolute top-1/2 left-4 right-4 h-1 bg-white/40 pointer-events-none" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-[4px] border-white/40 rounded-full pointer-events-none" />
-                    
-                    {/* Goal Areas */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-24 border-b-[4px] border-x-[4px] border-white/40 bg-white/5 pointer-events-none" />
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-24 border-t-[4px] border-x-[4px] border-white/40 bg-white/5 pointer-events-none" />
+                <CenterField
+                  playerField={gameState.playerField}
+                  aiField={gameState.aiField}
+                  selectedCard={gameState.selectedCard}
+                  onSlotClick={handleSlotClick}
+                  onAttackClick={handleAttack}
+                  currentTurn={gameState.currentTurn}
+                  turnPhase={gameState.turnPhase}
+                  isFirstTurn={gameState.isFirstTurn}
+                  lastPlacedCard={lastPlacedCard}
+                  onCardMouseEnter={handleHoverEnterCard}
+                  onCardMouseLeave={handleHoverLeaveCard}
+                />
 
-                    {/* Corner Arcs */}
-                    <div className="absolute top-4 left-4 w-12 h-12 border-r-[4px] border-b-[4px] border-white/40 rounded-br-full pointer-events-none" />
-                    <div className="absolute top-4 right-4 w-12 h-12 border-l-[4px] border-b-[4px] border-white/40 rounded-bl-full pointer-events-none" />
-                    <div className="absolute bottom-4 left-4 w-12 h-12 border-r-[4px] border-t-[4px] border-white/40 rounded-tr-full pointer-events-none" />
-                    <div className="absolute bottom-4 right-4 w-12 h-12 border-l-[4px] border-t-[4px] border-white/40 rounded-tl-full pointer-events-none" />
-
-                    {/* GameField Content */}
-                    <div className="absolute inset-0 z-10">
-                       <GameField
-                          playerField={gameState.playerField}
-                          aiField={gameState.aiField}
-                          selectedCard={gameState.selectedCard}
-                          onSlotClick={handleSlotClick}
-                          onAttackClick={handleAttack}
-                          currentTurn={gameState.currentTurn}
-                          turnPhase={gameState.turnPhase}
-                          isFirstTurn={gameState.isFirstTurn}
-                          lastPlacedCard={lastPlacedCard}
-                          onCardMouseEnter={handleHoverEnterCard}
-                          onCardMouseLeave={handleHoverLeaveCard}
-                       />
-                    </div>
-                </div>
-
-                {/* Right Panel (Decks: Opponent Top / Player Bottom) */}
-                <div 
-                  className="w-48 relative flex flex-col justify-between py-4 z-20 transform-style-3d border-l border-white/5 bg-stone-900/40"
-                  style={{
-                    transform: 'translateZ(0px)',
-                  }}
-                >
-                  {/* Panel Background with Fade */}
-                  <div className="absolute inset-y-0 left-0 right-[-100px] bg-gradient-to-l from-stone-900 via-stone-900/90 to-transparent pointer-events-none" />
-
-                    {/* Opponent Deck Area (Top Right) */}
-                    <div className="relative flex flex-row gap-4 justify-center items-start mt-6 px-4">
-                        {/* AI Synergy Deck */}
-                        <div 
-                            className="group relative w-32 h-20 transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-1"
-                            style={{ transform: 'translateZ(20px)', transformStyle: 'preserve-3d' }}
-                        >
-                            <div className="absolute top-[2px] left-[2px] w-full h-full bg-stone-900 rounded border border-white/10 shadow-xl" style={{ transform: 'translateZ(-2px)' }} />
-                            <div className="absolute top-[4px] left-[4px] w-full h-full bg-stone-900 rounded border border-white/10 shadow-xl" style={{ transform: 'translateZ(-4px)' }} />
-                            <div className="absolute top-[6px] left-[6px] w-full h-full bg-stone-950 rounded border border-white/5 shadow-xl" style={{ transform: 'translateZ(-6px)' }} />
-                            
-                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-900 via-slate-800 to-stone-950 rounded border border-white/40 shadow-2xl flex flex-col items-center justify-center overflow-hidden">
-                                <div className="absolute inset-0 opacity-40 bg-[url('/images/pattern_dot.png')] mix-blend-overlay" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                                <div className="relative w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center mb-2 bg-white/5 backdrop-blur-sm">
-                                    <span className="text-2xl filter drop-shadow-md">✨</span>
-                                </div>
-                                <span className="relative text-[10px] text-white/90 font-black uppercase tracking-[0.2em]">OPPONENT</span>
-                                <span className="relative text-[8px] text-white/50 font-bold uppercase tracking-widest mt-0.5">DECK</span>
-                            </div>
-
-                            <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-stone-900 font-black text-xs rounded-full flex items-center justify-center border-2 border-stone-900 shadow-xl z-10 group-hover:scale-110 transition-transform">
-                                {gameState.aiSynergyHand.length}
-                            </div>
-                        </div>
-
-                        {/* AI Synergy Discard */}
-                        <div 
-                            className="group relative w-32 h-20 transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-1"
-                            style={{ transform: 'translateZ(10px)', transformStyle: 'preserve-3d' }}
-                        >
-                            <div className="absolute top-[1px] left-[1px] w-full h-full bg-stone-900/80 rounded border border-white/5 shadow-lg rotate-[-2deg]" style={{ transform: 'translateZ(-1px)' }} />
-                            <div className="absolute top-[2px] left-[-1px] w-full h-full bg-stone-950/80 rounded border border-white/5 shadow-lg rotate-[1deg]" style={{ transform: 'translateZ(-2px)' }} />
-
-                            <div className="absolute inset-0 w-full h-full" style={{ transform: 'translateZ(1px)' }}>
-                                <div className="w-full h-full bg-stone-800 rounded border border-white/10 flex flex-col items-center justify-center overflow-hidden -rotate-3 shadow-2xl">
-                                    <div className="absolute inset-0 bg-red-900/10" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                    <span className="relative text-2xl opacity-20 mb-2 filter grayscale">♻️</span>
-                                    <span className="relative text-[8px] text-white/20 font-bold uppercase tracking-widest">DISCARD</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Player Deck Area (Bottom Right) */}
-                    <div className="relative flex flex-row gap-4 justify-center items-end mb-6 px-4 mt-auto">
-                        {/* Player Synergy Deck */}
-                        <div 
-                            className="group relative w-32 h-20 cursor-pointer transition-all duration-300 ease-out hover:scale-105 hover:translate-y-1"
-                            style={{ transform: 'translateZ(20px)', transformStyle: 'preserve-3d' }}
-                            onClick={() => setViewingPile('deck')}
-                        >
-                            <div className="absolute top-[2px] left-[2px] w-full h-full bg-stone-900 rounded border border-white/10 shadow-xl" style={{ transform: 'translateZ(-2px)' }} />
-                            <div className="absolute top-[4px] left-[4px] w-full h-full bg-stone-900 rounded border border-white/10 shadow-xl" style={{ transform: 'translateZ(-4px)' }} />
-                            <div className="absolute top-[6px] left-[6px] w-full h-full bg-stone-950 rounded border border-white/5 shadow-xl" style={{ transform: 'translateZ(-6px)' }} />
-                            
-                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-900 via-emerald-800 to-teal-950 rounded border border-white/40 shadow-2xl flex flex-col items-center justify-center overflow-hidden">
-                                <div className="absolute inset-0 opacity-40 bg-[url('/images/pattern_dot.png')] mix-blend-overlay" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                                <div className="relative w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center mb-2 bg-white/5 backdrop-blur-sm">
-                                    <span className="text-2xl filter drop-shadow-md">⚽</span>
-                                </div>
-                                <span className="relative text-[10px] text-white/90 font-black uppercase tracking-[0.2em]">SYNERGY</span>
-                                <span className="relative text-[8px] text-white/50 font-bold uppercase tracking-widest mt-0.5">DECK</span>
-                            </div>
-
-                            <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-stone-900 font-black text-xs rounded-full flex items-center justify-center border-2 border-stone-900 shadow-xl z-10 group-hover:scale-110 transition-transform">
-                                {gameState.synergyDeck.length}
-                            </div>
-                        </div>
-
-                        {/* Player Synergy Discard */}
-                        <div 
-                            className="group relative w-32 h-20 cursor-pointer transition-all duration-300 ease-out hover:scale-105 hover:translate-y-1"
-                            style={{ transform: 'translateZ(10px)', transformStyle: 'preserve-3d' }}
-                            onClick={() => setViewingPile('discard')}
-                        >
-                            <div className="absolute top-[1px] left-[1px] w-full h-full bg-stone-900/80 rounded border border-white/5 shadow-lg rotate-[-2deg]" style={{ transform: 'translateZ(-1px)' }} />
-                            <div className="absolute top-[2px] left-[-1px] w-full h-full bg-stone-950/80 rounded border border-white/5 shadow-lg rotate-[1deg]" style={{ transform: 'translateZ(-2px)' }} />
-                            
-                            {gameState.synergyDiscard.length > 0 ? (
-                                <div className="absolute inset-0 w-full h-full" style={{ transform: 'translateZ(1px)' }}>
-                                    <div className="w-full h-full bg-stone-800 rounded border border-white/20 flex flex-col items-center justify-center overflow-hidden rotate-3 shadow-2xl">
-                                        <div className="absolute inset-0 bg-green-900/20" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                        <span className="relative text-2xl opacity-40 mb-2 filter grayscale">♻️</span>
-                                        <span className="relative text-[8px] text-white/40 font-bold uppercase tracking-widest">DISCARD</span>
-                                    </div>
-                                    <div className="absolute inset-0 hover:bg-white/5 transition-colors rounded rotate-3" />
-                                </div>
-                            ) : (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center rounded border-2 border-dashed border-white/10 bg-white/5">
-                                   <span className="text-2xl mb-2 opacity-10">♻️</span>
-                                   <span className="text-[8px] font-bold uppercase tracking-widest opacity-10">EMPTY</span>
-                                </div>
-                            )}
-
-                            <div className="absolute -top-3 -right-3 w-7 h-7 bg-stone-800 text-white/60 font-bold text-xs rounded-full flex items-center justify-center border-2 border-stone-700 shadow-lg z-10 group-hover:scale-110 transition-transform">
-                                {gameState.synergyDiscard.length}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <RightPanel
+                  aiSynergyHandCount={gameState.aiSynergyHand.length}
+                  synergyDeckCount={gameState.synergyDeck.length}
+                  synergyDiscardCount={gameState.synergyDiscard.length}
+                  onOpenPile={(p) => setViewingPile(p)}
+                />
              </div>
         </div>
       </div>
 
       {/* View Control Toggle */}
-      <div className="absolute top-4 right-32 z-50 pointer-events-auto">
+      <div className="absolute top-[100px] left-4 z-50 pointer-events-auto">
         <button 
           onClick={() => setShowViewControls(!showViewControls)}
-          className="bg-stone-800/80 backdrop-blur border border-white/20 rounded-full p-2 hover:bg-stone-700 transition-colors"
+          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-stone-700 transition-all shadow-xl flex items-center gap-2 group"
           title="Camera Settings"
         >
-          📷
+          <span className="text-lg group-hover:scale-110 transition-transform">📷</span>
+          <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">View</span>
         </button>
       </div>
 
       {/* Camera Controls Panel */}
-      {showViewControls && (
-        <div className="absolute top-16 right-32 w-64 bg-stone-900/90 backdrop-blur border border-white/20 rounded-xl p-4 z-50 shadow-2xl">
-          <h3 className="text-sm font-bold uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Camera Settings</h3>
-          
-          <div className="space-y-4">
+      <AnimatePresence>
+        {showViewControls && (
+          <motion.div 
+            drag
+            dragMomentum={false}
+            initial={{ opacity: 0, scale: 0.9, x: -20 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.9, x: -20 }}
+            className="absolute top-[145px] left-4 w-64 bg-stone-900/95 backdrop-blur-lg border border-white/20 rounded-2xl p-5 z-50 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t-white/30 cursor-move"
+          >
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2 pointer-events-none">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/90">Camera Engine</h3>
+              </div>
+              <button 
+                onClick={() => setShowViewControls(false)} 
+                className="text-white/40 hover:text-white text-xs pointer-events-auto p-1"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4 cursor-default" onPointerDown={(e) => e.stopPropagation()}>
             {/* Pitch (Tilt) */}
             <div className="space-y-1">
               <div className="flex justify-between text-xs text-white/60">
@@ -905,9 +726,10 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                 Corner View
               </button>
             </div>
-          </div>
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Card Preview (Center) */}
       <AnimatePresence>
@@ -931,6 +753,41 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Settings & Controls Overlay */}
+      <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 items-end pointer-events-none">
+        {/* Audio Controls */}
+        <div className="flex bg-stone-900/90 backdrop-blur-md rounded-full p-1 border border-white/20 shadow-2xl pointer-events-auto">
+          <button
+            onClick={() => toggleAudioSetting('bgm')}
+            className={clsx(
+              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+              audioSettings.bgm ? "text-green-400 bg-white/10" : "text-white/20 hover:bg-white/5"
+            )}
+            title="Toggle Background Music"
+          >
+            <span className="text-xl">{audioSettings.bgm ? '📻' : '🔇'}</span>
+          </button>
+          <button
+            onClick={() => toggleAudioSetting('sfx')}
+            className={clsx(
+              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+              audioSettings.sfx ? "text-blue-400 bg-white/10" : "text-white/20 hover:bg-white/5"
+            )}
+            title="Toggle Sound Effects"
+          >
+            <span className="text-xl">{audioSettings.sfx ? '🔊' : '🔇'}</span>
+          </button>
+        </div>
+
+        <button 
+          onClick={handleBack}
+          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
+        >
+          <span className="text-lg group-hover:-translate-x-1 transition-transform">⬅️</span>
+          <span className="text-xs font-black tracking-[0.2em] text-white/90 uppercase">Quit Game</span>
+        </button>
+      </div>
 
       {/* 2. HUD Layer - Top (Opponent) */}
       <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
@@ -1053,26 +910,13 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
             </AnimatePresence>
          </div>
 
-         {/* Bottom Right: Actions & Synergy */}
+         {/* Bottom Right: Actions & Draw Area */}
          <div className="absolute bottom-4 right-4 pointer-events-auto flex flex-col items-end gap-4">
-             {/* Synergy Hand */}
-             <div className="flex flex-col items-end gap-1">
-                 <div className="flex justify-between items-center gap-2 px-1">
-                     <span className="text-[10px] text-white/40 uppercase tracking-widest">SYNERGY</span>
-                 </div>
-                 <div className="flex gap-2">
-                    {gameState.playerSynergyHand.map((card) => (
-                      <div key={card.id} className="relative transform hover:-translate-y-4 transition-transform cursor-pointer">
-                         <SynergyCardComponent 
-                           card={card} 
-                           size="normal" 
-                           onClick={() => handleSynergySelect(card)}
-                           selected={gameState.selectedSynergyCards.some(c => c.id === card.id)}
-                         />
-                      </div>
-                    ))}
-                 </div>
-             </div>
+             <DrawArea
+               playerSynergyHand={gameState.playerSynergyHand}
+               selectedSynergyCards={gameState.selectedSynergyCards}
+               onSynergySelect={handleSynergySelect}
+             />
 
              {/* Action Buttons */}
              <div className="w-48">
