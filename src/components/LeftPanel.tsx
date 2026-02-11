@@ -7,7 +7,7 @@ interface Props {
   aiBench: PlayerCard[];
   playerBench: PlayerCard[];
   playerSubstitutionsLeft: number;
-  substitutionSelectedId?: string;
+  substitutionSelectedId?: string | undefined;
   onHoverEnter: (card: PlayerCard) => void;
   onHoverLeave: () => void;
   onSubstituteSelect: (card: PlayerCard) => void;

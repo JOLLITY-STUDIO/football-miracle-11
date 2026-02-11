@@ -7,7 +7,7 @@ interface Props {
   onBack: () => void;
 }
 
-type TabType = 'overview' | 'cards' | 'icons' | 'effects' | 'rules';
+type TabType = 'overview' | 'cards' | 'icons' | 'effects' | 'rules' | 'manual_cn' | 'manual_jp' | 'expansions';
 
 export const CardGuide: React.FC<Props> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
