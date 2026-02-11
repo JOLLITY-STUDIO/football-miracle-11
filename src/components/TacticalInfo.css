@@ -1,0 +1,157 @@
+.tactical-info {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tactical-header {
+  text-align: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tactical-header h3 {
+  color: #ffd700;
+  font-size: 14px;
+  margin: 0;
+}
+
+.tactical-content {
+  font-size: 12px;
+}
+
+.team-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 0 5px;
+}
+
+.team-labels .ai-label {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.team-labels .player-label {
+  color: #4ecdc4;
+  font-weight: bold;
+}
+
+.icon-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.icon-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-label {
+  width: 90px;
+  color: #aaa;
+  font-size: 11px;
+}
+
+.icon-bars {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 16px;
+}
+
+.ai-bar,
+.player-bar {
+  height: 100%;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  transition: width 0.3s ease;
+}
+
+.ai-bar {
+  margin-left: auto;
+}
+
+.player-bar {
+  margin-right: auto;
+}
+
+.bar-count {
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.vs-divider {
+  color: #888;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
+}
+
+.tactical-summary {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-section h4 {
+  color: #fff;
+  font-size: 12px;
+  margin: 0 0 8px 0;
+}
+
+.bonus-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.bonus-item {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.bonus-item.attack {
+  background: rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+}
+
+.bonus-item.defense {
+  background: rgba(78, 205, 196, 0.3);
+  color: #4ecdc4;
+}
+
+.bonus-item.pass {
+  background: rgba(255, 217, 61, 0.3);
+  color: #ffd93d;
+}
+
+.bonus-item.press {
+  background: rgba(108, 92, 231, 0.3);
+  color: #6c5ce7;
+}
+
+.bonus-item.breakthrough {
+  background: rgba(0, 206, 201, 0.3);
+  color: #00cec9;
+}
+
+.no-bonus {
+  color: #666;
+  font-style: italic;
+  font-size: 10px;
+}

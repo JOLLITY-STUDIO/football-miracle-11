@@ -1,0 +1,150 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+// Use Vite's import.meta.glob to auto-load music files from public/bgm/
+// This runs at build time. Adding files requires a dev server restart.
+const bgmModules = import.meta.glob('/public/bgm/*.{mp3,wav,ogg,m4a}', { eager: true });
+
+const AUTO_PLAYLIST = Object.keys(bgmModules).map(path => {
+  // path is like "/public/bgm/filename.mp3"
+  const filename = path.split('/').pop();
+  return filename || '';
+}).filter(name => name !== '');
+
+const PLAYLIST = AUTO_PLAYLIST.length > 0 ? AUTO_PLAYLIST : [
+  'Give_Me_Hope_-_Modern_Pitch.mp3',
+];
+
+export const BackgroundMusic: React.FC = () => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.2); // Lowered default volume slightly
+  const [currentTrack, setCurrentTrack] = useState<string>('');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Pick a random track that is different from the current one (unless there's only 1)
+  const pickRandomTrack = useCallback((exclude?: string) => {
+    if (PLAYLIST.length === 0) return '';
+    if (PLAYLIST.length === 1) return PLAYLIST[0];
+    
+    let availableTracks = PLAYLIST;
+    if (exclude) {
+      availableTracks = PLAYLIST.filter(track => track !== exclude);
+    }
+    
+    const randomIndex = Math.floor(Math.random() * availableTracks.length);
+    return availableTracks[randomIndex];
+  }, []);
+
+  const playNextTrack = useCallback(() => {
+    const nextTrack = pickRandomTrack(currentTrack);
+    setCurrentTrack(nextTrack);
+    // The useEffect listening to currentTrack will trigger the play
+  }, [currentTrack, pickRandomTrack]);
+
+  useEffect(() => {
+    // Initial track selection
+    if (!currentTrack && PLAYLIST.length > 0) {
+      setCurrentTrack(pickRandomTrack());
+    }
+  }, [pickRandomTrack, currentTrack]);
+
+  useEffect(() => {
+    // Play when track changes
+    if (currentTrack && audioRef.current) {
+      audioRef.current.src = `/bgm/${currentTrack}`;
+      audioRef.current.volume = volume;
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(err => {
+            console.log("Autoplay blocked or playback failed", err);
+            setIsPlaying(false);
+          });
+      }
+    }
+  }, [currentTrack]); // Intentionally not including volume here to avoid restarting track on volume change
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        if (!audioRef.current.src || audioRef.current.src === window.location.href) {
+            // If no source is set yet, set it
+            if (currentTrack) {
+                audioRef.current.src = `/bgm/${currentTrack}`;
+            } else if (PLAYLIST.length > 0) {
+                const track = pickRandomTrack();
+                setCurrentTrack(track);
+                audioRef.current.src = `/bgm/${track}`;
+            }
+        }
+        audioRef.current.play().catch(e => console.error("Play failed", e));
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  return (
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-stone-900/80 backdrop-blur-md p-2 rounded-full border border-stone-700 shadow-lg text-white transition-opacity hover:opacity-100 opacity-60">
+      <audio 
+        ref={audioRef} 
+        onEnded={playNextTrack}
+        onError={(e) => {
+          console.warn(`Audio playback error for track ${currentTrack}`, e);
+          // Try next track on error
+          if (isPlaying) {
+              setTimeout(playNextTrack, 1000); 
+          }
+        }}
+      />
+      
+      <div className="flex items-center gap-2 px-2">
+        <button 
+          onClick={togglePlay}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-lg"
+          title={isPlaying ? "Pause Music" : "Play Music"}
+        >
+          {isPlaying ? '🔊' : '🔇'}
+        </button>
+        
+        {/* Track Info (Scrollable if long) */}
+        {isPlaying && currentTrack && (
+           <div className="max-w-[100px] overflow-hidden text-xs text-stone-300 whitespace-nowrap">
+             <div className="animate-marquee inline-block">
+               {currentTrack.replace(/_/g, ' ').replace('.mp3', '')}
+             </div>
+           </div>
+        )}
+
+        <input 
+          type="range" 
+          min="0" 
+          max="1" 
+          step="0.01" 
+          value={volume}
+          onChange={(e) => setVolume(parseFloat(e.target.value))}
+          className="w-20 h-1 bg-stone-600 rounded-lg appearance-none cursor-pointer accent-green-500 hover:accent-green-400"
+          title={`Volume: ${Math.round(volume * 100)}%`}
+        />
+        
+        <button 
+            onClick={playNextTrack}
+            className="w-6 h-6 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-[10px] text-stone-400 hover:text-white transition-colors"
+            title="Next Track (Random)"
+        >
+            ⏭
+        </button>
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,168 @@
+.tactical-board {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.board-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.board-header h3 {
+  color: #ffd700;
+  font-size: 18px;
+  margin: 0;
+}
+
+.board-zones {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.connections-layer {
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.tactical-zone {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 15px;
+  position: relative;
+}
+
+.zone-label {
+  position: absolute;
+  left: -60px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 12px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.zone-slots {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.tactical-slot {
+  width: 70px;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.tactical-slot:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.tactical-slot.highlighted {
+  border-color: #4ecdc4;
+  background: rgba(78, 205, 196, 0.1);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(78, 205, 196, 0);
+  }
+}
+
+.tactical-slot.occupied {
+  border: 2px solid #ffd700;
+  background: linear-gradient(145deg, #2a2a4a, #1a1a3a);
+  cursor: default;
+}
+
+.empty-slot {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.slot-card {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.star-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+}
+
+.card-name {
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.card-position {
+  color: #ffd700;
+  font-size: 9px;
+  margin-bottom: 5px;
+}
+
+.card-icons {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.icon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.connection-line {
+  opacity: 0.7;
+  animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+.player-board .tactical-zone {
+  border-left: 3px solid #4ecdc4;
+}
+
+.ai-board .tactical-zone {
+  border-left: 3px solid #ff6b6b;
+}

@@ -1,0 +1,116 @@
+.pre-game {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+}
+
+.team-select-container {
+  text-align: center;
+}
+
+.team-select-container h2 {
+  color: #ffd700;
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.team-select-container p {
+  color: #aaa;
+  margin-bottom: 40px;
+}
+
+.team-options {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.team-option {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 40px;
+  width: 300px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 3px solid transparent;
+  position: relative;
+}
+
+.team-option:hover {
+  transform: translateY(-10px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.team-option.home {
+  background: linear-gradient(145deg, rgba(78, 205, 196, 0.1), rgba(78, 205, 196, 0.05));
+}
+
+.team-option.home:hover {
+  border-color: #4ecdc4;
+  box-shadow: 0 10px 40px rgba(78, 205, 196, 0.3);
+}
+
+.team-option.away {
+  background: linear-gradient(145deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05));
+}
+
+.team-option.away:hover {
+  border-color: #ff6b6b;
+  box-shadow: 0 10px 40px rgba(255, 107, 107, 0.3);
+}
+
+.team-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.team-option h3 {
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.team-option p {
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.team-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.mini-player {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #ddd;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 12px 30px;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
