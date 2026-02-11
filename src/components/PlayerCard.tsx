@@ -104,7 +104,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
         onClick={disabled ? undefined : onClick}
         draggable={draggable}
         onDragStart={() => onDragStart?.(card)}
-        onDragEnd={onDragEnd}
+        onDragEnd={() => onDragEnd?.()}
       >
         <BaseCard 
           size={size} 
@@ -128,15 +128,15 @@ export const PlayerCardComponent: React.FC<Props> = ({
                   <span className={clsx("text-[9px] font-black leading-none", variant === 'home' ? "text-stone-800" : "text-white")}>{card.name}</span>
                   <span className="text-[7px] text-stone-500 font-bold leading-tight">{roleName}</span>
                 </div>
-                <div className={clsx("w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shadow-sm border", 
+                <div className={clsx("w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shadow-sm border",
                   variant === 'home' ? "bg-white text-stone-900 border-stone-200" : "bg-stone-800 text-white border-stone-700")}>
-                  {card.value}
+                  {card.isStar ? '★' : card.attack}
                 </div>
               </div>
 
               <div className="flex-1 flex gap-1.5 mt-1 overflow-hidden">
                 <div className="w-14 h-14 flex-shrink-0 bg-stone-100 rounded-lg overflow-hidden border border-stone-200 shadow-inner">
-                  <PlayerAvatar seed={card.id || card.name} imageUrl={card.imageUrl} />
+                  <PlayerAvatar seed={card.id || card.name} imageUrl={card.imageUrl || ''} />
                 </div>
                 
                 <div className="flex-1 flex flex-col justify-between py-0.5 overflow-hidden">
