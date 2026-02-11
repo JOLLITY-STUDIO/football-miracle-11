@@ -24,12 +24,12 @@ export const RightPanel: React.FC<Props> = ({
 }) => {
   return (
     <div
-      className="basis-[30%] min-w-[520px] relative flex h-full bg-stone-900 border-l border-white/5 overflow-hidden z-20 transform-style-3d"
+      className="w-[500px] relative flex h-full bg-stone-900 border-l border-white/5 overflow-hidden z-20 transform-style-3d"
       style={{ transform: 'translateZ(0px)' }}
     >
       <div className="absolute inset-y-0 left-0 right-[-100px] bg-gradient-to-l from-stone-900 via-stone-900/90 to-transparent pointer-events-none" />
       
-      <div className="relative flex h-full w-full p-4 gap-6 z-10 justify-center">
+      <div className="relative flex h-full w-full p-6 gap-8 z-10 justify-center">
         
         {/* 1. Synergy Board - Fixed Width to prevent scaling */}
         <div className="relative w-[300px] flex flex-col bg-[#C62918] rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 flex-shrink-0">

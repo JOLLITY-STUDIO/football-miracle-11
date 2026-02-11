@@ -5,6 +5,7 @@ import { GameBoard } from './components/GameBoard';
 import { GameRecordList, ReplayViewer } from './components/GameRecordList';
 import { CardGuide } from './components/CardGuide';
 import { BackgroundMusic } from './components/BackgroundMusic';
+import { OrientationWarning } from './components/OrientationWarning';
 import type { GameRecord } from './game/gameRecorder';
 import type { PlayerCard } from './data/cards';
 
@@ -50,6 +51,7 @@ function App() {
   return (
     <div className="min-h-screen">
       <BackgroundMusic /> {/* Global Music Player */}
+      <OrientationWarning />
       {currentView === 'menu' && (
         <MainMenu
           onStartGame={handleQuickStart}

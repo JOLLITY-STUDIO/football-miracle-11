@@ -24,12 +24,11 @@ export const LeftPanel: React.FC<Props> = ({
 }) => {
   return (
     <div
-      className="basis-[25.2%] relative flex flex-col justify-between py-4 z-20 transform-style-3d border-r border-white/5 bg-stone-900/40"
+      className="w-[420px] relative flex flex-col justify-between p-6 z-20 transform-style-3d border-r border-white/5 bg-stone-900/40"
       style={{ transform: 'translateZ(0px)' }}
     >
-      <div className="absolute inset-y-0 left-[-100px] right-0 bg-gradient-to-r from-stone-900 via-stone-900/90 to-transparent pointer-events-none" />
-      <div className="relative flex flex-col items-center w-full pl-0 mt-6">
-        <div className="relative z-10 text-[10px] text-red-400 font-bold uppercase tracking-widest mb-2 w-full text-left pl-4 border-b border-red-500/20 pb-1 flex items-center gap-2">
+      <div className="relative flex flex-col items-center w-full pl-0">
+        <div className="relative z-10 text-[10px] text-red-400 font-bold uppercase tracking-widest mb-2 w-full text-left pl-2 border-b border-red-500/20 pb-1 flex items-center gap-2">
           <span>OPP BENCH</span>
           <span className="text-[8px] opacity-50">({aiBench.length})</span>
         </div>
@@ -58,7 +57,7 @@ export const LeftPanel: React.FC<Props> = ({
         </div>
       </div>
       <div className="relative flex flex-col items-center w-full pl-0 mt-auto">
-        <div className="relative z-10 text-[10px] text-green-400 font-bold uppercase tracking-widest mb-2 w-full text-left pl-4 border-t border-green-500/20 pt-1 flex items-center gap-2">
+        <div className="relative z-10 text-[10px] text-green-400 font-bold uppercase tracking-widest mb-2 w-full text-left pl-2 border-t border-green-500/20 pt-1 flex items-center gap-2">
           <span>YOUR BENCH</span>
           <span className="text-[8px] opacity-50">({playerSubstitutionsLeft} Subs)</span>
         </div>

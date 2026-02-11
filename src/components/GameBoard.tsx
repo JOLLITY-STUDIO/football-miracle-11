@@ -90,14 +90,30 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     playSound('click');
   };
 
-  // Camera/View Control State
+  // View Control State
   const [viewSettings, setViewSettings] = useState({
     pitch: 0,
     rotation: 0,
-    zoom: 0.9,
+    zoom: 1.0,
     height: 0
   });
   const [showViewControls, setShowViewControls] = useState(false);
+
+  // Auto-scaling logic to fit screen
+  const [autoScale, setAutoScale] = useState(1);
+  const BASE_WIDTH = 2000; // Total width: 420 + 1000 + 500 + some padding
+  const BASE_HEIGHT = 1200;
+
+  useEffect(() => {
+    const handleResize = () => {
+      const sW = window.innerWidth / BASE_WIDTH;
+      const sH = window.innerHeight / BASE_HEIGHT;
+      setAutoScale(Math.min(sW, sH, 1)); // Don't scale up beyond 1:1
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Phase Banner Logic
   useEffect(() => {
@@ -530,9 +546,11 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
       <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
         <div 
-          className="relative w-full max-w-[90vw] aspect-[1134/792] transition-transform duration-700 ease-out transform-style-3d transform-gpu"
+          className="relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center"
           style={{
-            transform: `rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height - 50}px) scale(${viewSettings.zoom})`,
+            width: `${BASE_WIDTH}px`,
+            height: `${BASE_HEIGHT}px`,
+            transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height - 50}px) scale(${viewSettings.zoom})`,
           }}
         >
              {/* Virtual Grid Floor - Moves with Camera */}
@@ -546,7 +564,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
              />
 
              {/* Board Container (Includes Side Panels) */}
-             <div className="absolute inset-0 flex flex-row items-stretch justify-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-xl overflow-visible bg-stone-900 border-[12px] border-stone-800 transform-style-3d perspective-2000">
+             <div className="relative w-[1920px] h-[1080px] flex flex-row items-stretch justify-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-xl overflow-visible bg-stone-900 border-[12px] border-stone-800 transform-style-3d perspective-2000">
                 <div className="absolute inset-[-20px] rounded-[28px] bg-[radial-gradient(circle_at_50%_40%,_rgba(16,99,39,0.8),_rgba(0,0,0,0.9))] blur-[8px]" style={{ transform: 'translateZ(-60px)' }} />
                 
                 {/* 3D Thickness/Volume Layer - Full Width Unified Board */}
