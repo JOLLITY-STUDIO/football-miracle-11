@@ -369,7 +369,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     }
 
     const card = gameState.selectedCard;
-    dispatch({ type: 'PLACE_CARD', card, zone, slot: slotPosition });
+    dispatch({ type: 'PLACE_CARD', card, zone, slot: startCol });
     dispatch({ type: 'SELECT_PLAYER_CARD', card: null });
     setLastPlacedCard(card);
     playSound('flip');
@@ -554,6 +554,16 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     dispatch({ type: 'CANCEL_INSTANT_SHOT' });
   };
 
+  const handleTriggerImmediateEffect = () => {
+    dispatch({ type: 'TRIGGER_EFFECT' });
+    playSound('click');
+  };
+
+  const handleSkipImmediateEffect = () => {
+    dispatch({ type: 'SKIP_EFFECT' });
+    playSound('click');
+  };
+
   const handleBack = (isSurrender: boolean = false) => {
     if (gameRecorder.current.getActions().length > 0) {
       let winner: 'player' | 'ai' | 'draw' = gameState.playerScore > gameState.aiScore ? 'player' : 
@@ -664,11 +674,12 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                 lastPlacedCard={lastPlacedCard}
                 onCardMouseEnter={handleHoverEnterCard}
                 onCardMouseLeave={handleHoverLeaveCard}
-                onInstantShotClick={handleInstantShot}
-                instantShotMode={gameState.instantShotMode}
-                setupStep={setupStep}
-                rotation={viewSettings.rotation}
-              />
+                          onInstantShotClick={handleInstantShot}
+                          instantShotMode={gameState.instantShotMode}
+                          currentAction={gameState.currentAction}
+                          setupStep={setupStep}
+                          rotation={viewSettings.rotation}
+                        />
 
               <motion.div
                 initial={{ x: 200, opacity: 0 }}
@@ -887,7 +898,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                     exit={{ opacity: 0, scale: 0.5, y: -50 }}
                     whileHover={{ 
                       scale: 1.5, 
-                      rotate: 270, // 180 (upside down) + 90 (horizontal)
+                      rotate: 0, 
                       zIndex: 100, 
                       y: 0,
                       x: 0 
@@ -935,7 +946,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                   exit={{ opacity: 0, scale: 0.5, y: 50 }}
                   whileHover={{ 
                     scale: 1.5, 
-                    rotate: 90, 
+                    rotate: 0, 
                     zIndex: 100,
                     y: 0,
                     x: 0

@@ -29,6 +29,7 @@ interface Props {
   onCardMouseLeave?: () => void;
   onInstantShotClick?: (zone: number, slot: number) => void;
   instantShotMode?: any;
+  currentAction?: string | null;
   setupStep?: number;
   rotation?: number;
 }
@@ -76,16 +77,6 @@ const canPlaceAt = (
   );
   if (occupied) return false;
 
-  if (zone === 1 && !isFirstTurn) {
-    const hasAdjacent = placedCards.some(
-      p => p.zone === zone && Math.abs(Math.floor(p.startCol / 2) + 1 - slotPosition) <= 1
-    );
-    const hasBehind = placedCards.some(
-      p => p.zone === 2 && Math.abs(Math.floor(p.startCol / 2) + 1 - slotPosition) <= 1
-    );
-    if (!hasAdjacent && !hasBehind) return false;
-  }
-
   return true;
 };
 
@@ -114,7 +105,7 @@ export const GameField: React.FC<Props> = ({
 
   const isRotated = rotation === 180;
 
-  const canPlaceCards = (turnPhase === 'playerAction' || isFirstTurn) && currentTurn === 'player';
+  const canPlaceCards = (turnPhase === 'playerAction' || isFirstTurn) && currentTurn === 'player' && !currentAction;
   const playerPlaced = getPlacedCards(playerField);
   const aiPlaced = getPlacedCards(aiField);
 
@@ -184,7 +175,7 @@ export const GameField: React.FC<Props> = ({
                   
                   // Simplified Grass Pattern (Vertical Stripes - only 2 colors)
                   // Using inline styles for specific HEX colors to ensure visibility
-                  "z-10",
+                  "z-0",
 
                   // Interaction States
                   !isAi && isValidPlacement ? "cursor-pointer ring-2 ring-green-400/80 shadow-[0_0_15px_rgba(74,222,128,0.5)] z-20" : "",
@@ -192,22 +183,22 @@ export const GameField: React.FC<Props> = ({
                 )}
                 style={{
                   backgroundColor: !isAi && isValidPlacement 
-                    ? 'rgba(74, 222, 128, 0.7)' 
+                    ? 'rgba(34, 197, 94, 0.6)' // More vibrant green
                     : (!isAi && selectedCard && !isValidPlacement && isZoneHighlight 
-                        ? 'rgba(239, 68, 68, 0.4)' 
-                        : ((row + slotIdx) % 2 === 0 ? 'rgba(163, 190, 46, 0.3)' : 'rgba(49, 173, 89, 0.3)')),
+                        ? 'rgba(239, 68, 68, 0.5)' 
+                        : ((row + slotIdx) % 2 === 0 ? 'rgba(46, 125, 50, 0.4)' : 'rgba(27, 94, 32, 0.4)')), // Deeper soccer greens
                 }}
                 onClick={() => !isAi && onSlotClick(zone.zone, colIdx)}
               >
                 {/* Dashed Lines at Bottom of Rows */}
                 {isRedLineRow && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,#ef4444_10px,#ef4444_20px)] z-0 pointer-events-none opacity-80" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,#ef4444_20px,#ef4444_40px)] z-10 pointer-events-none opacity-90" />
                 )}
                 {isGreenLineRow && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,#22c55e_10px,#22c55e_20px)] z-0 pointer-events-none opacity-80" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,#22c55e_20px,#22c55e_40px)] z-10 pointer-events-none opacity-90" />
                 )}
                 {isBlueLineRow && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,#3b82f6_10px,#3b82f6_20px)] z-0 pointer-events-none opacity-80" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,#3b82f6_20px,#3b82f6_40px)] z-10 pointer-events-none opacity-90" />
                 )}
 
                 {/* Field Marking Icons (Background) */}
@@ -230,11 +221,11 @@ export const GameField: React.FC<Props> = ({
                 {/* Render Card if it exists and we are at start of slot */}
                 {isSlotStart && card && (
                   <div 
-                    className={clsx("absolute left-0 top-0 w-[200%] h-full z-10 p-1 pointer-events-none transform-style-3d backface-hidden flex items-center justify-center")}
+                    className={clsx("absolute left-0 top-0 w-[200%] h-full z-10 pointer-events-none transform-style-3d backface-hidden flex items-center justify-center")}
                     style={{
-                      transform: isAi ? 'rotateX(-45deg) rotate(180deg) translateZ(40px) scale(1.1)' : 'rotateX(-45deg) translateZ(40px) scale(1.1)',
-                      transformOrigin: 'center bottom',
-                      filter: 'drop-shadow(0 25px 35px rgba(0,0,0,0.8))'
+                      transform: isAi ? 'rotateX(-20deg) rotate(180deg) translateZ(1px)' : 'rotateX(-20deg) translateZ(1px)',
+                      transformOrigin: 'center center',
+                      filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))'
                     }}
                   >
                      <motion.div
@@ -339,14 +330,19 @@ export const GameField: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-full">
+    <div className="flex flex-col w-full h-full border-[6px] border-white/30 rounded-sm bg-stone-900/50 relative overflow-hidden">
+      {/* Center Line */}
+      <div className="absolute top-1/2 left-0 right-0 h-[4px] bg-white/40 -translate-y-1/2 z-20" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-[4px] border-white/40 rounded-full z-20" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/40 rounded-full z-20" />
+
       {/* Top Field (Opponent if normal, Player if rotated) */}
-      <div className={clsx("flex-1 min-h-0", isRotated ? "" : "rotate-180")}> 
+      <div className={clsx("flex-1 min-h-0 relative", isRotated ? "" : "rotate-180")}> 
         {renderGrid(!isRotated)}
       </div>
 
       {/* Bottom Field (Player if normal, Opponent if rotated) */}
-      <div className={clsx("flex-1 min-h-0", isRotated ? "rotate-180" : "")}>
+      <div className={clsx("flex-1 min-h-0 relative", isRotated ? "rotate-180" : "")}>
         {renderGrid(isRotated)}
       </div>
     </div>

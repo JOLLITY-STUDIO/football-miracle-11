@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/magic-number-eleven/'
+  base: process.env.NODE_ENV === 'production' ? '/magic-number-eleven/' : '/'
 })

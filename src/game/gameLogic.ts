@@ -281,11 +281,12 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     
     case 'PLACE_CARD': {
       if (state.turnPhase !== 'playerAction' || state.currentAction) return state;
-      let newState = placeCard(state, action.card, action.zone, (action.slot - 1) * 2, true);
+      const slotPosition = Math.floor(action.slot / 2) + 1;
+      let newState = placeCard(state, action.card, action.zone, action.slot, true);
       newState.currentAction = 'organizeAttack';
-      
+
       if (action.card.immediateEffect !== 'none') {
-        newState.pendingImmediateEffect = { card: action.card, zone: action.zone, slot: action.slot };
+        newState.pendingImmediateEffect = { card: action.card, zone: action.zone, slot: slotPosition };
         newState.message = `Triggering ${action.card.name}'s effect...`;
       } else {
         // Go to 'end' phase to trigger auto-end turn timer in GameBoard

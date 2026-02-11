@@ -191,21 +191,6 @@ export function canPlaceCardAtSlot(
   if (!targetSlot || targetSlot.playerCard) return false;
   if (!card.zones.includes(zone)) return false;
 
-  if (zone === 1 && !isFirstTurn) {
-    const zoneSlots = targetZone.slots;
-    const hasAdjacentInZone = 
-      (slotPosition > 0 && zoneSlots.find(s => s.position === slotPosition - 1)?.playerCard) ||
-      (slotPosition < zoneSlots.length - 1 && zoneSlots.find(s => s.position === slotPosition + 1)?.playerCard);
-    
-    const zone2 = fieldSlots.find(z => z.zone === 2);
-    const hasAdjacentBehind = zone2 && (
-      zone2.slots.find(s => s.position === slotPosition)?.playerCard ||
-      zone2.slots.find(s => s.position === slotPosition + 1)?.playerCard
-    );
-    
-    if (!hasAdjacentInZone && !hasAdjacentBehind) return false;
-  }
-
   return true;
 }
 
