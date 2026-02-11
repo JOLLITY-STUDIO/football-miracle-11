@@ -8,11 +8,16 @@ interface Props {
   round: number;
   isPlayerTurn: boolean;
   onSelect: (index: number) => void;
-  onMouseEnter?: (card: PlayerCard) => void;
-  onMouseLeave?: () => void;
+  aiSelectedIndex?: number | null;
 }
 
-const StarCardDraft: React.FC<Props> = ({ cards, round, isPlayerTurn, onSelect, onMouseEnter, onMouseLeave }) => {
+const StarCardDraft: React.FC<Props> = ({ 
+  cards, 
+  round, 
+  isPlayerTurn, 
+  onSelect, 
+  aiSelectedIndex = null
+}) => {
   if (cards.length === 0) return null;
 
   return (
@@ -43,29 +48,37 @@ const StarCardDraft: React.FC<Props> = ({ cards, round, isPlayerTurn, onSelect, 
                 key={card.id}
                 data-testid="star-card"
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                animate={{ 
+                  opacity: 1, 
+                  y: aiSelectedIndex === index ? -20 : 0,
+                  scale: aiSelectedIndex === index ? 1.05 : 1
+                }}
                 transition={{ delay: index * 0.1 }}
                 className={`relative transition-all duration-300 ${
                   isPlayerTurn 
                     ? 'cursor-pointer' 
-                    : 'opacity-70 grayscale-[0.5]'
+                    : aiSelectedIndex === index ? 'opacity-100 scale-105' : 'opacity-70 grayscale-[0.5]'
                 }`}
-                whileHover={isPlayerTurn ? { scale: 1.05, y: -10 } : {}}
+                whileHover={isPlayerTurn ? { 
+                  scale: 1.25, 
+                  y: -20,
+                  zIndex: 50,
+                  transition: { type: "spring", stiffness: 400, damping: 25 }
+                } : {}}
                 onClick={() => isPlayerTurn && onSelect(index)}
               >
-                {isPlayerTurn && (
+                {(isPlayerTurn || aiSelectedIndex === index) && (
                    <motion.div 
-                     className="absolute -inset-4 bg-yellow-500/20 rounded-xl blur-xl"
+                     className={`absolute -inset-6 ${aiSelectedIndex === index ? 'bg-red-500/30' : 'bg-yellow-500/20'} rounded-xl blur-2xl`}
                      initial={{ opacity: 0 }}
-                     whileHover={{ opacity: 1 }}
+                     animate={{ opacity: aiSelectedIndex === index ? 1 : 0 }}
+                     whileHover={isPlayerTurn ? { opacity: 1, scale: 1.1 } : {}}
                    />
                 )}
                 <div className="relative z-10">
                   <PlayerCardComponent
                     card={card}
                     size="large"
-                    onMouseEnter={() => onMouseEnter?.(card)}
-                    onMouseLeave={() => onMouseLeave?.()}
                   />
                   {isPlayerTurn && (
                     <motion.div 
@@ -74,6 +87,15 @@ const StarCardDraft: React.FC<Props> = ({ cards, round, isPlayerTurn, onSelect, 
                       whileHover={{ opacity: 1, y: 0 }}
                     >
                       SELECT
+                    </motion.div>
+                  )}
+                  {aiSelectedIndex === index && (
+                    <motion.div 
+                      className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      AI PICKING...
                     </motion.div>
                   )}
                 </div>

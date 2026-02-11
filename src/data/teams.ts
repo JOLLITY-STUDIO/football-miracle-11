@@ -23,8 +23,8 @@ export interface TeamSelectionState {
   draftState: DraftState | null;
 }
 
-const homeTeamBasePlayers = basePlayerCards.slice(0, 10);
-const awayTeamBasePlayers = basePlayerCards.slice(10, 20);
+const homeTeamBasePlayers = basePlayerCards.filter(card => card.id.startsWith('H'));
+const awayTeamBasePlayers = basePlayerCards.filter(card => card.id.startsWith('A'));
 
 export const homeTeam: Team = {
   id: 'home',

@@ -8,15 +8,18 @@ import type { PlayerCard, SynergyCard } from '../data/cards';
 import { GameField } from './GameField';
 import { PlayerCardComponent } from './PlayerCard';
 import { SynergyCardComponent } from './SynergyCard';
-import { DrawArea } from './DrawArea';
+import { SynergyPanel } from './SynergyPanel';
 import { PenaltyModal } from './PenaltyModal';
 import { LeftPanel } from './LeftPanel';
 import { CenterField } from './CenterField';
 import { RightPanel } from './RightPanel';
+import { BackgroundMusic } from './BackgroundMusic';
 import StarCardDraft from './StarCardDraft';
 import PhaseBanner from './PhaseBanner';
+import { CoinToss } from './CoinToss';
 import { TurnTransition } from './TurnTransition';
 import SquadSelect from './SquadSelect';
+import { CardDealer } from './CardDealer';
 import { 
   placeCard, 
   performAITurn, 
@@ -34,7 +37,9 @@ import {
   startDraftRound,
   pickDraftCard,
   stealSynergyCard,
-  startSecondHalf
+  startSecondHalf,
+  gameReducer,
+  type GameAction,
 } from '../game/gameLogic';
 import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
 import { playSound } from '../utils/audio';
@@ -51,10 +56,11 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     }
     return createInitialState();
   });
-  const [pendingImmediateEffect, setPendingImmediateEffect] = useState<{ card: PlayerCard; zone: number; slot: number } | null>(null);
-  const [synergyChoice, setSynergyChoice] = useState<{ cards: SynergyCard[]; sourceCard: PlayerCard } | null>(null);
-  const [instantShotMode, setInstantShotMode] = useState<{ card: PlayerCard; zone: number; slot: number } | null>(null);
-  const [substitutionMode, setSubstitutionMode] = useState<{ incomingCard: PlayerCard } | null>(null);
+  
+  const dispatch = useCallback((action: GameAction) => {
+    setGameState(prev => gameReducer(prev, action));
+  }, []);
+
   const [lastPlacedCard, setLastPlacedCard] = useState<PlayerCard | null>(null);
   const [hoveredCard, setHoveredCard] = useState<PlayerCard | null>(null);
   const [hoverSoundPlayedForId, setHoverSoundPlayedForId] = useState<string | null>(null);
@@ -70,16 +76,117 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
   }
 
   const [aiTurnTriggered, setAiTurnTriggered] = useState(false);
+  const [setupStep, setSetupStep] = useState(0); // 0: not started, 1: board, 2: control, 3: cards, 4: done
+  const [tossResult, setTossResult] = useState<'home' | 'away' | null>(null);
+  const [aiDraftSelectingIndex, setAiDraftSelectingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    // If we skip setup phase (e.g. from pre-game), force setupStep to 4
+    if (gameState.phase !== 'setup' && setupStep === 0) {
+      setSetupStep(4);
+      return;
+    }
+
+    if (gameState.phase === 'setup' && setupStep === 0) {
+      // Start setup sequence after a short delay
+      const timer = setTimeout(() => setSetupStep(1), 1000);
+      return () => clearTimeout(timer);
+    }
+    if (gameState.phase === 'setup' && setupStep === 4) {
+      const timer = setTimeout(() => {
+        dispatch({ type: 'FINISH_SETUP' });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.phase, setupStep, dispatch]);
 
   const [lastTurn, setLastTurn] = useState<string>('player');
   const [lastPhase, setLastPhase] = useState<string>('');
   const [viewingPile, setViewingPile] = useState<'deck' | 'discard' | null>(null);
   const [shownStoppageTime, setShownStoppageTime] = useState(false);
   
+  // Audio Feedback for card actions (hand changes)
+  const prevPlayerHandCount = useRef(gameState.playerHand.length);
+  const prevAiHandCount = useRef(gameState.aiHand.length);
+  const prevPlayerSynergyCount = useRef(gameState.playerSynergyHand.length);
+  const prevAiSynergyCount = useRef(gameState.aiSynergyHand.length);
+
+  useEffect(() => {
+    // Player hand changes
+    if (gameState.playerHand.length < prevPlayerHandCount.current) {
+      playSound('flip'); // Card played
+    } else if (gameState.playerHand.length > prevPlayerHandCount.current) {
+      playSound('draw'); // Card drawn
+    }
+    prevPlayerHandCount.current = gameState.playerHand.length;
+
+    // AI hand changes
+    if (gameState.aiHand.length < prevAiHandCount.current) {
+      playSound('flip'); // Card played
+    } else if (gameState.aiHand.length > prevAiHandCount.current) {
+      playSound('draw'); // Card drawn
+    }
+    prevAiHandCount.current = gameState.aiHand.length;
+
+    // Synergy hand changes
+    if (gameState.playerSynergyHand.length !== prevPlayerSynergyCount.current) {
+      playSound('draw');
+    }
+    prevPlayerSynergyCount.current = gameState.playerSynergyHand.length;
+
+    if (gameState.aiSynergyHand.length !== prevAiSynergyCount.current) {
+      playSound('draw');
+    }
+    prevAiSynergyCount.current = gameState.aiSynergyHand.length;
+  }, [gameState.playerHand.length, gameState.aiHand.length, gameState.playerSynergyHand.length, gameState.aiSynergyHand.length]);
+  
   // Audio Settings
   const [audioSettings, setAudioSettings] = useState(() => {
-    return JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true}');
+    return JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
   });
+
+  // Setup Animation Sequence Effects
+  useEffect(() => {
+    if (setupStep === 1) {
+      // Step 1: Board appearance/zoom
+      setViewSettings(prev => ({ ...prev, zoom: 0.8, pitch: 20 }));
+      playSound('swosh');
+      const timer = setTimeout(() => setSetupStep(2), 1500);
+      return () => clearTimeout(timer);
+    } else if (setupStep === 2) {
+      // Step 2: Control marker initialization
+      playSound('slide');
+      const timer = setTimeout(() => setSetupStep(3), 1500);
+      return () => clearTimeout(timer);
+    } else if (setupStep === 3) {
+      // Step 3: Card dealing
+      dispatch({ type: 'SET_DEALING', isDealing: true });
+      playSound('draw');
+      const timer = setTimeout(() => {
+        dispatch({ type: 'SET_DEALING', isDealing: false });
+        setSetupStep(4);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [setupStep, dispatch]);
+
+  // Sound effect for drawing cards
+  const prevHandSize = useRef(gameState.playerHand.length);
+  const prevSynergyHandSize = useRef(gameState.playerSynergyHand.length);
+  
+  useEffect(() => {
+    if (gameState.playerHand.length > prevHandSize.current) {
+      playSound('draw');
+    }
+    prevHandSize.current = gameState.playerHand.length;
+  }, [gameState.playerHand.length]);
+
+  useEffect(() => {
+    if (gameState.playerSynergyHand.length > prevSynergyHandSize.current) {
+      playSound('draw');
+    }
+    prevSynergyHandSize.current = gameState.playerSynergyHand.length;
+  }, [gameState.playerSynergyHand.length]);
 
   const toggleAudioSetting = (key: 'bgm' | 'sfx') => {
     const newSettings = { ...audioSettings, [key]: !audioSettings[key] };
@@ -187,26 +294,38 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
   // AI Draft Logic
   useEffect(() => {
     if (gameState.phase === 'draft' && gameState.currentTurn === 'ai' && gameState.draftStep > 0) {
-      const timer = setTimeout(() => {
-        const newState = aiPickDraftCard(gameState);
-        setGameState(newState);
+      // Simulate AI thinking and selecting
+      const selectTimer = setTimeout(() => {
+        const randomIndex = Math.floor(Math.random() * gameState.availableDraftCards.length);
+        setAiDraftSelectingIndex(randomIndex);
+      }, 500);
+
+      const pickTimer = setTimeout(() => {
+        dispatch({ type: 'AI_DRAFT_PICK' });
+        setAiDraftSelectingIndex(null);
         playSound('draw');
-      }, 1500);
-      return () => clearTimeout(timer);
+      }, 2000); // Increased from 1500 to 2000 for better visibility
+
+      return () => {
+        clearTimeout(selectTimer);
+        clearTimeout(pickTimer);
+      };
     }
-  }, [gameState.phase, gameState.currentTurn, gameState.draftStep]);
+  }, [gameState.phase, gameState.currentTurn, gameState.draftStep, gameState.availableDraftCards.length, dispatch]);
 
   // AI Turn Logic
   useEffect(() => {
-    if (!aiTurnTriggered && gameState.currentTurn === 'ai' && gameState.turnCount === 0 && gameState.phase !== 'draft') {
-      setAiTurnTriggered(true);
+    const isMatchPhase = gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf';
+    const isAITurn = gameState.currentTurn === 'ai' && (gameState.turnPhase === 'teamAction' || gameState.turnPhase === 'playerAction');
+    
+    if (isMatchPhase && isAITurn && !gameState.isDealing) {
       const timer = setTimeout(() => {
         gameRecorder.current.recordAction('ai_action', 'ai');
-        setGameState(prev => performAITurn(prev));
-      }, 1500);
+        dispatch({ type: 'AI_TURN' });
+      }, 2000); // 2 second delay for AI to "think"
       return () => clearTimeout(timer);
     }
-  }, [aiTurnTriggered, gameState.currentTurn, gameState.turnCount, gameState.phase]);
+  }, [gameState.currentTurn, gameState.turnPhase, gameState.phase, gameState.isDealing, dispatch]);
 
   const saveCurrentSnapshot = () => {
     const snapshot = {
@@ -222,227 +341,140 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     gameRecorder.current.recordSnapshot(snapshot);
   };
 
-  const canPlaceCards = (gameState.turnPhase === 'playerAction' || gameState.isFirstTurn) && gameState.currentTurn === 'player';
+  const canDoAction = (gameState.turnPhase === 'playerAction' || gameState.isFirstTurn) && gameState.currentTurn === 'player';
+  const canPlaceCards = canDoAction && !gameState.currentAction;
 
   const handleCardSelect = (card: PlayerCard) => {
     if (gameState.currentTurn !== 'player') return;
     if (!canPlaceCards) return;
-    playSound('click');
-    setGameState(prev => ({
-      ...prev,
-      selectedCard: prev.selectedCard?.id === card.id ? null : card,
-    }));
+    playSound('draw'); // Changed from 'click' to 'draw'
+    dispatch({ type: 'SELECT_PLAYER_CARD', card: gameState.selectedCard?.id === card.id ? null : card });
   };
 
   const handleSlotClick = (zone: number, startCol: number) => {
-    // Phase check feedback
-    if (!canPlaceCards && gameState.selectedCard) {
-        if (gameState.turnPhase === 'teamAction') {
-             setGameState(prev => ({ ...prev, message: 'Must perform Team Action (Pass/Press) first!' }));
-             playSound('error');
-             return;
-        }
-    }
-
     if (!gameState.selectedCard || gameState.currentTurn !== 'player') return;
-    if (!canPlaceCards) return;
+    if (!canPlaceCards) {
+      if (gameState.turnPhase === 'teamAction') {
+        setGameState(prev => ({ ...prev, message: 'Must perform Team Action first!' }));
+        playSound('error');
+      }
+      return;
+    }
     
-    // Convert field coordinates to zone slot index
-    // 8x4 field means each zone has 4 slots (1-4)
     const slotPosition = Math.floor(startCol / 2) + 1;
-    
-    const targetZone = gameState.playerField.find(z => z.zone === zone);
-    const targetSlot = targetZone?.slots.find(s => s.position === slotPosition);
-    
-    if (!targetSlot) {
-      console.error(`Slot not found: zone ${zone}, pos ${slotPosition}`);
-      return;
-    }
-
-    if (targetSlot.playerCard) {
-      setGameState(prev => ({ ...prev, message: 'Slot already occupied!' }));
-      playSound('error');
-      return;
-    }
-
     if (!canPlaceCardAtSlot(gameState.selectedCard, gameState.playerField, zone, slotPosition, gameState.isFirstTurn)) {
-      setGameState(prev => ({ ...prev, message: 'Cannot place card here! Check zone restrictions.' }));
+      setGameState(prev => ({ ...prev, message: 'Cannot place card here!' }));
       playSound('error');
       return;
     }
 
-    gameRecorder.current.recordAction('place_card', 'player', {
-      cardId: gameState.selectedCard.id,
-      zone,
-      slot: slotPosition,
-    });
-
-    const placedCard = gameState.selectedCard;
-    const newState = placeCard(gameState, placedCard, zone, startCol, true);
-    newState.selectedCard = null;
-    saveCurrentSnapshot();
-    setGameState(newState);
-    setLastPlacedCard(placedCard);
+    const card = gameState.selectedCard;
+    dispatch({ type: 'PLACE_CARD', card, zone, slot: slotPosition });
+    dispatch({ type: 'SELECT_PLAYER_CARD', card: null });
+    setLastPlacedCard(card);
     playSound('flip');
-
-    if (placedCard.immediateEffect !== 'none') {
-      setPendingImmediateEffect({ card: placedCard, zone, slot: slotPosition });
-    }
   };
 
   const handleDragStart = (card: PlayerCard) => {
-    if (gameState.currentTurn !== 'player' || !canPlaceCards) return;
-    setGameState(prev => ({ ...prev, selectedCard: card }));
+    if (gameState.currentTurn !== 'player' || !canDoAction) return;
+    dispatch({ type: 'SELECT_PLAYER_CARD', card });
     playSound('click');
   };
 
   const handleDragEnd = () => {
-    // We don't necessarily want to clear selectedCard here because the click handler 
-    // might be needed for the drop. But usually dragEnd clears it.
-    // However, in our current hybrid system, it's safer to leave it if a drop didn't happen.
+    // No longer needed to manually clear if we use centralized state
   };
   
+  const handleSynergyChoiceSelect = (keepIndex: number) => {
+    dispatch({ type: 'SYNERGY_CHOICE_SELECT', index: keepIndex });
+    playSound('draw');
+  };
+
   const handleHoverEnterCard = (card: PlayerCard) => {
     setHoveredCard(card);
     if (hoverSoundPlayedForId !== card.id) {
-      playSound('click');
+      playSound('draw'); // Changed from 'click' to 'draw' for card hover/select
       setHoverSoundPlayedForId(card.id);
     }
   };
-  
+
   const handleHoverLeaveCard = () => {
     setHoveredCard(null);
     setHoverSoundPlayedForId(null);
   };
 
-  const handleTriggerImmediateEffect = () => {
-    if (!pendingImmediateEffect) return;
-    
-    const effect = pendingImmediateEffect.card.immediateEffect;
-    
-    if (effect === 'draw_synergy_2_choose_1') {
-      const { state: newState, drawnCards } = drawTwoSynergyCardsForChoice(gameState, true);
-      if (drawnCards.length >= 2) {
-        setGameState(newState);
-        setSynergyChoice({ cards: drawnCards, sourceCard: pendingImmediateEffect.card });
-        setPendingImmediateEffect(null);
-        playSound('draw');
-      } else {
-        const fallbackState = applyImmediateEffect(gameState, effect, true);
-        fallbackState.message = `Deck insufficient, drew ${drawnCards.length} synergy card(s)`;
-        setGameState(fallbackState);
-        setPendingImmediateEffect(null);
-      }
-    } else if (effect === 'instant_shot') {
-      setInstantShotMode({ 
-        card: pendingImmediateEffect.card, 
-        zone: pendingImmediateEffect.zone, 
-        slot: pendingImmediateEffect.slot 
-      });
-      setPendingImmediateEffect(null);
-      const newState = { ...gameState };
-      newState.message = `Select synergy cards to boost instant shot (ignores base defense)`;
-      setGameState(newState);
-    } else if (effect === 'steal_synergy') {
-      const { state: newState, stolenCard } = stealSynergyCard(gameState, true);
-      if (stolenCard) {
-        newState.message = `Stole synergy card: ${stolenCard.name}`;
-      }
-      setGameState(newState);
-      setPendingImmediateEffect(null);
-      playSound('draw');
-    } else {
-      const newState = applyImmediateEffect(gameState, effect, true);
-      newState.message = `Triggered ${pendingImmediateEffect.card.name}'s immediate effect: ${getImmediateEffectDescription(effect)}`;
-      setGameState(newState);
-      setPendingImmediateEffect(null);
-    }
-  };
-
-  const handleSkipImmediateEffect = () => {
-    if (!pendingImmediateEffect) return;
-    
-    const newState = { ...gameState };
-    newState.message = `Skipped ${pendingImmediateEffect.card.name}'s Immediate Effect`;
-    setGameState(newState);
-    setPendingImmediateEffect(null);
-  };
-
-  const handleSynergyChoiceSelect = (keepIndex: number) => {
-    if (!synergyChoice) return;
-    
-    const newState = resolveSynergyChoice(gameState, synergyChoice.cards, keepIndex, true);
-    newState.message = `Kept ${synergyChoice.cards[keepIndex]?.name || 'synergy card'}, discarded ${synergyChoice.cards[1 - keepIndex]?.name || 'synergy card'}`;
-    setGameState(newState);
-    setSynergyChoice(null);
-    playSound('draw');
-  };
-
   const handleSubstituteSelect = (card: PlayerCard) => {
     if (gameState.playerSubstitutionsLeft <= 0) return;
     if (gameState.currentTurn !== 'player') return;
-    setSubstitutionMode({ incomingCard: card });
+    dispatch({ type: 'START_SUBSTITUTION', card });
     playSound('click');
   };
 
   const handleSubstituteTarget = (outgoingCardId: string) => {
-    if (!substitutionMode) return;
-    
-    const newState = substitutePlayer(
-      gameState,
-      outgoingCardId,
-      substitutionMode.incomingCard.id,
-      true
-    );
-    setGameState(newState);
-    setSubstitutionMode(null);
+    if (!gameState.substitutionMode) return;
+    dispatch({ 
+      type: 'SUBSTITUTE', 
+      incomingCardId: gameState.substitutionMode.incomingCard.id, 
+      outgoingCardId 
+    });
     playSound('whistle');
   };
 
   const handleCancelSubstitution = () => {
-    setSubstitutionMode(null);
+    dispatch({ type: 'CANCEL_SUBSTITUTION' });
   };
 
+  const handleCoinTossComplete = useCallback(() => {
+    if (tossResult) {
+      dispatch({ type: 'COIN_TOSS', isHomeTeam: tossResult === 'home' });
+      // Don't clear tossResult immediately to avoid UI flash
+      // The modal will close because gameState.phase changes to 'draft'
+      playSound('whistle');
+    }
+  }, [tossResult, dispatch]);
+
+  // Clear tossResult once we are no longer in coinToss phase
+  useEffect(() => {
+    if (gameState.phase !== 'coinToss' && tossResult !== null) {
+      setTossResult(null);
+    }
+  }, [gameState.phase, tossResult]);
+
+  const startToss = () => {
+    const result = Math.random() < 0.5 ? 'home' : 'away';
+    setTossResult(result);
+  };
+
+  useEffect(() => {
+    // If we are in draft phase and just finished coin toss, play swap sound if away
+    if (gameState.phase === 'draft' && !gameState.isHomeTeam) {
+      playSound('swosh');
+      const timer = setTimeout(() => {
+        playSound('snap');
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.phase, gameState.isHomeTeam]);
+
   const handlePenaltyComplete = (playerPoints: number, aiPoints: number) => {
-    const isPlayerKicker = gameState.currentTurn === 'player';
-    const newState = resolvePenaltyKick(gameState, playerPoints, aiPoints, isPlayerKicker);
-    setGameState(newState);
+    dispatch({ type: 'PENALTY_COMPLETE', playerPoints, aiPoints });
     playSound('whistle');
   };
 
   const handleSynergySelect = (card: SynergyCard) => {
     if (gameState.currentTurn !== 'player') return;
     const controlState = getControlState(gameState.controlPosition);
-    if (controlState === 'defense') return;
     
-    const maxSynergy = getMaxSynergyCardsForAttack(controlState);
-    const maxHandCards = Math.max(0, maxSynergy - 1);
-    const isSelected = gameState.selectedSynergyCards.some(c => c.id === card.id);
-    
-    if (isSelected) {
-      setGameState(prev => ({
-        ...prev,
-        selectedSynergyCards: prev.selectedSynergyCards.filter(c => c.id !== card.id),
-      }));
-    } else if (gameState.selectedSynergyCards.length < maxHandCards) {
-      setGameState(prev => ({
-        ...prev,
-        selectedSynergyCards: [...prev.selectedSynergyCards, card],
-      }));
-    }
+    // According to the rules, players can only select synergy cards during their turn phase
+    // if they have the control or as part of a shot attempt.
+    dispatch({ type: 'SELECT_SYNERGY_CARD', card });
     playSound('click');
   };
 
   const handleTeamAction = useCallback((action: 'pass' | 'press') => {
-    if (gameState.currentTurn !== 'player') return;
-    if (gameState.turnPhase !== 'teamAction') return;
-
-    gameRecorder.current.recordAction('team_action', 'player', { action });
-    const newState = performTeamAction(gameState, action);
-    saveCurrentSnapshot();
-    setGameState(newState);
+    dispatch({ type: 'TEAM_ACTION', action });
     playSound('click');
-  }, [gameState]);
+  }, [dispatch]);
 
   const handleAttack = useCallback((zone: number, slot: number) => {
     if (gameState.currentTurn !== 'player') return;
@@ -459,66 +491,78 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
     
     let synergyCards: SynergyCard[] = [];
-    let newState = { ...gameState };
     
-    if (newState.synergyDeck.length > 0) {
-      const firstCard = newState.synergyDeck[0];
+    if (gameState.synergyDeck.length > 0) {
+      const firstCard = gameState.synergyDeck[0];
       if (firstCard) {
         synergyCards.push(firstCard);
-        newState.synergyDeck = newState.synergyDeck.slice(1);
       }
     }
     
     const additionalCards = gameState.selectedSynergyCards.slice(0, maxSynergyCards - 1);
     synergyCards = [...synergyCards, ...additionalCards];
 
-    gameRecorder.current.recordAction('attack', 'player', {
-      attackerId: attacker.id,
-      zone,
-      slot,
-      synergyCards: synergyCards.map(c => c.id),
-    });
+    dispatch({ type: 'PERFORM_SHOT', zone, slot, synergyCards });
+    
+    // The sound will be played based on result in a useEffect or after dispatch
+  }, [gameState, dispatch]);
 
-    const finalState = performShot(newState, attacker, zone, slot, synergyCards, true);
-    finalState.selectedSynergyCards = [];
-    saveCurrentSnapshot();
-    setGameState(finalState);
-    playSound('goal');
-  }, [gameState]);
+  useEffect(() => {
+    if (gameState.pendingShot && gameState.turnPhase === 'end') {
+      const result = gameState.pendingShot.result;
+      if (result === 'goal' || result === 'magicNumber') {
+        playSound('goal');
+      } else if (result === 'saved') {
+        playSound('slide');
+      } else {
+        playSound('swosh');
+      }
+    }
+  }, [gameState.pendingShot, gameState.turnPhase]);
 
   const handleEndTurn = useCallback(() => {
-    if (gameState.currentTurn !== 'player') return;
-    if (gameState.phase === 'halfTime') return;
-    if (gameState.phase === 'finished') return;
-    
-    gameRecorder.current.recordAction('end_turn', 'player');
-    gameRecorder.current.incrementTurn();
-    saveCurrentSnapshot();
-    setLastPlacedCard(null);
+    dispatch({ type: 'END_TURN' });
+    playSound('whistle');
 
-    setGameState(prev => ({
-      ...prev,
-      currentTurn: 'ai',
-      message: 'AI Turn...',
-    }));
+    // AI Turn handled by useEffect
+  }, [dispatch]);
 
-    setTimeout(() => {
-      gameRecorder.current.recordAction('ai_action', 'ai');
-      setGameState(prev => performAITurn(prev));
-    }, 1500);
-  }, [gameState]);
+  useEffect(() => {
+    if (gameState.turnPhase === 'end' && !gameState.pendingPenalty) {
+      const timer = setTimeout(() => {
+        handleEndTurn();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.turnPhase, gameState.pendingPenalty, handleEndTurn]);
 
   const handleStartSecondHalf = () => {
-    if (gameState.phase !== 'halfTime') return;
-    const newState = startSecondHalf(gameState);
-    setGameState(newState);
+    dispatch({ type: 'START_SECOND_HALF' });
     playSound('whistle');
   };
 
-  const handleBack = () => {
+  const handleInstantShot = useCallback((zone: number, slot: number) => {
+    if (!gameState.instantShotMode) return;
+    
+    // Instant shot uses selected synergy cards
+    const synergyCards = [...gameState.selectedSynergyCards];
+    dispatch({ type: 'PERFORM_SHOT', zone, slot, synergyCards });
+    playSound('goal');
+  }, [gameState, dispatch]);
+
+  const handleCancelInstantShot = () => {
+    dispatch({ type: 'CANCEL_INSTANT_SHOT' });
+  };
+
+  const handleBack = (isSurrender: boolean = false) => {
     if (gameRecorder.current.getActions().length > 0) {
-      const winner = gameState.playerScore > gameState.aiScore ? 'player' : 
+      let winner: 'player' | 'ai' | 'draw' = gameState.playerScore > gameState.aiScore ? 'player' : 
                      gameState.playerScore < gameState.aiScore ? 'ai' : 'draw';
+      
+      if (isSurrender) {
+        winner = 'ai'; // AI wins if player surrenders
+      }
+
       const record = gameRecorder.current.endGame(winner, {
         player: gameState.playerScore,
         ai: gameState.aiScore,
@@ -531,6 +575,13 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
   const passCount = countIcons(gameState.playerField, 'pass');
   const pressCount = countIcons(gameState.playerField, 'press');
   const canDoTeamAction = !gameState.isFirstTurn || gameState.playerField.some(z => z.slots.some(s => s.playerCard));
+
+  const handleVolumeChange = (newVolume: number) => {
+    const newSettings = { ...audioSettings, volume: newVolume };
+    setAudioSettings(newSettings);
+    localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
+    window.dispatchEvent(new Event('audioSettingsChanged'));
+  };
 
   return (
     <div className="h-screen w-screen bg-black overflow-hidden relative font-['Roboto'] select-none text-white">
@@ -576,6 +627,11 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                 <div className="absolute inset-0 border-t border-l border-white/10 rounded-xl pointer-events-none" />
                 <div className="absolute inset-0 border-b border-r border-black/50 rounded-xl pointer-events-none" />
 
+                {/* Card Dealing Animations */}
+                <CardDealer isDealing={gameState.isDealing} type="player" />
+                <CardDealer isDealing={gameState.isDealing} type="ai" />
+                <CardDealer isDealing={gameState.isDealing} type="synergy" />
+
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ left: '14px', top: '14px' }} />
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ right: '14px', top: '14px' }} />
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ left: '14px', bottom: '14px' }} />
@@ -584,42 +640,103 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                 <LeftPanel
                   aiBench={gameState.aiBench}
                   playerBench={gameState.playerBench}
+                  playerScore={gameState.playerScore}
+                  aiScore={gameState.aiScore}
+                  controlPosition={gameState.controlPosition}
+                  setupStep={setupStep}
+                  isHomeTeam={gameState.isHomeTeam}
                   playerSubstitutionsLeft={gameState.playerSubstitutionsLeft}
-                  substitutionSelectedId={substitutionMode?.incomingCard.id}
+                  substitutionSelectedId={gameState.substitutionMode?.incomingCard.id}
                   onHoverEnter={handleHoverEnterCard}
                   onHoverLeave={handleHoverLeaveCard}
                   onSubstituteSelect={handleSubstituteSelect}
                 />
 
-                <CenterField
-                  playerField={gameState.playerField}
-                  aiField={gameState.aiField}
-                  selectedCard={gameState.selectedCard}
-                  onSlotClick={handleSlotClick}
-                  onAttackClick={handleAttack}
-                  currentTurn={gameState.currentTurn}
-                  turnPhase={gameState.turnPhase}
-                  isFirstTurn={gameState.isFirstTurn}
-                  lastPlacedCard={lastPlacedCard}
-                  onCardMouseEnter={handleHoverEnterCard}
-                  onCardMouseLeave={handleHoverLeaveCard}
-                />
+              <CenterField
+                playerField={gameState.playerField}
+                aiField={gameState.aiField}
+                selectedCard={gameState.selectedCard}
+                onSlotClick={handleSlotClick}
+                onAttackClick={handleAttack}
+                currentTurn={gameState.currentTurn}
+                turnPhase={gameState.turnPhase}
+                isFirstTurn={gameState.isFirstTurn}
+                lastPlacedCard={lastPlacedCard}
+                onCardMouseEnter={handleHoverEnterCard}
+                onCardMouseLeave={handleHoverLeaveCard}
+                onInstantShotClick={handleInstantShot}
+                instantShotMode={gameState.instantShotMode}
+                setupStep={setupStep}
+                rotation={viewSettings.rotation}
+              />
 
+              <motion.div
+                initial={{ x: 200, opacity: 0 }}
+                animate={setupStep >= 1 ? { x: 0, opacity: 1 } : { x: 200, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 100, damping: 20 }}
+              >
                 <RightPanel
-                  aiSynergyHandCount={gameState.aiSynergyHand.length}
+                  aiSynergyHand={gameState.aiSynergyHand}
+                  playerSynergyHand={gameState.playerSynergyHand}
+                  selectedSynergyCards={gameState.selectedSynergyCards}
+                  onSynergySelect={handleSynergySelect}
                   synergyDeckCount={gameState.synergyDeck.length}
                   synergyDiscardCount={gameState.synergyDiscard.length}
                   onOpenPile={(p) => setViewingPile(p)}
+                  turnPhase={gameState.turnPhase}
+                  playerActiveSynergy={gameState.playerActiveSynergy}
+                  aiActiveSynergy={gameState.aiActiveSynergy}
                 />
+              </motion.div>
              </div>
         </div>
       </div>
 
-      {/* View Control Toggle */}
-      <div className="absolute top-[100px] left-4 z-50 pointer-events-auto">
+      {/* Left Side Controls - Vertically Centered */}
+      <div className="fixed top-1/2 left-4 -translate-y-1/2 z-[60] flex flex-col gap-3 items-start pointer-events-none">
+        {/* 1. Exit/Surrender Button */}
+        <button 
+          data-testid="back-button"
+          onClick={() => {
+            const isMatchPhase = ['firstHalf', 'secondHalf', 'extraTime', 'penalty'].includes(gameState.phase);
+            if (isMatchPhase) {
+              if (window.confirm('Are you sure you want to surrender? According to the rules, exiting now will count as a loss.')) {
+                handleBack(true); // Pass true to indicate surrender
+              }
+            } else {
+              handleBack();
+            }
+          }} 
+          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
+        >
+          <span className="text-lg group-hover:-translate-x-1 transition-transform">⬅️</span>
+          <span className="text-[10px] font-black tracking-widest text-white/90 uppercase">
+            {['firstHalf', 'secondHalf', 'extraTime', 'penalty'].includes(gameState.phase) ? 'Surrender' : 'Quit'}
+          </span>
+        </button>
+
+        {/* 2. Audio & BGM Player */}
+        <div className="flex flex-col gap-2 pointer-events-auto">
+           {/* SFX Quick Toggle */}
+           <button
+              onClick={() => toggleAudioSetting('sfx')}
+              className={clsx(
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-stone-900/80 backdrop-blur-md border border-white/20 shadow-xl",
+                audioSettings.sfx ? "text-blue-400 bg-white/10" : "text-white/20 hover:bg-white/5"
+              )}
+              title="Toggle Sound Effects"
+            >
+              <span className="text-xl">{audioSettings.sfx ? '🔊' : '🔇'}</span>
+            </button>
+            
+            {/* BGM Player Component */}
+            <BackgroundMusic variant="game" />
+        </div>
+
+        {/* 3. View Control Button */}
         <button 
           onClick={() => setShowViewControls(!showViewControls)}
-          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-stone-700 transition-all shadow-xl flex items-center gap-2 group"
+          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-stone-700 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
           title="Camera Settings"
         >
           <span className="text-lg group-hover:scale-110 transition-transform">📷</span>
@@ -749,95 +866,33 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         )}
       </AnimatePresence>
 
-      {/* Card Preview (Center) */}
-      <AnimatePresence>
-        {hoveredCard && (
-          <div className="absolute inset-0 z-[100] pointer-events-none flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-             <motion.div
-               initial={{ opacity: 0, scale: 0.85, y: 10 }}
-               animate={{ opacity: 1, scale: 1, y: 0 }}
-               exit={{ opacity: 0, scale: 0.85, y: 10 }}
-               className="relative p-4 rounded-3xl bg-stone-900/80 border border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-             >
-                <div className="relative filter drop-shadow-[0_0_30px_rgba(0,0,0,0.5)] scale-[2] origin-center">
-                  <PlayerCardComponent
-                    card={hoveredCard as PlayerCard}
-                    size="large"
-                    disabled={true}
-                    faceDown={false}
-                  />
-                </div>
-             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Settings & Controls Overlay */}
-      <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 items-end pointer-events-none">
-        {/* Audio Controls */}
-        <div className="flex bg-stone-900/90 backdrop-blur-md rounded-full p-1 border border-white/20 shadow-2xl pointer-events-auto">
-          <button
-            onClick={() => toggleAudioSetting('bgm')}
-            className={clsx(
-              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-              audioSettings.bgm ? "text-green-400 bg-white/10" : "text-white/20 hover:bg-white/5"
-            )}
-            title="Toggle Background Music"
-          >
-            <span className="text-xl">{audioSettings.bgm ? '📻' : '🔇'}</span>
-          </button>
-          <button
-            onClick={() => toggleAudioSetting('sfx')}
-            className={clsx(
-              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-              audioSettings.sfx ? "text-blue-400 bg-white/10" : "text-white/20 hover:bg-white/5"
-            )}
-            title="Toggle Sound Effects"
-          >
-            <span className="text-xl">{audioSettings.sfx ? '🔊' : '🔇'}</span>
-          </button>
-        </div>
-
-        <button 
-          onClick={handleBack}
-          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
-        >
-          <span className="text-lg group-hover:-translate-x-1 transition-transform">⬅️</span>
-          <span className="text-xs font-black tracking-[0.2em] text-white/90 uppercase">Quit Game</span>
-        </button>
-      </div>
-
       {/* 2. HUD Layer - Top (Opponent) */}
       <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
-         {/* Top Left: Opponent Info */}
-         <div className="absolute top-4 left-4 pointer-events-auto flex items-start gap-4">
-             {/* Avatar/Score Block */}
-             <div className="flex flex-col items-center bg-black/60 backdrop-blur-md rounded-xl p-3 border border-red-500/30 shadow-xl">
-                 <div className="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1">OPPONENT</div>
-                 <div 
-                    data-testid="ai-score"
-                    className="text-4xl font-['Russo_One'] text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]"
-                  >
-                    {gameState.aiScore.toString().padStart(2, '0')}
-                 </div>
-             </div>
-         </div>
+
 
          {/* Top Center: Opponent Hand (Fanned - Horizontal) */}
-         <div className="absolute top-[-60px] left-1/2 -translate-x-1/2 w-[800px] h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50">
+         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[80%] h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50">
             <AnimatePresence>
                 {gameState.aiHand.map((card, i) => (
                   <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: -100, rotate: 180 }}
-                    animate={{ 
+                    key={card.id}
+                    initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                    animate={setupStep >= 3 ? { 
                       opacity: 1, 
-                      y: 0, 
-                      rotate: 180 + (i - (gameState.aiHand.length - 1) / 2) * 4, 
-                      x: (i - (gameState.aiHand.length - 1) / 2) * -60 
-                    }}
+                      y: 5 - Math.abs(i - (gameState.aiHand.length - 1) / 2) * 2, 
+                      scale: 1,
+                      rotate: 180 - (i - (gameState.aiHand.length - 1) / 2) * 5, 
+                      x: (i - (gameState.aiHand.length - 1) / 2) * -85 
+                    } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
                     exit={{ opacity: 0, scale: 0.5, y: -50 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    whileHover={{ 
+                      scale: 1.5, 
+                      rotate: 270, // 180 (upside down) + 90 (horizontal)
+                      zIndex: 100, 
+                      y: 0,
+                      x: 0 
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     className="relative origin-center w-48 h-28 shadow-xl"
                     style={{ zIndex: i }}
                   >
@@ -856,67 +911,44 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                  OPP HAND: {gameState.aiHand.length}
              </div>
          </div>
-
-         {/* Top Right: Opponent Synergy (Horizontal) */}
-         <div className="absolute top-4 right-4 pointer-events-auto flex flex-col items-end gap-1">
-             <div className="flex justify-between items-center gap-2 px-1">
-                 <span className="text-[10px] text-white/60 font-bold">{gameState.aiSynergyHand.length}</span>
-                 <span className="text-[10px] text-white/40 uppercase tracking-widest">SYNERGY</span>
-             </div>
-             <div className="flex gap-2">
-                {gameState.aiSynergyHand.map((card, i) => (
-                  <div key={i} className="w-16 h-10 bg-purple-900/50 rounded border border-purple-500/30 shadow-sm relative overflow-hidden">
-                     <div className="absolute top-0 right-0 bottom-0 w-3 bg-purple-500/20" />
-                     <div className="absolute inset-0 flex items-center justify-center opacity-20">
-                        <span className="text-lg">✨</span>
-                     </div>
-                  </div>
-                ))}
-             </div>
-         </div>
       </div>
 
       {/* 3. HUD Layer - Bottom (Player) */}
       <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none" data-testid="game-board">
-         {/* Bottom Left: Player Info */}
-         <div className="absolute bottom-4 left-4 pointer-events-auto flex items-end gap-4">
-             {/* Avatar/Score Block */}
-             <div className="flex flex-col items-center bg-black/60 backdrop-blur-md rounded-xl p-3 border border-green-500/30 shadow-xl">
-                 <div className="text-[10px] text-green-400 font-bold uppercase tracking-widest mb-1">YOU</div>
-                 <div 
-                    data-testid="player-score"
-                    className="text-4xl font-['Russo_One'] text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.6)]"
-                  >
-                    {gameState.playerScore.toString().padStart(2, '0')}
-                 </div>
-             </div>
-         </div>
+
 
          {/* Bottom Center: Player Hand */}
-         <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 w-[800px] h-48 pointer-events-auto flex justify-center items-end pb-4 perspective-1000">
+         <div className="absolute bottom-[-100px] left-1/2 -translate-x-1/2 w-[80%] h-48 pointer-events-auto flex justify-center items-end pb-4 perspective-1000">
             <AnimatePresence>
               {gameState.playerHand.map((card, i) => (
                 <motion.div
                   key={card.id}
                   data-testid="hand-card"
-                  initial={{ opacity: 0, y: 100, rotate: 0 }}
-                  animate={{ 
+                  initial={{ opacity: 0, y: 200, rotate: 0, scale: 0 }}
+                  animate={setupStep >= 3 ? { 
                     opacity: 1, 
-                    y: Math.abs(i - (gameState.playerHand.length - 1) / 2) * 2, 
-                    rotate: (i - (gameState.playerHand.length - 1) / 2) * 3, 
+                    y: (gameState.selectedCard?.id === card.id ? -120 : -5) + Math.abs(i - (gameState.playerHand.length - 1) / 2) * 2, 
+                    scale: gameState.selectedCard?.id === card.id ? 1.1 : 1,
+                    rotate: gameState.selectedCard?.id === card.id ? 0 : (i - (gameState.playerHand.length - 1) / 2) * 3, 
                     x: (i - (gameState.playerHand.length - 1) / 2) * -70 
-                  }}
+                  } : { opacity: 0, y: 200, rotate: 0, scale: 0 }}
                   exit={{ opacity: 0, scale: 0.5, y: 50 }}
-                  whileHover={{ y: -80, scale: 1.1, rotate: 0, zIndex: 100, x: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  whileHover={{ 
+                    scale: 1.5, 
+                    rotate: 90, 
+                    zIndex: 100,
+                    y: 0,
+                    x: 0
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   className="relative origin-bottom cursor-pointer shadow-2xl"
-                  style={{ zIndex: i }}
+                  style={{ zIndex: gameState.selectedCard?.id === card.id ? 100 : i }}
                 >
                   <PlayerCardComponent
                     card={card}
                     onClick={() => handleCardSelect(card)}
-                    onMouseEnter={() => setHoveredCard(card)}
-                    onMouseLeave={() => setHoveredCard(null)}
+                    onMouseEnter={() => handleHoverEnterCard(card)}
+                    onMouseLeave={handleHoverLeaveCard}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     selected={gameState.selectedCard?.id === card.id}
@@ -927,91 +959,126 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
               ))}
             </AnimatePresence>
          </div>
+      </div>
 
-         {/* Bottom Right: Actions & Draw Area */}
-         <div className="absolute bottom-4 right-4 pointer-events-auto flex flex-col items-end gap-4">
-             <DrawArea
-               playerSynergyHand={gameState.playerSynergyHand}
-               selectedSynergyCards={gameState.selectedSynergyCards}
-               onSynergySelect={handleSynergySelect}
-             />
+      {/* Right Side: Turn Info & Action Buttons Container */}
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 pointer-events-auto flex flex-col items-end gap-6">
+          {/* Turn Information */}
+          <div className="text-right">
+              <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">TURN {gameState.turnCount}</div>
+              <div className="text-2xl font-['Russo_One'] text-white drop-shadow-md mb-2">
+                  {gameState.currentTurn === 'player' ? <span className="text-blue-400">YOUR TURN</span> : <span className="text-red-400">OPP TURN</span>}
+              </div>
+              <div className="text-xs text-yellow-400 max-w-[150px] leading-tight ml-auto">{gameState.message}</div>
+          </div>
 
-             {/* Action Buttons */}
-             <div className="w-48">
+          {/* Action Buttons Panel */}
+          <div className="w-40 flex flex-col gap-3">
                 {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' ? (
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-3 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
+                    <div className="flex justify-between items-center mb-1 px-1">
+                      <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Tactical Action</div>
+                      <div className="group relative">
+                        <span className="text-white/20 text-[10px] cursor-help hover:text-white/50 transition-colors">ⓘ</span>
+                        <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-stone-900 border border-white/10 rounded-lg text-[9px] text-white/70 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
+                          <p className="mb-1"><strong className="text-green-400">PASS:</strong> Draw synergy cards based on icons on field.</p>
+                          <p><strong className="text-amber-400">PRESS:</strong> Move control marker towards opponent.</p>
+                        </div>
+                      </div>
+                    </div>
                     <button
-                      data-testid="team-action-pass"
-                      onClick={() => handleTeamAction('pass')}
-                      disabled={!canDoTeamAction || passCount === 0}
-                      className="flex-1 py-3 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-['Russo_One'] text-xs rounded-lg shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all"
-                    >
-                      <span>PASS</span>
-                      <span className="text-[10px] opacity-80">{passCount} available</span>
-                    </button>
-                    <button
-                      data-testid="team-action-press"
-                      onClick={() => handleTeamAction('press')}
-                      disabled={!canDoTeamAction || pressCount === 0}
-                      className="flex-1 py-3 bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white font-['Russo_One'] text-xs rounded-lg shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all"
-                    >
-                      <span>PRESS</span>
-                      <span className="text-[10px] opacity-80">{pressCount} available</span>
-                    </button>
+                        data-testid="team-action-pass"
+                        onClick={() => handleTeamAction('pass')}
+                        disabled={!canDoTeamAction || passCount === 0}
+                        className="w-full h-24 bg-gradient-to-br from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
+                        <span className="text-sm tracking-widest group-hover:scale-110 transition-transform">PASS</span>
+                        <span className="text-[10px] font-bold text-green-200/80 mt-1">DRAW SYNERGY</span>
+                        <div className="mt-2 flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
+                          <span className="text-[9px] font-black">{Math.min(passCount, 5 - gameState.playerSynergyHand.length)}</span>
+                          <span className="text-[8px] opacity-60">CARDS</span>
+                        </div>
+                      </button>
+                      <button
+                        data-testid="team-action-press"
+                        onClick={() => handleTeamAction('press')}
+                        disabled={!canDoTeamAction || pressCount === 0}
+                        className="w-full h-24 bg-gradient-to-br from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
+                        <span className="text-sm tracking-widest group-hover:scale-110 transition-transform">PRESS</span>
+                        <span className="text-[10px] font-bold text-amber-200/80 mt-1">PUSH CONTROL</span>
+                        <div className="mt-2 flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
+                          <span className="text-[9px] font-black">{pressCount}</span>
+                          <span className="text-[8px] opacity-60">STEPS</span>
+                        </div>
+                      </button>
+                    
+                    {/* Auto-skip hint if both are 0 */}
+                    {passCount === 0 && pressCount === 0 && (
+                      <button
+                        onClick={() => dispatch({ type: 'TEAM_ACTION', action: 'pass' })} // This will trigger performTeamAction which sets phase to playerAction
+                        className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
+                      >
+                        No actions available - Skip ➔
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <button
                     onClick={handleEndTurn}
                     disabled={gameState.currentTurn !== 'player' || gameState.turnPhase !== 'playerAction'}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:bg-gray-700 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.5)] border border-white/20 transition-all hover:scale-105 active:scale-95"
+                    className="w-full py-5 bg-gradient-to-br from-blue-600/90 to-blue-800/90 hover:from-blue-500 hover:to-blue-700 disabled:from-stone-800/50 disabled:to-stone-900/50 disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(37,99,235,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
                   >
-                    END TURN
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
+                    <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">END TURN</span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                   </button>
                 )}
-             </div>
-         </div>
-      </div>
-
-      {/* 4. Side Info (Phase / Momentum) */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
-          {/* Momentum Gauge (Vertical) */}
-          <div className="h-64 w-4 bg-stone-900/80 backdrop-blur rounded-full border border-white/10 relative shadow-xl">
-             <div className="absolute bottom-0 left-0 right-0 bg-yellow-500/20 rounded-full" style={{ height: `${gameState.controlPosition * 10}%` }} />
-             
-             {/* Indicator */}
-             <motion.div 
-                 className="absolute left-1/2 -translate-x-1/2 w-6 h-6 bg-yellow-400 rounded-full shadow-[0_0_10px_rgba(250,204,21,0.8)] border-2 border-white z-10"
-                 animate={{ bottom: `${(gameState.controlPosition / 10) * 100}%` }}
-             />
-             
-             {/* Markers */}
-             {[0, 2, 5, 8, 10].map(pos => (
-                 <div key={pos} className="absolute left-1/2 -translate-x-1/2 w-2 h-0.5 bg-white/40" style={{ bottom: `${(pos / 10) * 100}%` }} />
-             ))}
-             
-             {/* Label */}
-             <div className="absolute -left-8 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-yellow-500 font-bold tracking-widest whitespace-nowrap">MOMENTUM</div>
+              </div>
           </div>
-      </div>
-
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 pointer-events-auto text-right">
-          <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">TURN {gameState.turnCount}</div>
-          <div className="text-2xl font-['Russo_One'] text-white drop-shadow-md mb-2">
-              {gameState.currentTurn === 'player' ? <span className="text-blue-400">YOUR TURN</span> : <span className="text-red-400">OPP TURN</span>}
-          </div>
-          <div className="text-xs text-yellow-400 max-w-[150px] leading-tight">{gameState.message}</div>
-          
-          <button 
-            onClick={() => {
-              if (window.confirm('Are you sure you want to surrender? This will end the current game.')) {
-                handleBack();
-              }
-            }} 
-            className="text-[10px] text-gray-600 hover:text-white mt-8 uppercase tracking-widest transition-colors"
+        
+        {/* Setup Overlay */}
+      <AnimatePresence>
+        {gameState.phase === 'setup' && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none"
           >
-              Surrender
-          </button>
-      </div>
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-black/60 backdrop-blur-xl border border-white/20 p-8 rounded-3xl flex flex-col items-center gap-6 shadow-[0_0_100px_rgba(0,0,0,0.8)]"
+            >
+              <div className="flex flex-col items-center">
+                <h2 className="text-4xl font-['Russo_One'] text-white tracking-widest mb-2 uppercase">Preparing Field</h2>
+                <div className="flex gap-2">
+                  <div className={clsx("w-3 h-3 rounded-full transition-colors duration-500", setupStep >= 1 ? "bg-green-500" : "bg-white/10")} />
+                  <div className={clsx("w-3 h-3 rounded-full transition-colors duration-500", setupStep >= 2 ? "bg-green-500" : "bg-white/10")} />
+                  <div className={clsx("w-3 h-3 rounded-full transition-colors duration-500", setupStep >= 3 ? "bg-green-500" : "bg-white/10")} />
+                </div>
+              </div>
+              
+              <div className="text-white/60 text-sm font-bold tracking-widest uppercase text-center h-6">
+                {setupStep === 1 && "Aligning Pitch..."}
+                {setupStep === 2 && "Calibrating Momentum..."}
+                {setupStep === 3 && "Dealing Player Cards..."}
+                {setupStep === 4 && "Ready to Play!"}
+              </div>
+
+              <button 
+                onClick={() => setSetupStep(4)}
+                className="pointer-events-auto mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-[10px] font-black tracking-[0.3em] uppercase transition-all"
+              >
+                Skip Intro
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modals & Overlays */}
       <AnimatePresence>
@@ -1023,16 +1090,34 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
             />
         )}
 
-        {/* Phase Banner */}
-        <PhaseBanner 
-            text={phaseBannerText} 
-            subtitle={phaseBannerSubtitle}
-            show={showPhaseBanner} 
-            onComplete={() => setShowPhaseBanner(false)} 
-        />
+        {/* Coin Toss Modal */}
+        {gameState.phase === 'coinToss' && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-[100]"
+          >
+            {!tossResult ? (
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+                className="bg-[#1a1a1a] p-10 rounded-3xl border-2 border-yellow-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] text-center"
+              >
+                <h2 className="text-4xl font-['Russo_One'] text-white mb-8 tracking-wider">COIN TOSS</h2>
+                <p className="text-gray-400 mb-10 text-lg">Click to determine Home/Away team</p>
+                <button 
+                  onClick={startToss}
+                  className="px-12 py-5 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-black text-2xl rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
+                >
+                  Toss Coin
+                </button>
+              </motion.div>
+            ) : (
+              <CoinToss result={tossResult} onComplete={handleCoinTossComplete} />
+            )}
+          </motion.div>
+        )}
 
         {/* Immediate Effect Modal */}
-        {pendingImmediateEffect && (
+        {gameState.pendingImmediateEffect && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
@@ -1042,8 +1127,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
               className="bg-[#2a2a2a] p-8 rounded-2xl border border-gray-700 max-w-md w-full shadow-2xl"
             >
               <h3 className="text-2xl font-['Russo_One'] text-white mb-2">Immediate Effect</h3>
-              <p className="text-yellow-400 font-bold mb-4">{pendingImmediateEffect.card.name}</p>
-              <p className="text-gray-300 mb-8">{getImmediateEffectDescription(pendingImmediateEffect.card.immediateEffect)}</p>
+              <p className="text-yellow-400 font-bold mb-4">{gameState.pendingImmediateEffect.card.name}</p>
+              <p className="text-gray-300 mb-8">{getImmediateEffectDescription(gameState.pendingImmediateEffect.card.immediateEffect)}</p>
               <div className="flex gap-4">
                 <button onClick={handleTriggerImmediateEffect} className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg">TRIGGER</button>
                 <button onClick={handleSkipImmediateEffect} className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-lg">SKIP</button>
@@ -1053,7 +1138,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         )}
 
         {/* Synergy Choice Modal */}
-        {synergyChoice && (
+        {gameState.synergyChoice && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
@@ -1061,7 +1146,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
             <div className="bg-[#2a2a2a] p-8 rounded-2xl border border-gray-700 max-w-2xl w-full">
               <h3 className="text-2xl font-['Russo_One'] text-center text-white mb-6">Choose One to Keep</h3>
               <div className="flex justify-center gap-8 mb-8">
-                {synergyChoice.cards.map((card, index) => (
+                {gameState.synergyChoice.cards.map((card, index) => (
                   <div key={card.id} className="flex flex-col gap-4">
                     <SynergyCardComponent 
                       card={card} 
@@ -1083,7 +1168,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         )}
 
         {/* Substitution Modal */}
-        {substitutionMode && (
+        {gameState.substitutionMode && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
@@ -1106,6 +1191,49 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                </div>
                <button onClick={handleCancelSubstitution} className="w-full py-3 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-lg">CANCEL</button>
             </div>
+          </motion.div>
+        )}
+
+        {/* Instant Shot Modal */}
+        {gameState.instantShotMode && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-[#1a1a1a] p-8 rounded-2xl border border-yellow-500/50 max-w-md w-full shadow-[0_0_50px_rgba(234,179,8,0.2)]"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black text-xl">⚡</div>
+                <h3 className="text-2xl font-['Russo_One'] text-white uppercase tracking-tighter">Instant Shot!</h3>
+              </div>
+              <p className="text-gray-300 mb-6 leading-relaxed">
+                <span className="text-yellow-400 font-bold">{gameState.instantShotMode.card.name}</span> can perform an immediate shot attempt. 
+                Select synergy cards from your hand to boost the attack power!
+              </p>
+              <div className="bg-black/40 p-4 rounded-xl mb-8 border border-white/5">
+                <div className="flex justify-between text-xs text-white/40 uppercase mb-2">
+                  <span>Target Zone</span>
+                  <span>Attack Boost</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-bold text-white">Zone {gameState.instantShotMode.zone}</span>
+                  <span className="text-xl font-bold text-yellow-500">+{gameState.selectedSynergyCards.length} Cards</span>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => handleInstantShot(gameState.instantShotMode!.zone, gameState.instantShotMode!.slot)} 
+                  className="flex-1 py-4 bg-yellow-600 hover:bg-yellow-500 text-white font-black rounded-xl shadow-lg transition-all"
+                >
+                  FIRE!
+                </button>
+                <button onClick={handleCancelInstantShot} className="flex-1 py-4 bg-stone-800 hover:bg-stone-700 text-white/70 font-bold rounded-xl transition-all">
+                  CANCEL
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -1141,8 +1269,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                          card={card} 
                          size="small" 
                          disabled={true}
-                         onMouseEnter={() => setHoveredCard(card as any)}
-                         onMouseLeave={() => setHoveredCard(null)}
+                         onMouseEnter={() => handleHoverEnterCard(card as any)}
+                         onMouseLeave={handleHoverLeaveCard}
                        />
                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg pointer-events-none" />
                     </div>
@@ -1175,8 +1303,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         onComplete={() => {
           setShowPhaseBanner(false);
           if (gameState.phase === 'draft' && gameState.draftStep === 0) {
-            const newState = startDraftRound(gameState);
-            setGameState(newState);
+            dispatch({ type: 'START_DRAFT_ROUND' });
           }
         }}
       />
@@ -1185,13 +1312,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         <SquadSelect
           allPlayers={[...gameState.playerHand, ...gameState.playerBench]}
           onConfirm={(starters, subs) => {
-            setGameState(prev => ({
-              ...prev,
-              phase: 'firstHalf',
-              playerHand: starters,
-              playerBench: subs,
-              message: 'Squad confirmed! Game starts - Team Action first',
-            }));
+            dispatch({ type: 'FINISH_SQUAD_SELECT', starters, subs });
           }}
         />
       )}
@@ -1201,17 +1322,16 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         onComplete={handlePenaltyComplete}
       />
 
-      <StarCardDraft
-        cards={gameState.availableDraftCards}
-        round={gameState.draftRound}
-        isPlayerTurn={gameState.currentTurn === 'player' && gameState.draftStep > 0}
-        onSelect={(index) => {
-          const newState = pickDraftCard(gameState, index, true);
-          setGameState(newState);
-        }}
-        onMouseEnter={setHoveredCard}
-        onMouseLeave={() => setHoveredCard(null)}
-      />
+        <StarCardDraft
+          cards={gameState.availableDraftCards}
+          round={gameState.draftRound}
+          isPlayerTurn={gameState.currentTurn === 'player' && gameState.draftStep > 0}
+          onSelect={(index) => {
+            dispatch({ type: 'PICK_DRAFT_CARD', cardIndex: index });
+            playSound('draw');
+          }}
+          aiSelectedIndex={aiDraftSelectingIndex}
+        />
     </div>
   );
 };

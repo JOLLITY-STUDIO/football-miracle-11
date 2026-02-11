@@ -3,7 +3,15 @@ import { playerCards, canPlaceCardInZone } from '../data/cards';
 import { getSynergyDeckFixed } from '../data/synergyConfig';
 
 export type ControlState = 'attack' | 'normal' | 'defense';
-export type GamePhase = 'coinToss' | 'draft' | 'squadSelect' | 'firstHalf' | 'halfTime' | 'secondHalf' | 'extraTime' | 'finished';
+export type GamePhase = 
+  | 'setup'
+  | 'coinToss'
+  | 'draft'
+  | 'squadSelect'
+  | 'firstHalf'
+  | 'halfTime'
+  | 'secondHalf'
+  | 'finished';
 export type TurnPhase = 'teamAction' | 'playerAction' | 'shooting' | 'end';
 export type PlayerActionType = 'organizeAttack' | 'directAttack' | null;
 export type ShotResult = 'goal' | 'saved' | 'missed' | 'magicNumber';
@@ -62,6 +70,13 @@ export interface GameState {
   availableDraftCards: PlayerCard[];
   starCardDeck: PlayerCard[];
   pendingPenalty: boolean;
+  pendingImmediateEffect: { card: PlayerCard; zone: number; slot: number } | null;
+  synergyChoice: { cards: SynergyCard[]; sourceCard: PlayerCard } | null;
+  substitutionMode: { incomingCard: PlayerCard } | null;
+  instantShotMode: { card: PlayerCard; zone: number; slot: number } | null;
+  playerActiveSynergy: SynergyCard[];
+  aiActiveSynergy: SynergyCard[];
+  isDealing: boolean;
 }
 
 export const createInitialState = (
@@ -92,7 +107,7 @@ export const createInitialState = (
   } else {
     const shuffledPlayers = [...playerCards.filter(c => c.unlocked && !c.isStar)].sort(() => Math.random() - 0.5);
     playerHand = shuffledPlayers.slice(0, 10);
-    playerBench = shuffledPlayers.slice(10, 13);
+    playerBench = [];
     playerField = [
       { zone: 1, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
       { zone: 2, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
@@ -104,8 +119,8 @@ export const createInitialState = (
   const aiPlayers = [...playerCards.filter(c => c.unlocked && !c.isStar)].sort(() => Math.random() - 0.5);
 
   return {
-    phase: 'coinToss',
-    turnPhase: 'teamAction',
+    phase: 'setup',
+    turnPhase: 'playerAction',
     currentTurn: 'player',
     controlPosition: 5,
     playerScore: 0,
@@ -115,7 +130,7 @@ export const createInitialState = (
     isHomeTeam: false,
     playerHand,
     playerBench,
-    playerSynergyHand: shuffledSynergy.slice(0, 5),
+    playerSynergyHand: [],
     playerField,
     aiField: [
       { zone: 1, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
@@ -124,14 +139,14 @@ export const createInitialState = (
       { zone: 4, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
     ],
     aiHand: aiPlayers.slice(0, 10),
-    aiBench: aiPlayers.slice(10, 13),
-    aiSynergyHand: shuffledSynergy.slice(5, 10),
-    synergyDeck: shuffledSynergy.slice(10),
+    aiBench: [],
+    aiSynergyHand: [],
+    synergyDeck: shuffledSynergy,
     synergyDiscard: [],
     selectedCard: null,
     selectedSynergyCards: [],
     currentAction: null,
-    message: 'Click to toss the coin',
+    message: 'Preparing game board...',
     turnCount: 0,
     isFirstTurn: true,
     isStoppageTime: false,
@@ -141,18 +156,304 @@ export const createInitialState = (
     availableDraftCards: [],
     starCardDeck: starCards,
     pendingPenalty: false,
+    pendingImmediateEffect: null,
+    synergyChoice: null,
+    substitutionMode: null,
+    instantShotMode: null,
+    playerActiveSynergy: [],
+    aiActiveSynergy: [],
+    isDealing: false,
   };
 };
 
-export const getControlState = (position: number): ControlState => {
-  if (position <= 2) return 'attack';
-  if (position >= 7) return 'defense';
-  return 'normal';
+export type GameAction = 
+  | { type: 'COIN_TOSS'; isHomeTeam: boolean }
+  | { type: 'START_DRAFT_ROUND' }
+  | { type: 'PICK_DRAFT_CARD'; cardIndex: number }
+  | { type: 'FINISH_SQUAD_SELECT'; starters: PlayerCard[]; subs: PlayerCard[] }
+  | { type: 'TEAM_ACTION'; action: 'pass' | 'press' }
+  | { type: 'PLACE_CARD'; card: PlayerCard; zone: number; slot: number }
+  | { type: 'PERFORM_SHOT'; zone: number; slot: number; synergyCards: SynergyCard[] }
+  | { type: 'END_TURN' }
+  | { type: 'SUBSTITUTE'; incomingCardId: string; outgoingCardId: string }
+  | { type: 'TRIGGER_EFFECT'; choice?: number }
+  | { type: 'SKIP_EFFECT' }
+  | { type: 'SYNERGY_CHOICE_SELECT'; index: number }
+  | { type: 'PENALTY_COMPLETE'; playerPoints: number; aiPoints: number }
+  | { type: 'SELECT_PLAYER_CARD'; card: PlayerCard | null }
+  | { type: 'SELECT_SYNERGY_CARD'; card: SynergyCard }
+  | { type: 'START_SUBSTITUTION'; card: PlayerCard }
+  | { type: 'CANCEL_SUBSTITUTION' }
+  | { type: 'START_SECOND_HALF' }
+  | { type: 'CANCEL_INSTANT_SHOT' }
+  | { type: 'AI_DRAFT_PICK' }
+  | { type: 'AI_TURN' }
+  | { type: 'SET_DEALING'; isDealing: boolean }
+  | { type: 'FINISH_SETUP' };
+
+export const gameReducer = (state: GameState, action: GameAction): GameState => {
+  switch (action.type) {
+    case 'FINISH_SETUP': {
+      return {
+        ...state,
+        phase: 'coinToss',
+        message: 'Click to toss the coin'
+      };
+    }
+    case 'AI_DRAFT_PICK':
+      return aiPickDraftCard(state);
+
+    case 'AI_TURN':
+      return performAITurn(state);
+
+    case 'SELECT_PLAYER_CARD':
+      return { ...state, selectedCard: action.card };
+
+    case 'SELECT_SYNERGY_CARD': {
+      const isSelected = state.selectedSynergyCards.some(c => c.id === action.card.id);
+      if (isSelected) {
+        return {
+          ...state,
+          selectedSynergyCards: state.selectedSynergyCards.filter(c => c.id !== action.card.id),
+        };
+      } else {
+        // Validation for max synergy cards is handled in UI or here?
+        // Let's handle it here too for safety.
+        const controlState = getControlState(state.controlPosition);
+        const maxSynergy = getMaxSynergyCardsForAttack(controlState);
+        const maxHandCards = Math.max(0, maxSynergy - 1);
+        
+        if (state.selectedSynergyCards.length < maxHandCards) {
+          return {
+            ...state,
+            selectedSynergyCards: [...state.selectedSynergyCards, action.card],
+          };
+        }
+        return state;
+      }
+    }
+
+    case 'START_SUBSTITUTION':
+      return { ...state, substitutionMode: { incomingCard: action.card } };
+
+    case 'CANCEL_SUBSTITUTION':
+      return { ...state, substitutionMode: null };
+
+    case 'START_SECOND_HALF':
+      if (state.phase !== 'halfTime') return state;
+      return startSecondHalf(state);
+
+    case 'SET_DEALING':
+      return { ...state, isDealing: action.isDealing };
+
+    case 'CANCEL_INSTANT_SHOT':
+      return { ...state, instantShotMode: null, message: 'Instant shot cancelled' };
+
+    case 'COIN_TOSS':
+      return performCoinToss(state, action.isHomeTeam);
+    
+    case 'START_DRAFT_ROUND':
+      return startDraftRound(state);
+    
+    case 'PICK_DRAFT_CARD':
+      return pickDraftCard(state, action.cardIndex, true);
+    
+    case 'FINISH_SQUAD_SELECT': {
+      const newState = { ...state };
+      newState.playerHand = action.starters;
+      newState.playerBench = action.subs;
+      newState.phase = 'firstHalf';
+      // Rule: Skip team action on the first turn of the match
+      newState.turnPhase = 'playerAction';
+      newState.isFirstTurn = true;
+      newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
+      newState.message = 'Match starts! First turn skips Team Action. Player Action now.';
+      return newState;
+    }
+    
+    case 'TEAM_ACTION':
+      if (state.turnPhase !== 'teamAction') return state;
+      {
+        let newState = performTeamAction(state, action.action);
+        newState.turnPhase = 'playerAction';
+        return newState;
+      }
+    
+    case 'PLACE_CARD': {
+      if (state.turnPhase !== 'playerAction' || state.currentAction) return state;
+      let newState = placeCard(state, action.card, action.zone, (action.slot - 1) * 2, true);
+      newState.currentAction = 'organizeAttack';
+      
+      if (action.card.immediateEffect !== 'none') {
+        newState.pendingImmediateEffect = { card: action.card, zone: action.zone, slot: action.slot };
+        newState.message = `Triggering ${action.card.name}'s effect...`;
+      } else {
+        // Go to 'end' phase to trigger auto-end turn timer in GameBoard
+        newState.turnPhase = 'end';
+        newState.message = 'Action completed. Turn ending...';
+      }
+      return newState;
+    }
+    
+    case 'PERFORM_SHOT': {
+      if (state.turnPhase !== 'playerAction' || state.currentAction !== null) return state;
+      
+      const zone = state.playerField.find(z => z.zone === action.zone);
+      const slot = zone?.slots.find(s => s.position === action.slot);
+      if (!slot?.playerCard) return state;
+
+      let newState = performShot(state, slot.playerCard, action.zone, action.slot, action.synergyCards, true);
+      
+      newState.currentAction = 'directAttack';
+      
+      // Auto transition to 'end' phase for UI to show result
+      // The UI will then call END_TURN after a delay
+      newState.turnPhase = 'end';
+      newState.selectedSynergyCards = [];
+      newState.instantShotMode = null;
+      return newState;
+    }
+
+    case 'END_TURN': {
+      let newState = { ...state };
+      
+      // Cleanup active synergy cards to discard pile
+      newState.synergyDiscard = [
+        ...newState.synergyDiscard,
+        ...state.playerActiveSynergy,
+        ...state.aiActiveSynergy
+      ];
+      newState.playerActiveSynergy = [];
+      newState.aiActiveSynergy = [];
+
+      // Reset action states
+      newState.currentAction = null;
+      newState.pendingImmediateEffect = null;
+      newState.selectedSynergyCards = [];
+      newState.instantShotMode = null;
+      newState.synergyChoice = null;
+      newState.isFirstTurn = false;
+      newState.pendingShot = null;
+      
+      // Swap turns
+      const nextTurn = state.currentTurn === 'player' ? 'ai' : 'player';
+      newState.currentTurn = nextTurn;
+      
+      // Check if next player can do team actions (Pass/Press icons on field)
+      const field = nextTurn === 'player' ? newState.playerField : newState.aiField;
+      const passCount = countIcons(field, 'pass');
+      const pressCount = countIcons(field, 'press');
+      
+      if (passCount === 0 && pressCount === 0) {
+        newState.turnPhase = 'playerAction';
+        newState.message = nextTurn === 'player' 
+          ? "Your turn. No team actions available, skipping to Player Action."
+          : "AI's turn. No team actions available, skipping to Player Action.";
+      } else {
+        newState.turnPhase = 'teamAction';
+        newState.message = nextTurn === 'player'
+          ? "Your turn. Select Team Action."
+          : "AI's turn. Team Action first.";
+      }
+      
+      return newState;
+    }
+
+    case 'SUBSTITUTE':
+      if (state.playerSubstitutionsLeft <= 0) return state;
+      return {
+        ...substitutePlayer(state, action.outgoingCardId, action.incomingCardId, true),
+        substitutionMode: null
+      };
+
+    case 'TRIGGER_EFFECT': {
+      if (!state.pendingImmediateEffect) return state;
+      const effect = state.pendingImmediateEffect.card.immediateEffect;
+      const card = state.pendingImmediateEffect.card;
+      const { zone, slot } = state.pendingImmediateEffect;
+
+      let newState: GameState;
+      if (effect === 'draw_synergy_2_choose_1') {
+        const { state: drawState, drawnCards } = drawTwoSynergyCardsForChoice(state, true);
+        if (drawnCards.length >= 2) {
+          return { ...drawState, synergyChoice: { cards: drawnCards, sourceCard: card }, pendingImmediateEffect: null };
+        } else {
+          let finalState = applyImmediateEffect(state, effect, true);
+          finalState.message = `Deck insufficient, drew ${drawnCards.length} synergy card(s)`;
+          newState = { ...finalState, pendingImmediateEffect: null };
+        }
+      } else if (effect === 'instant_shot') {
+        return { ...state, instantShotMode: { card, zone, slot }, pendingImmediateEffect: null, message: `Select synergy cards to boost instant shot (ignores base defense)` };
+      } else if (effect === 'steal_synergy') {
+        const { state: stealState, stolenCard } = stealSynergyCard(state, true);
+        newState = { ...stealState, message: stolenCard ? `Stole synergy card: ${stolenCard.name}` : stealState.message, pendingImmediateEffect: null };
+      } else {
+        newState = applyImmediateEffect(state, effect, true);
+        newState.pendingImmediateEffect = null;
+      }
+
+      // Transition to 'end' phase for auto-end turn timer
+      return {
+        ...newState,
+        turnPhase: 'end',
+        message: (newState.message || 'Effect resolved.') + ' Turn ending...'
+      };
+    }
+
+    case 'SKIP_EFFECT': {
+      const newState = { ...state, pendingImmediateEffect: null, message: `Skipped ${state.pendingImmediateEffect?.card.name}'s effect` };
+      return {
+        ...newState,
+        turnPhase: 'end',
+        message: newState.message + ". Turn ending..."
+      };
+    }
+
+    case 'SYNERGY_CHOICE_SELECT': {
+      if (!state.synergyChoice) return state;
+      let newState = resolveSynergyChoice(state, state.synergyChoice.cards, action.index, true);
+      newState.synergyChoice = null;
+      // Transition to 'end' phase for auto-end turn timer
+      return {
+        ...newState,
+        turnPhase: 'end',
+        message: (newState.message || 'Synergy chosen.') + ' Turn ending...'
+      };
+    }
+
+    case 'PENALTY_COMPLETE': {
+      const isPlayerKicker = state.currentTurn === 'player';
+      return resolvePenaltyKick(state, action.playerPoints, action.aiPoints, isPlayerKicker);
+    }
+
+    default:
+      return state;
+  }
 };
 
-export const performCoinToss = (state: GameState): GameState => {
-  const isHomeTeam = Math.random() < 0.5;
-  return {
+export const getControlState = (position: number, isPlayer: boolean = true): ControlState => {
+  // 0: Home Attack (Red)
+  // 1, 2: Home Normal (Green)
+  // 3, 4: Home Defense (Blue)
+  // 5: Neutral
+  // 6, 7: Away Defense (Blue)
+  // 8, 9: Away Normal (Green)
+  // 10: Away Attack (Red)
+
+  if (isPlayer) {
+    if (position === 0 || position === 6 || position === 7) return 'attack';
+    if (position === 3 || position === 4 || position === 10) return 'defense';
+    return 'normal'; // 1, 2, 5, 8, 9
+  } else {
+    // AI Perspective (Away)
+    if (position === 10 || position === 3 || position === 4) return 'attack';
+    if (position === 6 || position === 7 || position === 0) return 'defense';
+    return 'normal'; // 8, 9, 5, 1, 2
+  }
+};
+
+export const performCoinToss = (state: GameState, isHomeTeam: boolean): GameState => {
+  const newState = {
     ...state,
     isHomeTeam,
     phase: 'draft',
@@ -160,6 +461,24 @@ export const performCoinToss = (state: GameState): GameState => {
     draftStep: 0,
     message: isHomeTeam ? 'You are Home Team! Draft starts' : 'You are Away Team! Draft starts',
   };
+
+  // Assign base cards based on team (10 cards each)
+  const homeCards = playerCards.filter(c => !c.isStar && c.id.startsWith('H'));
+  const awayCards = playerCards.filter(c => !c.isStar && c.id.startsWith('A'));
+
+  if (isHomeTeam) {
+    newState.playerHand = [...homeCards];
+    newState.aiHand = [...awayCards];
+  } else {
+    newState.playerHand = [...awayCards];
+    newState.aiHand = [...homeCards];
+  }
+  
+  // Ensure bench is empty before draft adds star cards
+  newState.playerBench = [];
+  newState.aiBench = [];
+
+  return newState;
 };
 
 export const startDraftRound = (state: GameState): GameState => {
@@ -755,12 +1074,17 @@ export const performShot = (
   if (isPlayer) {
     newState.playerSynergyHand = newState.playerSynergyHand.filter(c => !usedAttackIds.includes(c.id));
     newState.aiSynergyHand = newState.aiSynergyHand.filter(c => !usedDefenseIds.includes(c.id));
+    newState.playerActiveSynergy = attackSynergy;
+    newState.aiActiveSynergy = defenseSynergy;
   } else {
     newState.aiSynergyHand = newState.aiSynergyHand.filter(c => !usedAttackIds.includes(c.id));
     newState.playerSynergyHand = newState.playerSynergyHand.filter(c => !usedDefenseIds.includes(c.id));
+    newState.aiActiveSynergy = attackSynergy;
+    newState.playerActiveSynergy = defenseSynergy;
   }
   
-  newState.synergyDiscard = [...newState.synergyDiscard, ...attackSynergy, ...defenseSynergy];
+  // Do not discard yet, wait for END_TURN
+  // newState.synergyDiscard = [...newState.synergyDiscard, ...attackSynergy, ...defenseSynergy];
   
   let resultMessage = '';
   switch (result) {
@@ -819,9 +1143,9 @@ export const startSecondHalf = (state: GameState): GameState => {
     controlPosition: 5,
     playerField: state.playerField.map(z => ({ ...z, slots: z.slots.map(s => ({ ...s, playerCard: null, shotMarkers: 0 })) })),
     aiField: state.aiField.map(z => ({ ...z, slots: z.slots.map(s => ({ ...s, playerCard: null, shotMarkers: 0 })) })),
-    playerSynergyHand: shuffledSynergy.slice(0, 5),
-    aiSynergyHand: shuffledSynergy.slice(5, 10),
-    synergyDeck: shuffledSynergy.slice(10),
+    playerSynergyHand: state.playerSynergyHand,
+    aiSynergyHand: state.aiSynergyHand,
+    synergyDeck: shuffledSynergy,
     synergyDiscard: [],
     isFirstTurn: true,
     isStoppageTime: false,
@@ -955,8 +1279,8 @@ export const performAITurn = (state: GameState): GameState => {
     newState = checkHalfEnd(newState);
   }
   
-  newState.currentTurn = 'player';
-  newState.turnPhase = 'teamAction';
+  // Transition to 'end' phase to let UI show what AI did
+  newState.turnPhase = 'end';
   newState.isFirstTurn = false;
   newState.turnCount += 1;
   
@@ -965,7 +1289,7 @@ export const performAITurn = (state: GameState): GameState => {
   } else if (newState.turnCount >= 20 && newState.phase === 'secondHalf') {
     newState = endGame(newState);
   } else {
-    newState.message += ' - Your turn';
+    newState.message += ' - Turn ending...';
   }
   
   return newState;

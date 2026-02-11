@@ -1,78 +1,120 @@
-# Magic Eleven - Game Manual
+# 神奇十一人 (Magic Eleven) - 游戏手册
 
-## 1. Game Overview
-Magic Eleven is a strategic soccer card game where two players (Player vs AI) compete to score goals using a combination of player cards, tactical positioning, and synergy effects. The game simulates a soccer match with a board game feel, featuring card drafting, squad management, and turn-based tactical gameplay.
+本文档是《神奇十一人》的核心规则手册，整合了所有游戏流程、卡牌机制及对战规则，方便后续查阅与修改。
 
-## 2. Game Phases
+---
 
-### Phase 1: The Draft (Sign Star Players)
-*   **Objective**: Build your team's core by signing powerful Star Players.
-*   **Rounds**: 3 Rounds.
-*   **Mechanism**:
-    *   A pool of 3 Star Cards is revealed.
-    *   Players take turns picking one card.
-    *   Order alternates: Round 1 (Home first), Round 2 (Away first), etc.
-*   **Outcome**: Each player adds Star Players to their hand/squad.
+## 1. 游戏总览
+《神奇十一人》是一款轻策略足球卡牌对战游戏。玩家（或 AI）通过部署球员卡、运用战术图标和协同卡，在 8x4 的球场版图上进行攻防博弈，最终比分高者获胜。
 
-### Phase 2: Squad Selection
-*   **Objective**: Finalize your starting lineup and bench.
-*   **Requirement**: Select 10 Starters and 3 Substitutes.
-*   **Formation**: 4-3-3 or similar (flexible placement).
+---
 
-### Phase 3: The Match (First Half & Second Half)
-*   **Duration**: Each half consists of a set number of turns (or until the deck runs out).
-*   **Turn Structure**:
-    1.  **Team Action Phase**:
-        *   **Pass**: Draw Synergy Cards (based on PASS icons on field).
-        *   **Press**: Move the Momentum/Control Marker (based on PRESS icons).
-    2.  **Player Action Phase**:
-        *   **Place Card**: Play a card from your hand to the field.
-        *   **Move**: Move a card on the field (if allowed).
-        *   **Attack**: Initiate a shot on goal (if in range).
-    3.  **Battle Phase (Shooting)**:
-        *   Attacker chooses a target slot.
-        *   Compare Attack Power (ATK) vs Defense Power (DEF).
-        *   **Synergy Boosts**: Both players can play Synergy Cards to boost stats.
-        *   **Result**: Goal, Save, or Miss.
+## 2. 游戏完整流程
 
-### Phase 4: Extra Time (Tie-Breaker)
-*   If the score is tied after full time, the game enters Golden Goal Extra Time.
+### 阶段 1：掷硬币 (Coin Toss)
+*   **目的**：决定主客场。
+*   **流程**：玩家点击屏幕开始掷硬币。
+*   **结果**：随机产生主场（Home）或客场（Away）球队。主场球队在选秀阶段拥有优先权。
 
-## 3. Card Types
+### 阶段 2：选秀 (Draft - 签约球星)
+*   **目的**：获取强力的“明星球员卡”。
+*   **轮次**：总计 3 轮。
+*   **机制**：
+    *   每轮展示 3 张随机明星卡。
+    *   主客场球队交替挑选。第一轮主场先选，第二轮客场先选，以此类推。
+*   **结果**：选中的明星卡加入玩家手牌。
 
-### Player Cards
-*   **Attributes**:
-    *   **Position**: FW (Forward), MF (Midfielder), DF (Defender), GK (Goalkeeper).
-    *   **Stats**: Attack (Red), Defense (Blue).
-    *   **Icons**:
-        *   **Pass**: Draw cards.
-        *   **Press**: Gain momentum.
-        *   **Attack**: Enable shooting.
-        *   **Defense**: Block shots.
-*   **Zones**: Specific areas where the card can be placed (e.g., Zone 1 = Defense, Zone 4 = Attack).
+### 阶段 3：阵容选择 (Squad Selection)
+*   **目的**：确定首发与替补。
+*   **要求**：从现有卡池中选择 **10 名首发球员** 和 **3 名替补球员**。
+*   **布阵**：玩家可根据球员位置（前锋、中场、后卫）预设其在球场上的分布。
 
-### Synergy Cards
-*   **Usage**: Played from hand during Battle (Shooting) to modify Power，或触发特殊效果。
-*   **Rule Details**:
-    *   **通用力量加成**：除「TACKLE」外的协同卡均为通用「力量」加成，不区分进攻或防守。使用时可选择加在进攻方或防守方的当前数值上（按卡面数值 +1/+2/+3/+4/+5）。
-    *   **一星 TACKLE**：仅用于防守方，表示一次有效的防守动作（加成数值按卡面），不能加在进攻方。
-    *   **结算时机**：在战斗阶段结算双方攻击/防守值前，玩家可交替打出协同卡；双方都不再出牌后，进行最终比较。
-    *   **叠加与上限**：协同卡可叠加使用，数值累加；如需限制上限，采用「每次战斗最多使用 X 张」的房规。
-    *   **已使用处理**：使用后的协同卡进入弃牌堆；当协同牌库用尽时，洗切弃牌堆重置为新牌库。
-*   **Types（用于美术与分类）**:
-    *   **Attack Boost**：加在进攻方或防守方的力量（通用）。
-    *   **Defense Boost**：加在进攻方或防守方的力量（通用）。
-    *   **Tackle**：仅用于防守方。
-    *   **Special**：独立效果（如 VAR/黄牌等）。
+### 阶段 4：正式比赛 (Match - 上/下半场)
+比赛分为上半场和下半场，每个半场由多个回合组成。
 
-## 4. Field & Zones
-*   **Layout**: 8 Columns x 4 Rows grid.
-*   **Zones**:
-    *   **Zone 1 (Goalkeeper/Defense)**: Protects the goal.
-    *   **Zone 2 (Defense/Midfield)**: Transition play.
-    *   **Zone 3 (Midfield/Attack)**: Playmaking.
-    *   **Zone 4 (Striker)**: Scoring zone.
+#### 每个回合的子阶段：
+1.  **团队行动阶段 (Team Action Phase)**：
+    *   **传球 (Pass)**：根据场上球员的“传球”图标数量，从协同牌库抽取相应数量的协同卡（手牌上限通常为 5 张）。
+    *   **逼抢 (Press)**：根据场上球员的“逼抢”图标数量，将“控球标记”向对方半场移动。
+2.  **个人行动阶段 (Player Action Phase)**：
+    *   **放置卡牌**：将球员卡从手牌放置到符合其位置限制的球场区域。
+    *   **移动球员**：调整场上球员的位置（如规则允许）。
+    *   **发起进攻**：选择处于进攻位置（Zone 4 或 Zone 3）且具备“进攻”图标的球员发起射门。
+3.  **射门结算阶段 (Shooting Phase)**：
+    *   **数值对比**：计算进攻球员的攻击力 (ATK) vs 防守方（守门员或防守球员）的防守力 (DEF)。
+    *   **协同增强**：双方交替打出协同卡。
+        *   进攻态：最多使用 3 张。
+        *   常态：最多使用 2 张。
+        *   防守态：不可使用（或仅限特定防守卡）。
+    *   **结果判定**：进攻值 > 防守值 则进球得分。
+4.  **回合结束 (End Phase)**：交换控球权。
 
-## 5. Winning the Game
-*   Score more goals than your opponent by the end of the match.
-*   Manage your Synergy Deck wisely - if it runs out, the game may end or enter a penalty phase.
+---
+
+## 3. 核心机制与规则
+
+### 3.1 球员卡属性
+*   **位置限制**：
+    *   **Zone 1 (底线/守门员区)**：仅限后卫/守门员。
+    *   **Zone 2 (后场)**：后卫、中场。
+    *   **Zone 3 (中场)**：中场、前锋。
+    *   **Zone 4 (前场/射门区)**：仅限前锋。
+*   **数值**：红色数字代表攻击力，蓝色数字代表防守力。
+*   **战术图标**：
+    *   **Pass (传球)**：用于抽卡。
+    *   **Press (逼抢)**：用于争夺控球权。
+    *   **Attack (进攻)**：允许发起射门。
+    *   **Defense (防守)**：增加区域防守强度。
+
+### 3.2 协同卡 (Synergy Cards)
+*   **通用加成**：大部分协同卡（+1 到 +5）可灵活加给进攻或防守。
+*   **Tackle (铲球)**：仅限防守方使用，可直接触发点球大战或大幅削弱对方进攻。
+*   **牌库重置**：当协同牌库用尽时，洗切弃牌堆。若无弃牌，则进入“伤停补时”。
+
+### 3.3 控球标记 (Control Marker)
+*   标记位于 0-10 的轨道上。
+*   **0-2**：进攻态 (Attack)。
+*   **3-7**：常态 (Normal)。
+*   **8-10**：防守态 (Defense)。
+*   控球态不仅影响协同卡的使用上限，还可能触发球员的特殊技能。
+
+---
+
+## 4. 特殊事件
+*   **中场休息 (Half Time)**：上半场结束，可更换替补球员。下半场交换开球权。
+*   **伤停补时 (Stoppage Time)**：协同牌库耗尽后触发。此阶段通常只能执行进攻操作，直到分出胜负或回合耗尽。
+*   **点球大战 (Penalty)**：特定卡牌（如铲球）触发。双方各抽点球卡对比数值。
+
+---
+
+---
+
+## 6. UI 界面与交互设计 (竖屏参考)
+
+### 6.1 核心界面布局
+*   **顶部区**：比分展示、半场提示、剩余换人次数。
+*   **中部核心区**：4线足球场（前线、二线、三线、四线）、控制轨道（进攻/常态/防守态）。
+*   **底部操作区**：手牌区、功能按钮（球队行动、球员行动、换人、结束回合）。
+
+### 6.2 交互逻辑
+*   **放置球员**：点击手牌高亮 -> 点击合法区域放置。
+*   **射门结算**：点击“球员行动” -> 选择射门 -> 弹出协同卡选择 -> 系统自动计算数值并判定。
+
+---
+
+## 7. 数值参考表 (Excel 核心数据)
+
+### 7.1 球员卡基础数值规律
+| 位置 | 进攻图标 | 防守图标 | 放置区域 |
+| :--- | :--- | :--- | :--- |
+| **前锋 (FW)** | 2-3 点 | 0-1 点 | Zone 4, Zone 3 |
+| **中场 (MF)** | 1-2 点 | 1-2 点 | Zone 3, Zone 2 |
+| **后卫 (DF)** | 0-1 点 | 2-3 点 | Zone 2, Zone 1 |
+
+### 7.2 协同卡加成
+*   **进攻加成**：+1, +2, +3（受控球态限制）。
+*   **防守加成**：+1, +2（常态可用）。
+*   **特殊卡**：铲球卡（触发点球大战）。
+
+---
+*(注：本文档为《神奇十一人》唯一权威规则说明，修改请直接编辑此文件。)*

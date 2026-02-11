@@ -1,13 +1,19 @@
 import React from 'react';
-import { SynergyArea } from './SynergyArea';
+import { SynergyPanel } from './SynergyPanel';
 import { BaseCard } from './BaseCard';
-import { penaltyCards } from '../data/cards';
+import { penaltyCards, type SynergyCard } from '../data/cards';
 
 interface Props {
-  aiSynergyHandCount: number;
+  aiSynergyHand: SynergyCard[];
+  playerSynergyHand: SynergyCard[];
+  selectedSynergyCards: SynergyCard[];
+  onSynergySelect: (card: SynergyCard) => void;
   synergyDeckCount: number;
   synergyDiscardCount: number;
   onOpenPile: (pile: 'deck' | 'discard') => void;
+  turnPhase: string;
+  playerActiveSynergy: SynergyCard[];
+  aiActiveSynergy: SynergyCard[];
 }
 
 // 66x43mm ratio is approximately 1.535
@@ -17,11 +23,19 @@ const STACK_W = 100; // Slightly smaller to fit better
 const STACK_H = 154; // Maintain ratio
 
 export const RightPanel: React.FC<Props> = ({
-  aiSynergyHandCount,
+  aiSynergyHand,
+  playerSynergyHand,
+  selectedSynergyCards,
+  onSynergySelect,
   synergyDeckCount,
   synergyDiscardCount,
   onOpenPile,
+  turnPhase,
+  playerActiveSynergy,
+  aiActiveSynergy,
 }) => {
+  const isEndPhase = turnPhase === 'end';
+
   return (
     <div
       className="w-[500px] relative flex h-full bg-stone-900 border-l border-white/5 overflow-hidden z-20 transform-style-3d"
@@ -31,25 +45,55 @@ export const RightPanel: React.FC<Props> = ({
       
       <div className="relative flex h-full w-full p-6 gap-8 z-10 justify-center">
         
-        {/* 1. Synergy Board - Fixed Width to prevent scaling */}
-        <div className="relative w-[300px] flex flex-col bg-[#C62918] rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 flex-shrink-0">
+        {/* 1. Synergy Board - Unified Board */}
+        <div className="relative w-[320px] flex flex-col bg-[#C62918] rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 flex-shrink-0">
           <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/wood-pattern-7.png')]" />
           
-          <div className="relative flex-1 flex flex-col justify-between py-4">
+          <div className="relative flex-1 flex flex-col justify-between py-6">
+            {/* Opponent Label (Upside down for them) */}
+            <div className="py-2 flex flex-col items-center">
+              <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] rotate-180">
+                Opponent Synergy
+              </div>
+              <div className="w-12 h-1 bg-white/10 rounded-full mt-1 rotate-180" />
+            </div>
+
             <div className="flex-1 flex flex-col justify-start">
-              <SynergyArea isOpponent={true} />
+              <SynergyPanel
+                synergyHand={isEndPhase ? aiActiveSynergy : aiSynergyHand}
+                isAi={true}
+                revealed={isEndPhase}
+                transparent={true}
+              />
             </div>
             
-            <div className="flex items-center justify-center py-2">
-              <div className="w-full border-t-2 border-dashed border-white/30 relative">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 bg-[#C62918] text-white/60 text-[11px] font-black tracking-[0.3em] uppercase whitespace-nowrap">
-                  Shared Zone
+            <div className="flex items-center justify-center py-4">
+              <div className="w-full border-t-2 border-dashed border-white/10 relative">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-1 bg-[#C62918] rounded-full border border-white/10 shadow-lg">
+                  <span className="text-white/40 text-[9px] font-black tracking-[0.5em] uppercase whitespace-nowrap">
+                    BATTLE FRONT
+                  </span>
                 </div>
               </div>
             </div>
             
             <div className="flex-1 flex flex-col justify-end">
-              <SynergyArea isOpponent={false} />
+              <SynergyPanel
+                synergyHand={isEndPhase ? playerActiveSynergy : playerSynergyHand}
+                selectedCards={selectedSynergyCards}
+                onSelect={onSynergySelect}
+                isAi={false}
+                revealed={isEndPhase}
+                transparent={true}
+              />
+            </div>
+
+            {/* Player Label */}
+            <div className="py-2 flex flex-col items-center">
+              <div className="w-12 h-1 bg-white/10 rounded-full mb-1" />
+              <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">
+                Your Synergy
+              </div>
             </div>
           </div>
 

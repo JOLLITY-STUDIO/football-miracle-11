@@ -14,29 +14,37 @@ const PLAYLIST = AUTO_PLAYLIST.length > 0 ? AUTO_PLAYLIST : [
   'Give_Me_Hope_-_Modern_Pitch.mp3',
 ];
 
-export const BackgroundMusic: React.FC = () => {
+interface Props {
+  variant?: 'default' | 'game';
+}
+
+export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.2); // Lowered default volume slightly
+  const [volume, setVolume] = useState(0.2);
   const [currentTrack, setCurrentTrack] = useState<string>('');
   const [isBgmEnabled, setIsBgmEnabled] = useState(() => {
-    const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true}');
+    const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
     return settings.bgm;
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
 
-  // Listen for storage changes to sync with settings panel
+  // Sync volume with global settings
   useEffect(() => {
-    const handleStorage = () => {
-      const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true}');
+    const syncSettings = () => {
+      const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
       setIsBgmEnabled(settings.bgm);
+      if (typeof settings.volume === 'number') {
+        // Map 0-1 global volume to 0-0.4 BGM relative volume (so it's not too loud)
+        setVolume(settings.volume * 0.4);
+      }
     };
-    window.addEventListener('storage', handleStorage);
-    // Custom event for same-window updates
-    window.addEventListener('audioSettingsChanged', handleStorage);
+    syncSettings();
+    window.addEventListener('storage', syncSettings);
+    window.addEventListener('audioSettingsChanged', syncSettings);
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('audioSettingsChanged', handleStorage);
+      window.removeEventListener('storage', syncSettings);
+      window.removeEventListener('audioSettingsChanged', syncSettings);
     };
   }, []);
 
@@ -169,6 +177,14 @@ export const BackgroundMusic: React.FC = () => {
 
   const togglePlay = () => {
     if (audioRef.current) {
+      const newBgmEnabled = !isPlaying;
+      
+      // Update global settings
+      const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
+      const newSettings = { ...settings, bgm: newBgmEnabled };
+      localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
+      window.dispatchEvent(new Event('audioSettingsChanged'));
+
       if (isPlaying) {
         audioRef.current.pause();
       } else {
@@ -189,11 +205,64 @@ export const BackgroundMusic: React.FC = () => {
     }
   };
 
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
+    // Update global settings - map relative BGM volume back to 0-1 global volume
+    const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
+    const globalVolume = newVolume / 0.4;
+    const newSettings = { ...settings, volume: globalVolume };
+    localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
+    window.dispatchEvent(new Event('audioSettingsChanged'));
+  };
+
+  if (variant === 'game') {
+    return (
+      <div className="flex items-center gap-2 bg-stone-900/80 backdrop-blur-md p-2 rounded-2xl border border-stone-700 shadow-lg text-white pointer-events-auto">
+        <audio ref={audioRef} onEnded={playNextTrack} loop={true} />
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 px-2">
+            <button 
+              onClick={togglePlay}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-lg"
+            >
+              {isPlaying ? '📻' : '🔇'}
+            </button>
+            {isPlaying && currentTrack && (
+               <div className="max-w-[80px] overflow-hidden text-[10px] text-stone-400 whitespace-nowrap">
+                 <div className="animate-marquee inline-block">
+                   {currentTrack.replace(/_/g, ' ').replace('.mp3', '')}
+                 </div>
+               </div>
+            )}
+            <button 
+                onClick={playNextTrack}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-[10px]"
+            >
+                ⏭
+            </button>
+          </div>
+          <div className="px-2">
+            <input 
+              type="range" 
+              min="0" 
+              max="0.4" 
+              step="0.01" 
+              value={volume}
+              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+              className="w-24 h-1 bg-stone-600 rounded-lg appearance-none cursor-pointer accent-green-500"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-stone-900/80 backdrop-blur-md p-2 rounded-full border border-stone-700 shadow-lg text-white transition-opacity hover:opacity-100 opacity-60">
+    <div className="fixed top-4 left-4 z-50 flex items-center gap-2 bg-stone-900/80 backdrop-blur-md p-2 rounded-full border border-stone-700 shadow-lg text-white transition-opacity hover:opacity-100 opacity-60">
       <audio 
         ref={audioRef} 
         onEnded={playNextTrack}
+        loop={true}
         onError={(e) => {
           console.warn(`Audio playback error for track ${currentTrack}`, e);
           // Try next track on error
@@ -203,7 +272,7 @@ export const BackgroundMusic: React.FC = () => {
         }}
       />
       
-      <div className="flex items-center gap-2 px-2">
+      <div className="flex items-center gap-2 px-2 flex-row-reverse">
         <button 
           onClick={togglePlay}
           className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-lg"
@@ -224,12 +293,12 @@ export const BackgroundMusic: React.FC = () => {
         <input 
           type="range" 
           min="0" 
-          max="1" 
+          max="0.4" 
           step="0.01" 
           value={volume}
-          onChange={(e) => setVolume(parseFloat(e.target.value))}
+          onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
           className="w-20 h-1 bg-stone-600 rounded-lg appearance-none cursor-pointer accent-green-500 hover:accent-green-400"
-          title={`Volume: ${Math.round(volume * 100)}%`}
+          title={`Volume: ${Math.round((volume / 0.4) * 100)}%`}
         />
         
         <button 

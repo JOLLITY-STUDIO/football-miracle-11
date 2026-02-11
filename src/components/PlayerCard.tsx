@@ -136,7 +136,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
 
               <div className="flex-1 flex gap-1.5 mt-1 overflow-hidden">
                 <div className="w-14 h-14 flex-shrink-0 bg-stone-100 rounded-lg overflow-hidden border border-stone-200 shadow-inner">
-                  <PlayerAvatar seed={card.id || card.name} />
+                  <PlayerAvatar seed={card.id || card.name} imageUrl={card.imageUrl} />
                 </div>
                 
                 <div className="flex-1 flex flex-col justify-between py-0.5 overflow-hidden">

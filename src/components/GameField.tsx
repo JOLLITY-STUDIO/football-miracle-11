@@ -27,10 +27,14 @@ interface Props {
   onDragEnd?: () => void;
   onCardMouseEnter?: (card: PlayerCard) => void;
   onCardMouseLeave?: () => void;
+  onInstantShotClick?: (zone: number, slot: number) => void;
+  instantShotMode?: any;
+  setupStep?: number;
+  rotation?: number;
 }
 
-const COLS = 8;
-const ROWS = 4;
+export const COLS = 8;
+export const ROWS = 4;
 
 const getPlacedCards = (field: FieldZone[]): PlacedCard[] => {
   const placed: PlacedCard[] = [];
@@ -58,9 +62,10 @@ const canPlaceAt = (
   placedCards: PlacedCard[]
 ): boolean => {
   if (!card.zones.includes(zone)) return false;
-  if (startCol < 0 || startCol > COLS - 2) return false;
 
   const normalizedCol = startCol % 2 === 0 ? startCol : startCol - 1;
+  if (normalizedCol < 0 || normalizedCol > COLS - 2) return false;
+
   const slotPosition = Math.floor(normalizedCol / 2) + 1;
 
   const occupied = placedCards.some(
@@ -98,10 +103,16 @@ export const GameField: React.FC<Props> = ({
   onDragEnd,
   onCardMouseEnter,
   onCardMouseLeave,
+  onInstantShotClick,
+  instantShotMode,
+  setupStep = 4,
+  rotation = 0,
 }) => {
   const [dragOverZone, setDragOverZone] = useState<number | null>(null);
   const [dragOverCol, setDragOverCol] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  const isRotated = rotation === 180;
 
   const canPlaceCards = (turnPhase === 'playerAction' || isFirstTurn) && currentTurn === 'player';
   const playerPlaced = getPlacedCards(playerField);
@@ -112,17 +123,23 @@ export const GameField: React.FC<Props> = ({
     const fieldData = isAi ? aiField : playerField;
     const placedCards = isAi ? aiPlaced : playerPlaced;
 
+    // Fixed dimensions based on card size 'large' (198x130)
+    // One cell = 99px wide, 130px high
+    const CELL_WIDTH = 99;
+    const CELL_HEIGHT = 130;
+
     return (
       <div 
         ref={gridRef}
         className={clsx(
-          "relative grid gap-1 overflow-visible"
+          "relative grid overflow-visible"
         )}
         style={{
-          gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-          width: '100%',
-          height: '100%',
+          gridTemplateColumns: `repeat(${COLS}, ${CELL_WIDTH}px)`,
+          gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`,
+          width: `${COLS * CELL_WIDTH}px`,
+          height: `${ROWS * CELL_HEIGHT}px`,
+          margin: '0 auto', // Center the grid
         }}
       >
         {/* Zones & Slots */}
@@ -160,13 +177,26 @@ export const GameField: React.FC<Props> = ({
                 className={clsx(
                   "relative transition-all duration-200 flex items-center justify-center",
                   // Slot Visuals
-                  isSlotStart ? "border-x border-white/10" : "", // Vertical borders for slots
-                  isSlotStart && !card ? "bg-white/5" : "", // Faint background for empty slots
+                  isSlotStart ? "border-l border-white/20" : "", // Vertical borders for slots
+                  colIdx === COLS - 1 ? "border-r border-white/20" : "", // End border
+                  row === 0 ? "border-t border-white/20" : "", // Top border
+                  row === ROWS - 1 ? "border-b border-white/20" : "", // Bottom border
                   
+                  // Simplified Grass Pattern (Vertical Stripes - only 2 colors)
+                  // Using inline styles for specific HEX colors to ensure visibility
+                  "z-10",
+
                   // Interaction States
-                  !isAi && isValidPlacement ? "bg-green-400/40 cursor-pointer hover:bg-green-400/60 ring-2 ring-green-400/80 shadow-[0_0_15px_rgba(74,222,128,0.5)]" : "",
-                  !isAi && selectedCard && !isValidPlacement && isZoneHighlight ? "bg-red-500/20" : ""
+                  !isAi && isValidPlacement ? "cursor-pointer ring-2 ring-green-400/80 shadow-[0_0_15px_rgba(74,222,128,0.5)] z-20" : "",
+                  !isAi && selectedCard && !isValidPlacement && isZoneHighlight ? "z-20" : ""
                 )}
+                style={{
+                  backgroundColor: !isAi && isValidPlacement 
+                    ? 'rgba(74, 222, 128, 0.7)' 
+                    : (!isAi && selectedCard && !isValidPlacement && isZoneHighlight 
+                        ? 'rgba(239, 68, 68, 0.4)' 
+                        : ((row + slotIdx) % 2 === 0 ? 'rgba(163, 190, 46, 0.3)' : 'rgba(49, 173, 89, 0.3)')),
+                }}
                 onClick={() => !isAi && onSlotClick(zone.zone, colIdx)}
               >
                 {/* Dashed Lines at Bottom of Rows */}
@@ -200,24 +230,45 @@ export const GameField: React.FC<Props> = ({
                 {/* Render Card if it exists and we are at start of slot */}
                 {isSlotStart && card && (
                   <div 
-                    className={clsx("absolute left-0 top-0 w-[200%] h-full z-10 p-1 pointer-events-none transform-style-3d backface-hidden")}
+                    className={clsx("absolute left-0 top-0 w-[200%] h-full z-10 p-1 pointer-events-none transform-style-3d backface-hidden flex items-center justify-center")}
                     style={{
-                      transform: isAi 
-                        ? 'rotateZ(180deg) rotateX(-45deg) translateZ(30px) scale(0.65)' 
-                        : 'rotateX(-45deg) translateZ(30px) scale(0.65)',
+                      transform: isAi ? 'rotateX(-45deg) rotate(180deg) translateZ(40px) scale(1.1)' : 'rotateX(-45deg) translateZ(40px) scale(1.1)',
                       transformOrigin: 'center bottom',
-                      filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.7))'
+                      filter: 'drop-shadow(0 25px 35px rgba(0,0,0,0.8))'
                     }}
                   >
                      <motion.div
-                       initial={{ opacity: 0, scale: 0.5, y: -100 }}
-                       animate={{ opacity: 1, scale: 1, y: 0 }}
-                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                       initial={setupStep < 4 ? { 
+                         opacity: 0, 
+                         scale: 0.2, 
+                         y: isAi ? -500 : 500,
+                         rotateY: 180,
+                         z: 500
+                       } : { opacity: 1, scale: 1, y: 0, rotateY: 0, z: 0 }}
+                       animate={setupStep >= 3 ? { 
+                         opacity: 1, 
+                         scale: 1, 
+                         y: 0,
+                         rotateY: 0,
+                         z: 0
+                       } : { 
+                         opacity: 0, 
+                         scale: 0.2, 
+                         y: isAi ? -500 : 500,
+                         rotateY: 180,
+                         z: 500
+                       }}
+                       transition={{ 
+                         type: "spring", 
+                         stiffness: 80, 
+                         damping: 15,
+                         delay: setupStep === 3 ? (zIdx * 0.2 + colIdx * 0.1) : 0 
+                       }}
                        className="w-full h-full relative pointer-events-auto"
                      >
                         <PlayerCardComponent 
                           card={card} 
-                          size="tiny"
+                          size="large"
                           faceDown={false} // Field cards are always visible
                           disabled={isAi} // AI cards are not interactive for player
                           onMouseEnter={() => onCardMouseEnter?.(card)}
@@ -289,17 +340,14 @@ export const GameField: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col w-full h-full">
-      {/* AI Field (Top Half) */}
-      <div className="flex-1 min-h-0 rotate-180"> 
-        {renderGrid(true)}
+      {/* Top Field (Opponent if normal, Player if rotated) */}
+      <div className={clsx("flex-1 min-h-0", isRotated ? "" : "rotate-180")}> 
+        {renderGrid(!isRotated)}
       </div>
 
-      {/* Center Line Spacer - very thin, just to separate grids visually if needed */}
-      {/* <div className="h-0.5 bg-white/10 w-full"></div> */}
-
-      {/* Player Field (Bottom Half) */}
-      <div className="flex-1 min-h-0">
-        {renderGrid(false)}
+      {/* Bottom Field (Player if normal, Opponent if rotated) */}
+      <div className={clsx("flex-1 min-h-0", isRotated ? "rotate-180" : "")}>
+        {renderGrid(isRotated)}
       </div>
     </div>
   );

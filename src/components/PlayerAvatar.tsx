@@ -1,11 +1,29 @@
 import React, { useMemo } from 'react';
+import clsx from 'clsx';
 
 interface Props {
   seed: string;
+  imageUrl?: string;
   className?: string;
 }
 
-const PlayerAvatar: React.FC<Props> = ({ seed = 'default', className }) => {
+const PlayerAvatar: React.FC<Props> = ({ seed = 'default', imageUrl, className }) => {
+  if (imageUrl) {
+    return (
+      <div className={clsx("w-full h-full bg-stone-200 flex items-center justify-center overflow-hidden", className)}>
+        <img 
+          src={imageUrl} 
+          alt="Player" 
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            // Fallback if image fails to load
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      </div>
+    );
+  }
+  
   // Deterministic random number generator based on seed string
   const getRandom = (str: string = 'default') => {
     let hash = 0;

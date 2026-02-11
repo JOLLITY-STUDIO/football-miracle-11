@@ -9,11 +9,11 @@ interface Props {
 // 66x43mm ratio is approximately 1.535
 // We will use pixels to ensure fixed sizes that don't scale with screen width
 const SIZE_CONFIG: Record<NonNullable<Props['size']>, { width: number, height: number }> = {
-  tiny: { width: 96, height: 62 },    // 1.5x scale
-  small: { width: 132, height: 86 },  // 2x scale
-  medium: { width: 165, height: 108 }, // 2.5x scale
-  large: { width: 198, height: 130 },  // 3x scale
-  synergy: { width: 140, height: 92 }, // Increased size for synergy slots
+  tiny: { width: 99, height: 65 },    // 1.5x (66x43mm)
+  small: { width: 132, height: 86 },  // 2x
+  medium: { width: 165, height: 108 }, // 2.5x
+  large: { width: 198, height: 130 },  // 3x
+  synergy: { width: 140, height: 92 }, // Legacy/Custom
 };
 
 export const BaseCard: React.FC<Props> = ({ size = 'medium', children, className }) => {

@@ -11,7 +11,7 @@ interface Props {
   selected?: boolean;
   disabled?: boolean;
   faceDown?: boolean;
-  size?: 'small' | 'normal';
+  size?: 'tiny' | 'small' | 'medium' | 'large' | 'synergy';
 }
 
 export const SynergyCardComponent: React.FC<Props> = ({ 
@@ -22,7 +22,7 @@ export const SynergyCardComponent: React.FC<Props> = ({
   selected, 
   disabled = false,
   faceDown = false,
-  size = 'normal'
+  size = 'medium'
 }) => {
   const isAttack = card.type === 'attack';
   const isDefense = card.type === 'defense';
@@ -81,7 +81,7 @@ export const SynergyCardComponent: React.FC<Props> = ({
       transition={{ duration: 0.6 }}
     >
       <BaseCard 
-        size={size === 'small' ? 'small' : 'medium'} 
+        size={size} 
         className={`border-[4px] border-[#1a1a1a] shadow-xl ${selected ? 'ring-4 ring-yellow-400' : ''}`}
       >
         {/* Front Face */}

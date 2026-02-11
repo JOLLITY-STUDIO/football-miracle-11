@@ -50,7 +50,7 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <BackgroundMusic /> {/* Global Music Player */}
+      {currentView !== 'game' && <BackgroundMusic />} {/* Global Music Player, hidden in game to use integrated one */}
       <OrientationWarning />
       {currentView === 'menu' && (
         <MainMenu
