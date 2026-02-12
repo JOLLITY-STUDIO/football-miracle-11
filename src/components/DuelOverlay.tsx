@@ -14,6 +14,10 @@ interface DuelOverlayProps {
   attackPower: number;
   defensePower: number;
   result: ShotResult;
+  activatedSkills: {
+    attackerSkills: string[];
+    defenderSkills: string[];
+  };
   onAdvance: () => void;
   isPlayerAttacking: boolean;
 }
@@ -27,6 +31,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
   attackPower,
   defensePower,
   result,
+  activatedSkills,
   onAdvance,
   isPlayerAttacking
 }) => {
@@ -48,20 +53,31 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
     if (duelPhase === 'reveal_attacker') {
       const baseAttack = attacker.icons.filter(i => i === 'attack').length;
       setDisplayAttackPower(baseAttack);
+    } else if (duelPhase === 'reveal_defender') {
+      if (defender) {
+        const baseDef = defender.icons.filter(i => i === 'defense').length;
+        setDisplayDefensePower(baseDef);
+      }
     } else if (duelPhase === 'reveal_synergy') {
+      // Animate synergy addition
       const synergyStars = attackSynergy.reduce((sum, c) => sum + c.stars, 0);
-      setDisplayAttackPower(prev => prev + synergyStars);
-      
       const defSynergyStars = defenseSynergy.reduce((sum, c) => sum + c.stars, 0);
-      setDisplayDefensePower(prev => prev + defSynergyStars);
+      
+      // Small delay to let cards reveal first
+      const timer = setTimeout(() => {
+        setDisplayAttackPower(prev => prev + synergyStars);
+        setDisplayDefensePower(prev => prev + defSynergyStars);
+      }, 500);
+      return () => clearTimeout(timer);
     } else if (duelPhase === 'reveal_skills') {
-      // Skills currently don't add to power directly in calculation but can affect logic
-      // In the future, if skills add power, update here
+      // In the current logic, skills are part of the final power calculation in gameLogic
+      // But we can show the "impact" here if we wanted to be precise.
+      // For now, we'll just show the badges.
     } else if (duelPhase === 'result') {
       setDisplayAttackPower(attackPower);
       setDisplayDefensePower(defensePower);
     }
-  }, [duelPhase, attacker, attackSynergy, defenseSynergy, attackPower, defensePower]);
+  }, [duelPhase, attacker, defender, attackSynergy, defenseSynergy, attackPower, defensePower]);
 
   if (duelPhase === 'none') return null;
 
@@ -101,19 +117,39 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                >
                  <span className="text-2xl font-black text-white">{displayAttackPower}</span>
                </motion.div>
-            </div>
-            
-            {/* Attack Synergy Reveal */}
+               </div>
+               
+               {/* Attacker Activated Skills */}
+               <div className="flex flex-wrap justify-center gap-2 mt-2 h-10">
+                 <AnimatePresence>
+                   {duelPhase === 'reveal_skills' && activatedSkills.attackerSkills.map((skill, i) => (
+                     <motion.div
+                       key={skill}
+                       initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                       animate={{ opacity: 1, scale: 1, y: 0 }}
+                       className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full border border-white/50 shadow-lg"
+                     >
+                       {skill}
+                     </motion.div>
+                   ))}
+                 </AnimatePresence>
+               </div>
+               
+               {/* Attack Synergy Reveal */}
             <div className="flex gap-2 h-24">
               <AnimatePresence>
-                {duelPhase !== 'init' && duelPhase !== 'reveal_attacker' && duelPhase !== 'reveal_defender' && attackSynergy.map((card, i) => (
+                {(duelPhase !== 'none') && attackSynergy.map((card, i) => (
                   <motion.div
                     key={card.id}
                     initial={{ scale: 0, y: 50, opacity: 0 }}
                     animate={{ scale: 1, y: 0, opacity: 1 }}
-                    transition={{ delay: i * 0.2 }}
+                    transition={{ delay: i * 0.1 }}
                   >
-                    <SynergyCardComponent card={card} size="small" />
+                    <SynergyCardComponent 
+                      card={card} 
+                      size="small" 
+                      faceDown={duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender'}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -148,25 +184,45 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                   >
                     <span className="text-2xl font-black text-white">{displayDefensePower}</span>
                   </motion.div>
-                </>
-              ) : (
-                <div className="w-[180px] h-[260px] border-4 border-dashed border-white/20 rounded-xl flex items-center justify-center text-white/20 font-black uppercase tracking-tighter text-center px-4">
-                  No Defender
-                </div>
-              )}
-            </div>
+                  </>
+                ) : (
+                  <div className="w-[180px] h-[260px] border-4 border-dashed border-white/20 rounded-xl flex items-center justify-center text-white/20 font-black uppercase tracking-tighter text-center px-4">
+                    No Defender
+                  </div>
+                )}
+              </div>
 
-            {/* Defense Synergy Reveal */}
+              {/* Defender Activated Skills */}
+              <div className="flex flex-wrap justify-center gap-2 mt-2 h-10">
+                <AnimatePresence>
+                  {duelPhase === 'reveal_skills' && activatedSkills.defenderSkills.map((skill, i) => (
+                    <motion.div
+                      key={skill}
+                      initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full border border-white/50 shadow-lg"
+                    >
+                      {skill}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {/* Defense Synergy Reveal */}
             <div className="flex gap-2 h-24">
               <AnimatePresence>
-                {duelPhase !== 'init' && duelPhase !== 'reveal_attacker' && duelPhase !== 'reveal_defender' && defenseSynergy.map((card, i) => (
+                {(duelPhase !== 'none') && defenseSynergy.map((card, i) => (
                   <motion.div
                     key={card.id}
                     initial={{ scale: 0, y: 50, opacity: 0 }}
                     animate={{ scale: 1, y: 0, opacity: 1 }}
-                    transition={{ delay: i * 0.2 }}
+                    transition={{ delay: i * 0.1 }}
                   >
-                    <SynergyCardComponent card={card} size="small" />
+                    <SynergyCardComponent 
+                      card={card} 
+                      size="small" 
+                      faceDown={duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender'}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -183,13 +239,17 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
               className="absolute bottom-20 flex flex-col items-center gap-6"
             >
               <div className={clsx(
-                "text-7xl font-black italic tracking-tighter uppercase drop-shadow-2xl",
+                "text-7xl font-black italic tracking-tighter uppercase drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]",
                 (result === 'goal' || result === 'magicNumber') ? "text-yellow-400" : "text-gray-400"
               )}>
                 {result === 'goal' && "GOAL!"}
                 {result === 'magicNumber' && "MAGIC NUMBER!"}
                 {result === 'saved' && "SAVED!"}
                 {result === 'missed' && "MISSED!"}
+              </div>
+              
+              <div className="text-white/60 font-bold uppercase tracking-widest text-sm">
+                Final Power: {attackPower} vs {defensePower}
               </div>
               
               <button 

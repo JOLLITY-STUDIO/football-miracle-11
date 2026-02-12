@@ -305,16 +305,17 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
   // AI Turn Logic
   useEffect(() => {
     const isMatchPhase = gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf';
-    const isAITurn = gameState.currentTurn === 'ai' && (gameState.turnPhase === 'teamAction' || gameState.turnPhase === 'playerAction');
+    const isAITurn = gameState.currentTurn === 'ai' && gameState.aiActionStep !== 'none';
     
-    if (isMatchPhase && isAITurn && !gameState.isDealing) {
+    if (isMatchPhase && isAITurn && !gameState.isDealing && gameState.duelPhase === 'none') {
+      const delay = gameState.aiActionStep === 'teamAction' ? 2000 : 1500;
       const timer = setTimeout(() => {
         gameRecorder.current.recordAction('ai_action', 'ai');
         dispatch({ type: 'AI_TURN' });
-      }, 2000); // 2 second delay for AI to "think"
+      }, delay);
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentTurn, gameState.turnPhase, gameState.phase, gameState.isDealing, dispatch]);
+  }, [gameState.currentTurn, gameState.aiActionStep, gameState.phase, gameState.isDealing, gameState.duelPhase, dispatch]);
 
   // Track AI newly placed cards for animation
   const prevAIHandRef = useRef<string[]>([]);
@@ -912,10 +913,29 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           {/* Turn Information */}
           <div className="text-right">
               <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">TURN {gameState.turnCount}</div>
-              <div className="text-2xl font-['Russo_One'] text-white drop-shadow-md mb-2">
-                  {gameState.currentTurn === 'player' ? <span className="text-blue-400">YOUR TURN</span> : <span className="text-red-400">OPP TURN</span>}
+              <div className="text-2xl font-['Russo_One'] text-white drop-shadow-md mb-2 flex items-center justify-end gap-3">
+                  {gameState.currentTurn === 'player' ? (
+                    <span className="text-blue-400">YOUR TURN</span>
+                  ) : (
+                    <>
+                      <span className="text-red-400">OPP TURN</span>
+                      {gameState.aiActionStep !== 'none' && (
+                        <motion.div 
+                          animate={{ opacity: [0.4, 1, 0.4] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                          className="flex gap-1"
+                        >
+                          <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                          <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                          <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                        </motion.div>
+                      )}
+                    </>
+                  )}
               </div>
-              <div className="text-xs text-yellow-400 max-w-[150px] leading-tight ml-auto">{gameState.message}</div>
+              <div className="text-xs text-yellow-400 max-w-[150px] leading-tight ml-auto h-8 flex items-center justify-end">
+                {gameState.message}
+              </div>
           </div>
 
           {/* Action Buttons Panel */}
@@ -1293,6 +1313,21 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           }
         }}
       />
+
+      {/* Duel Overlay */}
+      {gameState.pendingShot && (
+        <DuelOverlay
+          isOpen={gameState.duelPhase !== 'none'}
+          duelPhase={gameState.duelPhase}
+          shotAttempt={gameState.pendingShot}
+          onAdvance={() => dispatch({ type: 'ADVANCE_DUEL' })}
+          onClose={() => {
+            // This is called when result phase is over or user clicks close
+            dispatch({ type: 'ADVANCE_DUEL' });
+          }}
+          isPlayerAttacking={gameState.currentTurn === 'player' || (gameState.currentTurn === 'ai' && gameState.turnPhase === 'end')}
+        />
+      )}
 
       {/* AI Card Play Notification */}
       <AnimatePresence>

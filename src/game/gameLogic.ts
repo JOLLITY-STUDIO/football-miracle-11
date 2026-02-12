@@ -36,6 +36,10 @@ export interface ShotAttempt {
   attackPower: number;
   defensePower: number;
   result: ShotResult;
+  activatedSkills: {
+    attackerSkills: string[];
+    defenderSkills: string[];
+  };
 }
 
 export interface GameState {
@@ -79,6 +83,7 @@ export interface GameState {
   aiActiveSynergy: SynergyCard[];
   isDealing: boolean;
   duelPhase: DuelPhase;
+  aiActionStep: 'teamAction' | 'placeCard' | 'shot' | 'endTurn' | 'none';
 }
 
 export const createInitialState = (
@@ -167,6 +172,7 @@ export const createInitialState = (
     aiActiveSynergy: [],
     isDealing: false,
     duelPhase: 'none',
+    aiActionStep: 'none',
   };
 };
 
@@ -372,6 +378,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       // Swap turns
       const nextTurn = state.currentTurn === 'player' ? 'ai' : 'player';
       newState.currentTurn = nextTurn;
+      newState.aiActionStep = nextTurn === 'ai' ? 'teamAction' : 'none';
       
       // Check if next player can do team actions (Pass/Press icons on field)
       const field = nextTurn === 'player' ? newState.playerField : newState.aiField;
@@ -512,6 +519,10 @@ export const performCoinToss = (state: GameState, isHomeTeam: boolean): GameStat
   newState.playerBench = [];
   newState.aiBench = [];
 
+  if (newState.currentTurn === 'ai') {
+    newState.aiActionStep = 'teamAction';
+  }
+  
   return newState;
 };
 
@@ -1078,6 +1089,20 @@ export const performShot = (
   const defensePower = hasBreakthroughAll ? 0 : calculateDefensePower(defender, defenseSynergy, opponentField, ignoreBaseDefense, attackerBreakthroughIcons);
   const result = resolveShot(attackPower, defensePower);
   
+  // Track activated skills for visual feedback
+  const attackerSkills: string[] = [];
+  if (attacker.icons.includes('attack')) attackerSkills.push('Shot');
+  if (attacker.icons.includes('breakthrough')) attackerSkills.push('Breakthrough');
+  if (hasBreakthroughAll) attackerSkills.push('Ignore All Defense');
+  if (ignoreBaseDefense) attackerSkills.push('Instant Shot');
+  if (currentShotMarkers > 0) attackerSkills.push('Fatigue');
+
+  const defenderSkills: string[] = [];
+  if (defender) {
+    if (defender.icons.includes('defense')) defenderSkills.push('Defend');
+    if (hasTackleCard) defenderSkills.push('Tackle');
+  }
+
   const shotAttempt: ShotAttempt = {
     attacker,
     defender,
@@ -1086,6 +1111,10 @@ export const performShot = (
     attackPower,
     defensePower,
     result,
+    activatedSkills: {
+      attackerSkills,
+      defenderSkills
+    }
   };
   
   if (result === 'goal' || result === 'magicNumber') {
@@ -1204,26 +1233,27 @@ export const endGame = (state: GameState): GameState => {
 export const performAITurn = (state: GameState): GameState => {
   let newState = { ...state };
   
-  if (newState.turnPhase === 'teamAction') {
+  // Phase 1: Team Action (Pass/Press)
+  if (newState.aiActionStep === 'teamAction') {
     const passCount = countIcons(newState.aiField, 'pass');
     const pressCount = countIcons(newState.aiField, 'press');
     const hasPlayers = newState.aiField.some(z => z.slots.some(s => s.playerCard));
     
     if (newState.isFirstTurn && !hasPlayers) {
       newState.message = 'AI skipped team actions for one turn';
-      newState.turnPhase = 'playerAction';
     } else if (passCount > 0 && newState.aiSynergyHand.length < 5) {
       newState = performTeamAction(newState, 'pass');
-      newState.turnPhase = 'playerAction';
     } else if (pressCount > 0) {
       newState = performTeamAction(newState, 'press');
-      newState.turnPhase = 'playerAction';
-    } else {
-      newState.turnPhase = 'playerAction';
     }
+    
+    newState.aiActionStep = 'placeCard';
+    newState.turnPhase = 'playerAction'; // Ensure we are in player action phase for placement
+    return newState;
   }
   
-  if (newState.turnPhase === 'playerAction') {
+  // Phase 2: Place Player Card
+  if (newState.aiActionStep === 'placeCard') {
     const availablePlacements: { card: PlayerCard; zone: number; slot: number }[] = [];
     
     newState.aiHand.forEach(card => {
@@ -1236,6 +1266,22 @@ export const performAITurn = (state: GameState): GameState => {
       });
     });
     
+    if (availablePlacements.length > 0 && Math.random() > 0.3) {
+      const placement = availablePlacements[Math.floor(Math.random() * availablePlacements.length)]!;
+      newState = placeCard(newState, placement.card, placement.zone, (placement.slot - 1) * 2, false);
+      
+      // After placing, decide if this card or another card should shoot
+      newState.aiActionStep = 'shot';
+    } else {
+      // No placement possible or decided not to place, move to shot anyway (existing cards might shoot)
+      newState.aiActionStep = 'shot';
+    }
+    return newState;
+  }
+  
+  // Phase 3: Shot Action
+  if (newState.aiActionStep === 'shot') {
+    // Find potential attackers (including newly placed one)
     const attackers: { zone: number; slot: number; card: PlayerCard }[] = [];
     newState.aiField.forEach(z => {
       z.slots.forEach(s => {
@@ -1244,90 +1290,66 @@ export const performAITurn = (state: GameState): GameState => {
         }
       });
     });
-    
-    if (availablePlacements.length > 0 && Math.random() > 0.3) {
-      const placement = availablePlacements[Math.floor(Math.random() * availablePlacements.length)]!;
-      const cardToPlace = placement.card;
-      
-      newState = placeCard(newState, cardToPlace, placement.zone, (placement.slot - 1) * 2, false);
-        
-        // Check for Immediate Shot Effect
-        let shouldShoot = false;
-        let ignoreBaseDefense = false;
-        
-        if (cardToPlace.immediateEffect === 'instant_shot') {
-          shouldShoot = true;
-          ignoreBaseDefense = true;
-          newState.message = 'AI uses Instant Shot effect!';
-        } else if (cardToPlace.icons.includes('attack') && Math.random() > 0.5) {
-          shouldShoot = true;
-        }
 
-        if (shouldShoot) {
-          const controlState = getControlState(newState.controlPosition);
-          const maxSynergy = getMaxSynergyCardsForAttack(controlState);
-          
-          // AI Attack Logic:
-          // 1. Draw 1 from Deck (if available) - Rule: First card MUST be from deck
-          // 2. Add from Hand up to maxSynergy - 1
-          
-          const aiSynergy: SynergyCard[] = [];
-          
-          if (newState.synergyDeck.length > 0) {
-            const firstCard = newState.synergyDeck[0];
-            if (firstCard) {
-              aiSynergy.push(firstCard);
-              newState.synergyDeck = newState.synergyDeck.slice(1);
-            }
-          }
-          
-          const remainingSlots = maxSynergy - aiSynergy.length;
-          if (remainingSlots > 0) {
-            const fromHand = newState.aiSynergyHand.slice(0, remainingSlots);
-            aiSynergy.push(...fromHand);
-          }
-          
-          newState = performShot(newState, cardToPlace, placement.zone, placement.slot, aiSynergy, false, ignoreBaseDefense);
-        }
-    } else if (attackers.length > 0) {
+    if (attackers.length > 0) {
+      // Logic for choosing attacker: priority to those with special effects or just random
       const attacker = attackers[Math.floor(Math.random() * attackers.length)]!;
       
-      const controlState = getControlState(newState.controlPosition);
-      const maxSynergy = getMaxSynergyCardsForAttack(controlState);
+      let shouldShoot = false;
+      let ignoreBaseDefense = false;
       
-      const aiSynergy: SynergyCard[] = [];
-      
-      if (newState.synergyDeck.length > 0) {
-        const firstCard = newState.synergyDeck[0];
-        if (firstCard) {
-          aiSynergy.push(firstCard);
-          newState.synergyDeck = newState.synergyDeck.slice(1);
+      if (attacker.card.immediateEffect === 'instant_shot') {
+        shouldShoot = true;
+        ignoreBaseDefense = true;
+        newState.message = 'AI uses Instant Shot effect!';
+      } else if (Math.random() > 0.4) { // 60% chance to shoot if available
+        shouldShoot = true;
+      }
+
+      if (shouldShoot) {
+        const controlState = getControlState(newState.controlPosition);
+        const maxSynergy = getMaxSynergyCardsForAttack(controlState);
+        const aiSynergy: SynergyCard[] = [];
+        
+        if (newState.synergyDeck.length > 0) {
+          const firstCard = newState.synergyDeck[0];
+          if (firstCard) {
+            aiSynergy.push(firstCard);
+            newState.synergyDeck = newState.synergyDeck.slice(1);
+          }
         }
+        
+        const remainingSlots = maxSynergy - aiSynergy.length;
+        if (remainingSlots > 0) {
+          const fromHand = newState.aiSynergyHand.slice(0, remainingSlots);
+          aiSynergy.push(...fromHand);
+        }
+        
+        newState = performShot(newState, attacker.card, attacker.zone, attacker.slot, aiSynergy, false, ignoreBaseDefense);
       }
-      
-      const remainingSlots = maxSynergy - aiSynergy.length;
-      if (remainingSlots > 0) {
-        const fromHand = newState.aiSynergyHand.slice(0, remainingSlots);
-        aiSynergy.push(...fromHand);
-      }
-      
-      newState = performShot(newState, attacker.card, attacker.zone, attacker.slot, aiSynergy, false);
     }
     
+    newState.aiActionStep = 'endTurn';
     newState = checkHalfEnd(newState);
+    return newState;
   }
   
-  // Transition to 'end' phase to let UI show what AI did
-  newState.turnPhase = 'end';
-  newState.isFirstTurn = false;
-  newState.turnCount += 1;
-  
-  if (newState.turnCount >= 10 && newState.phase === 'firstHalf') {
-    newState = startHalfTime(newState);
-  } else if (newState.turnCount >= 20 && newState.phase === 'secondHalf') {
-    newState = endGame(newState);
-  } else {
-    newState.message += ' - Turn ending...';
+  // Phase 4: End Turn
+  if (newState.aiActionStep === 'endTurn') {
+    newState.turnPhase = 'end';
+    newState.isFirstTurn = false;
+    newState.turnCount += 1;
+    
+    if (newState.turnCount >= 10 && newState.phase === 'firstHalf') {
+      newState = startHalfTime(newState);
+    } else if (newState.turnCount >= 20 && newState.phase === 'secondHalf') {
+      newState = endGame(newState);
+    } else {
+      newState.message += ' - Turn ending...';
+    }
+    
+    newState.aiActionStep = 'none';
+    return newState;
   }
   
   return newState;
