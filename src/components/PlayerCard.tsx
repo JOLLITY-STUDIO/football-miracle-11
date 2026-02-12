@@ -39,7 +39,7 @@ const getCardBgColor = (type: string) => {
 
 const getIconSymbol = (icon: TacticalIcon): string => {
   switch (icon) {
-    case 'attack': return '⚔️';
+    case 'attack': return '⚽';
     case 'defense': return '🛡️';
     case 'pass': return '👟';
     case 'press': return '⚡';
@@ -50,29 +50,29 @@ const getIconSymbol = (icon: TacticalIcon): string => {
 
 const getIconColor = (icon: TacticalIcon): string => {
   switch (icon) {
-    case 'attack': return '#ef4444';
+    case 'attack': return '#22c55e';
     case 'defense': return '#3b82f6';
-    case 'pass': return '#22c55e';
-    case 'press': return '#f59e0b';
+    case 'pass': return '#f59e0b';
+    case 'press': return '#ef4444';
     case 'breakthrough': return '#8b5cf6';
     case 'breakthroughAll': return '#ec4899';
   }
 };
 
-const getHalfIconInfo = (position: IconPosition): { top: string; side: 'left' | 'right' } => {
-  const positions: Record<IconPosition, { top: string; side: 'left' | 'right' }> = {
-    'slot1-topLeft': { top: '15%', side: 'left' },
-    'slot1-topRight': { top: '15%', side: 'right' },
-    'slot1-middleLeft': { top: '50%', side: 'left' },
-    'slot1-middleRight': { top: '50%', side: 'right' },
-    'slot1-bottomLeft': { top: '85%', side: 'left' },
-    'slot1-bottomRight': { top: '85%', side: 'right' },
-    'slot2-topLeft': { top: '15%', side: 'left' },
-    'slot2-topRight': { top: '15%', side: 'right' },
-    'slot2-middleLeft': { top: '50%', side: 'left' },
-    'slot2-middleRight': { top: '50%', side: 'right' },
-    'slot2-bottomLeft': { top: '85%', side: 'left' },
-    'slot2-bottomRight': { top: '85%', side: 'right' },
+const getHalfIconInfo = (position: IconPosition): { edge: 'top' | 'bottom' | 'left' | 'right'; pos: string } => {
+  const positions: Record<IconPosition, { edge: 'top' | 'bottom' | 'left' | 'right'; pos: string }> = {
+    'slot1-topLeft': { edge: 'top', pos: '25%' },
+    'slot1-topRight': { edge: 'top', pos: '75%' },
+    'slot1-middleLeft': { edge: 'left', pos: '50%' },
+    'slot1-middleRight': { edge: 'right', pos: '50%' },
+    'slot1-bottomLeft': { edge: 'bottom', pos: '25%' },
+    'slot1-bottomRight': { edge: 'bottom', pos: '75%' },
+    'slot2-topLeft': { edge: 'top', pos: '25%' },
+    'slot2-topRight': { edge: 'top', pos: '75%' },
+    'slot2-middleLeft': { edge: 'left', pos: '50%' },
+    'slot2-middleRight': { edge: 'right', pos: '50%' },
+    'slot2-bottomLeft': { edge: 'bottom', pos: '25%' },
+    'slot2-bottomRight': { edge: 'bottom', pos: '75%' },
   };
   return positions[position];
 };
@@ -101,7 +101,89 @@ export const PlayerCardComponent: React.FC<Props> = ({
     large: { width: '220px', height: '132px' }
   };
 
-  const halfIconSize = 14;
+  const halfIconSize = 24;
+
+  const renderHalfIcon = (iconPos: { type: TacticalIcon; position: IconPosition }, index: number) => {
+    const info = getHalfIconInfo(iconPos.position);
+    const iconColor = getIconColor(iconPos.type);
+    const iconSymbol = getIconSymbol(iconPos.type);
+    const radius = halfIconSize / 2;
+    
+    let containerStyle: React.CSSProperties = {};
+    let iconStyle: React.CSSProperties = {};
+    
+    if (info.edge === 'top') {
+      containerStyle = {
+        top: '0px',
+        left: info.pos,
+        width: `${halfIconSize}px`,
+        height: `${radius}px`,
+        transform: 'translateX(-50%)',
+        borderRadius: `0 0 ${radius}px ${radius}px`,
+        backgroundColor: `${iconColor}66`,
+        boxShadow: `inset 0 -2px 4px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)`
+      };
+      iconStyle = {
+        fontSize: '12px',
+        transform: 'translateY(1px)'
+      };
+    } else if (info.edge === 'bottom') {
+      containerStyle = {
+        bottom: '0px',
+        left: info.pos,
+        width: `${halfIconSize}px`,
+        height: `${radius}px`,
+        transform: 'translateX(-50%)',
+        borderRadius: `${radius}px ${radius}px 0 0`,
+        backgroundColor: `${iconColor}66`,
+        boxShadow: `inset 0 2px 4px rgba(0,0,0,0.4), 0 -1px 2px rgba(0,0,0,0.3)`
+      };
+      iconStyle = {
+        fontSize: '12px',
+        transform: 'translateY(-1px)'
+      };
+    } else if (info.edge === 'left') {
+      containerStyle = {
+        top: info.pos,
+        left: '0px',
+        width: `${radius}px`,
+        height: `${halfIconSize}px`,
+        transform: 'translateY(-50%)',
+        borderRadius: `0 ${radius}px ${radius}px 0`,
+        backgroundColor: `${iconColor}66`,
+        boxShadow: `inset -2px 0 4px rgba(0,0,0,0.4), 1px 0 2px rgba(0,0,0,0.3)`
+      };
+      iconStyle = {
+        fontSize: '12px',
+        transform: 'translateX(1px)'
+      };
+    } else {
+      containerStyle = {
+        top: info.pos,
+        right: '0px',
+        width: `${radius}px`,
+        height: `${halfIconSize}px`,
+        transform: 'translateY(-50%)',
+        borderRadius: `${radius}px 0 0 ${radius}px`,
+        backgroundColor: `${iconColor}66`,
+        boxShadow: `inset 2px 0 4px rgba(0,0,0,0.4), -1px 0 2px rgba(0,0,0,0.3)`
+      };
+      iconStyle = {
+        fontSize: '12px',
+        transform: 'translateX(-1px)'
+      };
+    }
+
+    return (
+      <div
+        key={`half-${index}`}
+        className="absolute flex items-center justify-center z-10"
+        style={containerStyle}
+      >
+        <span style={iconStyle}>{iconSymbol}</span>
+      </div>
+    );
+  };
 
   return (
     <div 
@@ -121,7 +203,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
         className={clsx(
           "relative preserve-3d cursor-pointer transition-shadow rounded-lg",
           selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-10 shadow-lg",
-          disabled && "opacity-50 grayscale cursor-not-allowed"
+          disabled && "cursor-not-allowed"
         )}
         style={cardSize[size]}
         onClick={disabled ? undefined : onClick}
@@ -164,34 +246,6 @@ export const PlayerCardComponent: React.FC<Props> = ({
                 {card.isStar ? '★' : card.attack}
               </span>
             </div>
-
-            {/* 左边缘凹进去的半圆图标 */}
-            {card.iconPositions?.filter(ip => getHalfIconInfo(ip.position).side === 'left').map((iconPos, index) => {
-              const posInfo = getHalfIconInfo(iconPos.position);
-              return (
-                <div
-                  key={`left-indent-${index}`}
-                  className="absolute flex items-center justify-center"
-                  style={{
-                    top: posInfo.top,
-                    left: '0px',
-                    width: `${halfIconSize}px`,
-                    height: `${halfIconSize}px`,
-                    transform: 'translateY(-50%)',
-                  }}
-                >
-                  <div 
-                    className="w-full h-full rounded-r-full flex items-center justify-end pr-0.5"
-                    style={{
-                      backgroundColor: `${getIconColor(iconPos.type)}55`,
-                      boxShadow: `inset -2px 0 4px rgba(0,0,0,0.3)`
-                    }}
-                  >
-                    <span className="text-[8px]">{getIconSymbol(iconPos.type)}</span>
-                  </div>
-                </div>
-              );
-            })}
           </div>
 
           {/* 右边一半：信息区域 */}
@@ -239,35 +293,10 @@ export const PlayerCardComponent: React.FC<Props> = ({
                 />
               </div>
             )}
-
-            {/* 右边缘凹进去的半圆图标 */}
-            {card.iconPositions?.filter(ip => getHalfIconInfo(ip.position).side === 'right').map((iconPos, index) => {
-              const posInfo = getHalfIconInfo(iconPos.position);
-              return (
-                <div
-                  key={`right-indent-${index}`}
-                  className="absolute flex items-center justify-center"
-                  style={{
-                    top: posInfo.top,
-                    right: '0px',
-                    width: `${halfIconSize}px`,
-                    height: `${halfIconSize}px`,
-                    transform: 'translateY(-50%)',
-                  }}
-                >
-                  <div 
-                    className="w-full h-full rounded-l-full flex items-center justify-start pl-0.5"
-                    style={{
-                      backgroundColor: `${getIconColor(iconPos.type)}55`,
-                      boxShadow: `inset 2px 0 4px rgba(0,0,0,0.3)`
-                    }}
-                  >
-                    <span className="text-[8px]">{getIconSymbol(iconPos.type)}</span>
-                  </div>
-                </div>
-              );
-            })}
           </div>
+
+          {/* 半圆图标 - 分布在四边（凹进去的效果） */}
+          {card.iconPositions?.map((iconPos, index) => renderHalfIcon(iconPos, index))}
         </div>
 
         {/* Back Face */}

@@ -42,39 +42,55 @@ import {
   type GameAction,
 } from '../game/gameLogic';
 import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
-import { playSound } from '../utils/audio';
+import { useGameAudio } from '../hooks/useGameAudio';
+import { useCameraView } from '../hooks/useCameraView';
+import { useGameState } from '../hooks/useGameState';
+import { CameraControls } from './CameraControls';
+import { GameScene3D } from './GameScene3D';
 
 interface Props {
   onBack: () => void;
   playerTeam: { starters: PlayerCard[]; substitutes: PlayerCard[]; initialField?: any[] } | null;
+  renderMode?: '2d' | '3d';
 }
 
-export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
-  const [gameState, setGameState] = useState<GameState>(() => {
-    if (playerTeam) {
-      return createInitialState(playerTeam.starters, playerTeam.substitutes, playerTeam.initialField);
-    }
-    return createInitialState();
-  });
-  
-  const dispatch = useCallback((action: GameAction) => {
-    setGameState(prev => gameReducer(prev, action));
-  }, []);
+export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2d' }) => {
+  const { playSound, toggleAudioSetting, audioSettings, setAudioSettings } = useGameAudio();
+  const { 
+    gameState, 
+    setGameState, 
+    dispatch, 
+    gameRecorder,
+    handleSlotClick, 
+    handleAttack, 
+    handleSynergySelect, 
+    handleTeamAction, 
+    handleEndTurn, 
+    handleSubstituteSelect, 
+    handleBack, 
+    handleInstantShot, 
+    handlePenaltyComplete 
+  } = useGameState(playerTeam, playSound, onBack);
+
+  const { 
+    viewSettings, 
+    setViewSettings, 
+    autoScale,
+    setAutoScale, 
+    showViewControls, 
+    setShowViewControls, 
+    toggleCameraView 
+  } = useCameraView(gameState.isHomeTeam);
 
   const [lastPlacedCard, setLastPlacedCard] = useState<PlayerCard | null>(null);
   const [hoveredCard, setHoveredCard] = useState<PlayerCard | null>(null);
+  const [hoveredCardPosition, setHoveredCardPosition] = useState({ x: 0, y: 0 });
   const [hoverSoundPlayedForId, setHoverSoundPlayedForId] = useState<string | null>(null);
+  const [aiJustPlacedCard, setAiJustPlacedCard] = useState<PlayerCard | null>(null);
   const [showPhaseBanner, setShowPhaseBanner] = useState(false);
   const [phaseBannerText, setPhaseBannerText] = useState('');
-  const [phaseBannerSubtitle, setPhaseBannerSubtitle] = useState(''); // 新增
-  const gameRecorder = useRef(new GameRecorder());
-  const gameStarted = useRef(false);
-
-  if (!gameStarted.current) {
-    gameStarted.current = true;
-    gameRecorder.current = new GameRecorder();
-  }
-
+  const [phaseBannerSubtitle, setPhaseBannerSubtitle] = useState('');
+  
   const [aiTurnTriggered, setAiTurnTriggered] = useState(false);
   const [setupStep, setSetupStep] = useState(0); // 0: not started, 1: board, 2: control, 3: cards, 4: done
   const [tossResult, setTossResult] = useState<'home' | 'away' | null>(null);
@@ -140,11 +156,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     prevAiSynergyCount.current = gameState.aiSynergyHand.length;
   }, [gameState.playerHand.length, gameState.aiHand.length, gameState.playerSynergyHand.length, gameState.aiSynergyHand.length]);
   
-  // Audio Settings
-  const [audioSettings, setAudioSettings] = useState(() => {
-    return JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
-  });
-
   // Setup Animation Sequence Effects
   useEffect(() => {
     if (setupStep === 1) {
@@ -188,27 +199,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     prevSynergyHandSize.current = gameState.playerSynergyHand.length;
   }, [gameState.playerSynergyHand.length]);
 
-  const toggleAudioSetting = (key: 'bgm' | 'sfx') => {
-    const newSettings = { ...audioSettings, [key]: !audioSettings[key] };
-    setAudioSettings(newSettings);
-    localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
-    // Dispatch custom event for BackgroundMusic component in the same window
-    window.dispatchEvent(new Event('audioSettingsChanged'));
-    playSound('click');
-  };
-
-  // View Control State
-  const [viewSettings, setViewSettings] = useState({
-    pitch: 0,
-    rotation: 0,
-    zoom: 1.0,
-    height: 0
-  });
-  const [showViewControls, setShowViewControls] = useState(false);
-
   // Auto-scaling logic to fit screen
-  const [autoScale, setAutoScale] = useState(1);
-  const BASE_WIDTH = 2000; // Total width: 420 + 1000 + 500 + some padding
+  const BASE_WIDTH = 2000;
   const BASE_HEIGHT = 1200;
 
   useEffect(() => {
@@ -251,14 +243,10 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         setLastPhase(gameState.turnPhase);
     }
 
-    // Show banner when Game Phase changes (Halftime/Extra Time)
+    // Show banner when Game Phase changes (Halftime)
     if (gameState.phase === 'halfTime') {
         setPhaseBannerText('HALF TIME');
         setPhaseBannerSubtitle('Make Substitutions and Prepare for 2nd Half');
-        setShowPhaseBanner(true);
-    } else if (gameState.phase === 'extraTime') {
-        setPhaseBannerText('EXTRA TIME');
-        setPhaseBannerSubtitle('Sudden Death! Next Goal Wins!');
         setShowPhaseBanner(true);
     }
     
@@ -327,6 +315,28 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     }
   }, [gameState.currentTurn, gameState.turnPhase, gameState.phase, gameState.isDealing, dispatch]);
 
+  // Track AI newly placed cards for animation
+  const prevAIHandRef = useRef<string[]>([]);
+  useEffect(() => {
+    const currentAIHandIds = gameState.aiHand.map(c => c.id);
+    const prevAIHandIds = prevAIHandRef.current;
+    
+    if (prevAIHandIds.length > currentAIHandIds.length) {
+      const placedCardId = prevAIHandIds.find(id => !currentAIHandIds.includes(id));
+      if (placedCardId) {
+        const aiFieldCards = gameState.aiField.flatMap(z => z.slots.map(s => s.playerCard).filter(Boolean));
+        const placedCard = aiFieldCards.find(c => c?.id === placedCardId);
+        if (placedCard) {
+          setAiJustPlacedCard(placedCard);
+          playSound('flip');
+          setTimeout(() => setAiJustPlacedCard(null), 1500);
+        }
+      }
+    }
+    
+    prevAIHandRef.current = currentAIHandIds;
+  }, [gameState.aiHand, gameState.aiField]);
+
   const saveCurrentSnapshot = () => {
     const snapshot = {
       playerScore: gameState.playerScore,
@@ -347,77 +357,39 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
   const handleCardSelect = (card: PlayerCard) => {
     if (gameState.currentTurn !== 'player') return;
     if (!canPlaceCards) return;
-    playSound('draw'); // Changed from 'click' to 'draw'
+    playSound('draw');
     dispatch({ type: 'SELECT_PLAYER_CARD', card: gameState.selectedCard?.id === card.id ? null : card });
   };
 
-  const handleSlotClick = (zone: number, startCol: number) => {
-    if (!gameState.selectedCard || gameState.currentTurn !== 'player') return;
-    if (!canPlaceCards) {
-      if (gameState.turnPhase === 'teamAction') {
-        setGameState(prev => ({ ...prev, message: 'Must perform Team Action first!' }));
-        playSound('error');
-      }
-      return;
-    }
-    
-    const slotPosition = Math.floor(startCol / 2) + 1;
-    if (!canPlaceCardAtSlot(gameState.selectedCard, gameState.playerField, zone, slotPosition, gameState.isFirstTurn)) {
-      setGameState(prev => ({ ...prev, message: 'Cannot place card here!' }));
-      playSound('error');
-      return;
-    }
-
-    const card = gameState.selectedCard;
-    dispatch({ type: 'PLACE_CARD', card, zone, slot: startCol });
-    dispatch({ type: 'SELECT_PLAYER_CARD', card: null });
-    setLastPlacedCard(card);
-    playSound('flip');
-  };
-
-  const handleDragStart = (card: PlayerCard) => {
-    if (gameState.currentTurn !== 'player' || !canDoAction) return;
-    dispatch({ type: 'SELECT_PLAYER_CARD', card });
-    playSound('click');
-  };
-
-  const handleDragEnd = () => {
-    // No longer needed to manually clear if we use centralized state
-  };
-  
   const handleSynergyChoiceSelect = (keepIndex: number) => {
     dispatch({ type: 'SYNERGY_CHOICE_SELECT', index: keepIndex });
     playSound('draw');
   };
 
-  const handleHoverEnterCard = (card: PlayerCard) => {
+  const handleHoverEnterCard = (card: PlayerCard, event?: React.MouseEvent) => {
     setHoveredCard(card);
+    if (event) {
+      setHoveredCardPosition({ x: event.clientX, y: event.clientY });
+    }
     if (hoverSoundPlayedForId !== card.id) {
-      playSound('draw'); // Changed from 'click' to 'draw' for card hover/select
+      playSound('draw');
       setHoverSoundPlayedForId(card.id);
     }
   };
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (hoveredCard) {
+        setHoveredCardPosition({ x: e.clientX, y: e.clientY });
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [hoveredCard]);
+
   const handleHoverLeaveCard = () => {
     setHoveredCard(null);
     setHoverSoundPlayedForId(null);
-  };
-
-  const handleSubstituteSelect = (card: PlayerCard) => {
-    if (gameState.playerSubstitutionsLeft <= 0) return;
-    if (gameState.currentTurn !== 'player') return;
-    dispatch({ type: 'START_SUBSTITUTION', card });
-    playSound('click');
-  };
-
-  const handleSubstituteTarget = (outgoingCardId: string) => {
-    if (!gameState.substitutionMode) return;
-    dispatch({ 
-      type: 'SUBSTITUTE', 
-      incomingCardId: gameState.substitutionMode.incomingCard.id, 
-      outgoingCardId 
-    });
-    playSound('whistle');
   };
 
   const handleCancelSubstitution = () => {
@@ -427,13 +399,10 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
   const handleCoinTossComplete = useCallback(() => {
     if (tossResult) {
       dispatch({ type: 'COIN_TOSS', isHomeTeam: tossResult === 'home' });
-      // Don't clear tossResult immediately to avoid UI flash
-      // The modal will close because gameState.phase changes to 'draft'
       playSound('whistle');
     }
-  }, [tossResult, dispatch]);
+  }, [tossResult, dispatch, playSound]);
 
-  // Clear tossResult once we are no longer in coinToss phase
   useEffect(() => {
     if (gameState.phase !== 'coinToss' && tossResult !== null) {
       setTossResult(null);
@@ -446,7 +415,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
   };
 
   useEffect(() => {
-    // If we are in draft phase and just finished coin toss, play swap sound if away
     if (gameState.phase === 'draft' && !gameState.isHomeTeam) {
       playSound('swosh');
       const timer = setTimeout(() => {
@@ -454,58 +422,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
       }, 600);
       return () => clearTimeout(timer);
     }
-  }, [gameState.phase, gameState.isHomeTeam]);
-
-  const handlePenaltyComplete = (playerPoints: number, aiPoints: number) => {
-    dispatch({ type: 'PENALTY_COMPLETE', playerPoints, aiPoints });
-    playSound('whistle');
-  };
-
-  const handleSynergySelect = (card: SynergyCard) => {
-    if (gameState.currentTurn !== 'player') return;
-    const controlState = getControlState(gameState.controlPosition);
-    
-    // According to the rules, players can only select synergy cards during their turn phase
-    // if they have the control or as part of a shot attempt.
-    dispatch({ type: 'SELECT_SYNERGY_CARD', card });
-    playSound('click');
-  };
-
-  const handleTeamAction = useCallback((action: 'pass' | 'press') => {
-    dispatch({ type: 'TEAM_ACTION', action });
-    playSound('click');
-  }, [dispatch]);
-
-  const handleAttack = useCallback((zone: number, slot: number) => {
-    if (gameState.currentTurn !== 'player') return;
-    if (gameState.turnPhase !== 'playerAction') return;
-    
-    const attackerZone = gameState.playerField.find(z => z.zone === zone);
-    const attackerSlot = attackerZone?.slots.find(s => s.position === slot);
-    if (!attackerSlot || !attackerSlot.playerCard) return;
-    
-    const attacker = attackerSlot.playerCard;
-    if (!attacker.icons.includes('attack')) return;
-
-    const controlState = getControlState(gameState.controlPosition);
-    const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
-    
-    let synergyCards: SynergyCard[] = [];
-    
-    if (gameState.synergyDeck.length > 0) {
-      const firstCard = gameState.synergyDeck[0];
-      if (firstCard) {
-        synergyCards.push(firstCard);
-      }
-    }
-    
-    const additionalCards = gameState.selectedSynergyCards.slice(0, maxSynergyCards - 1);
-    synergyCards = [...synergyCards, ...additionalCards];
-
-    dispatch({ type: 'PERFORM_SHOT', zone, slot, synergyCards });
-    
-    // The sound will be played based on result in a useEffect or after dispatch
-  }, [gameState, dispatch]);
+  }, [gameState.phase, gameState.isHomeTeam, playSound]);
 
   useEffect(() => {
     if (gameState.pendingShot && gameState.turnPhase === 'end') {
@@ -519,13 +436,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
       }
     }
   }, [gameState.pendingShot, gameState.turnPhase]);
-
-  const handleEndTurn = useCallback(() => {
-    dispatch({ type: 'END_TURN' });
-    playSound('whistle');
-
-    // AI Turn handled by useEffect
-  }, [dispatch]);
 
   useEffect(() => {
     if (gameState.turnPhase === 'end' && !gameState.pendingPenalty) {
@@ -541,15 +451,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     playSound('whistle');
   };
 
-  const handleInstantShot = useCallback((zone: number, slot: number) => {
-    if (!gameState.instantShotMode) return;
-    
-    // Instant shot uses selected synergy cards
-    const synergyCards = [...gameState.selectedSynergyCards];
-    dispatch({ type: 'PERFORM_SHOT', zone, slot, synergyCards });
-    playSound('goal');
-  }, [gameState, dispatch]);
-
   const handleCancelInstantShot = () => {
     dispatch({ type: 'CANCEL_INSTANT_SHOT' });
   };
@@ -564,22 +465,10 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
     playSound('click');
   };
 
-  const handleBack = (isSurrender: boolean = false) => {
-    if (gameRecorder.current.getActions().length > 0) {
-      let winner: 'player' | 'ai' | 'draw' = gameState.playerScore > gameState.aiScore ? 'player' : 
-                     gameState.playerScore < gameState.aiScore ? 'ai' : 'draw';
-      
-      if (isSurrender) {
-        winner = 'ai'; // AI wins if player surrenders
-      }
-
-      const record = gameRecorder.current.endGame(winner, {
-        player: gameState.playerScore,
-        ai: gameState.aiScore,
-      });
-      saveGameRecord(record);
-    }
-    onBack();
+  const handleSubstituteTarget = (targetCardId: string) => {
+    if (!gameState.substitutionMode?.incomingCard) return;
+    dispatch({ type: 'SUBSTITUTE', outgoingCardId: targetCardId, incomingCardId: gameState.substitutionMode.incomingCard.id });
+    playSound('whistle');
   };
 
   const passCount = countIcons(gameState.playerField, 'pass');
@@ -607,7 +496,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
       <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
         <div 
-          className="relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center"
+          className={clsx("relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center", viewSettings.pitch === 0 ? "pointer-events-auto" : "pointer-events-none")}
           style={{
             width: `${BASE_WIDTH}px`,
             height: `${BASE_HEIGHT}px`,
@@ -662,24 +551,44 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                   onSubstituteSelect={handleSubstituteSelect}
                 />
 
-              <CenterField
-                playerField={gameState.playerField}
-                aiField={gameState.aiField}
-                selectedCard={gameState.selectedCard}
-                onSlotClick={handleSlotClick}
-                onAttackClick={handleAttack}
-                currentTurn={gameState.currentTurn}
-                turnPhase={gameState.turnPhase}
-                isFirstTurn={gameState.isFirstTurn}
-                lastPlacedCard={lastPlacedCard}
-                onCardMouseEnter={handleHoverEnterCard}
-                onCardMouseLeave={handleHoverLeaveCard}
-                          onInstantShotClick={handleInstantShot}
-                          instantShotMode={gameState.instantShotMode}
-                          currentAction={gameState.currentAction}
-                          setupStep={setupStep}
-                          rotation={viewSettings.rotation}
-                        />
+              {renderMode === '3d' ? (
+                <div className="flex-1 relative bg-black overflow-hidden">
+                  <GameScene3D
+                    playerField={gameState.playerField}
+                    aiField={gameState.aiField}
+                    selectedCard={gameState.selectedCard}
+                    onSlotClick={handleSlotClick}
+                    onCardMouseEnter={setHoveredCard}
+                    onCardMouseLeave={() => setHoveredCard(null)}
+                    currentTurn={gameState.currentTurn}
+                    turnPhase={gameState.turnPhase}
+                    isFirstTurn={gameState.isFirstTurn}
+                    currentAction={gameState.currentAction}
+                    viewSettings={viewSettings}
+                    isHomeTeam={gameState.isHomeTeam}
+                    onAttackClick={handleAttack}
+                  />
+                </div>
+              ) : (
+                <CenterField
+                  playerField={gameState.playerField}
+                  aiField={gameState.aiField}
+                  selectedCard={gameState.selectedCard}
+                  onSlotClick={handleSlotClick}
+                  onAttackClick={handleAttack}
+                  currentTurn={gameState.currentTurn}
+                  turnPhase={gameState.turnPhase}
+                  isFirstTurn={gameState.isFirstTurn}
+                  lastPlacedCard={lastPlacedCard}
+                  onCardMouseEnter={handleHoverEnterCard}
+                  onCardMouseLeave={handleHoverLeaveCard}
+                  onInstantShotClick={handleInstantShot}
+                  instantShotMode={gameState.instantShotMode}
+                  currentAction={gameState.currentAction}
+                  setupStep={setupStep}
+                  rotation={viewSettings.rotation}
+                />
+              )}
 
               <motion.div
                 initial={{ x: 200, opacity: 0 }}
@@ -703,8 +612,62 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         </div>
       </div>
 
+      {/* 2D Click Overlay for 3D perspective issues (only in 2D mode) */}
+      {renderMode === '2d' && viewSettings.pitch !== 0 && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
+        >
+          <div 
+            className="relative pointer-events-auto"
+            style={{
+              width: `${880 * autoScale}px`,
+              height: `${1040 * autoScale}px`,
+            }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              const col = Math.floor((x / rect.width) * 8);
+              const row = Math.floor((y / rect.height) * 4);
+              if (col >= 0 && col < 8 && row >= 0 && row < 4) {
+                const zone = row;
+                handleSlotClick(zone, col);
+              }
+            }}
+          >
+            {[0, 1, 2, 3].map(row => (
+              <div key={row} className="flex">
+                {[0, 1, 2, 3, 4, 5, 6, 7].map(col => {
+                  const zone = row;
+                  const slotIdx = Math.floor(col / 2);
+                  const slot = gameState.playerField[zone]?.slots.find(s => s.position === slotIdx + 1);
+                  const hasCard = slot?.playerCard;
+                  const isValidPlacement = gameState.selectedCard && 
+                    !hasCard && 
+                    canPlaceCardAtSlot(gameState.selectedCard, gameState.playerField, zone, slotIdx + 1, gameState.isFirstTurn);
+                  
+                  return (
+                    <div 
+                      key={col}
+                      className={clsx(
+                        "border border-white/10",
+                        isValidPlacement ? "bg-green-500/30 cursor-pointer" : "cursor-pointer"
+                      )}
+                      style={{
+                        width: `${110 * autoScale}px`,
+                        height: `${260 * autoScale}px`,
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Left Side Controls - Vertically Centered */}
-      <div className="fixed top-1/2 left-4 -translate-y-1/2 z-[60] flex flex-col gap-3 items-start pointer-events-none">
+      <div className="fixed top-1/2 left-4 -translate-y-1/2 z-[60] flex flex-col gap-3 items-center pointer-events-none">
         {/* 1. Exit/Surrender Button */}
         <button 
           data-testid="back-button"
@@ -718,7 +681,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
               handleBack();
             }
           }} 
-          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
+          className="w-36 bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
         >
           <span className="text-lg group-hover:-translate-x-1 transition-transform">⬅️</span>
           <span className="text-[10px] font-black tracking-widest text-white/90 uppercase">
@@ -727,12 +690,12 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         </button>
 
         {/* 2. Audio & BGM Player */}
-        <div className="flex flex-col gap-2 pointer-events-auto">
+        <div className="w-36 flex flex-col gap-2 pointer-events-auto">
            {/* SFX Quick Toggle */}
            <button
               onClick={() => toggleAudioSetting('sfx')}
               className={clsx(
-                "w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-stone-900/80 backdrop-blur-md border border-white/20 shadow-xl",
+                "w-full h-10 rounded-xl flex items-center justify-center transition-all bg-stone-900/80 backdrop-blur-md border border-white/20 shadow-xl",
                 audioSettings.sfx ? "text-blue-400 bg-white/10" : "text-white/20 hover:bg-white/5"
               )}
               title="Toggle Sound Effects"
@@ -747,13 +710,15 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         {/* 3. View Control Button */}
         <button 
           onClick={() => setShowViewControls(!showViewControls)}
-          className="bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-stone-700 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
+          className="w-36 bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-stone-700 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
           title="Camera Settings"
         >
           <span className="text-lg group-hover:scale-110 transition-transform">📷</span>
           <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">View</span>
         </button>
       </div>
+
+
 
       {/* Camera Controls Panel */}
       <AnimatePresence>
@@ -899,9 +864,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                     whileHover={{ 
                       scale: 1.5, 
                       rotate: 0, 
-                      zIndex: 100, 
-                      y: 0,
-                      x: 0 
+                      zIndex: 100
                     }}
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     className="relative origin-center w-48 h-28 shadow-xl"
@@ -912,8 +875,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                         size="medium" 
                         faceDown={false}
                         variant="away"
-                        onMouseEnter={() => handleHoverEnterCard(card)}
-                        onMouseLeave={handleHoverLeaveCard}
                      />
                   </motion.div>
                 ))}
@@ -947,9 +908,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                   whileHover={{ 
                     scale: 1.5, 
                     rotate: 0, 
-                    zIndex: 100,
-                    y: 0,
-                    x: 0
+                    zIndex: 100
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   className="relative origin-bottom cursor-pointer shadow-2xl"
@@ -958,13 +917,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
                   <PlayerCardComponent
                     card={card}
                     onClick={() => handleCardSelect(card)}
-                    onMouseEnter={() => handleHoverEnterCard(card)}
-                    onMouseLeave={handleHoverLeaveCard}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
                     selected={gameState.selectedCard?.id === card.id}
                     size="medium" 
-                    draggable={gameState.turnPhase === 'playerAction' || gameState.isFirstTurn}
                   />
                 </motion.div>
               ))}
@@ -1184,23 +1138,63 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
           >
-            <div className="bg-[#2a2a2a] p-6 rounded-2xl border border-gray-700 max-w-lg w-full">
-               <h3 className="text-xl font-['Russo_One'] text-white mb-4 text-center">Select Player to Swap Out</h3>
-               <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto mb-6">
-                 {gameState.playerField.flatMap(zone => 
-                   zone.slots.filter(slot => slot.playerCard).map(slot => (
-                     <div
-                       key={`${zone.zone}-${slot.position}`}
-                       onClick={() => handleSubstituteTarget(slot.playerCard!.id)}
-                       className="bg-[#333] hover:bg-[#444] p-3 rounded-lg cursor-pointer border border-[#444] transition-colors"
-                     >
-                       <div className="font-bold text-white">{slot.playerCard!.name}</div>
-                       <div className="text-xs text-gray-400">Zone {zone.zone} • Slot {slot.position}</div>
-                     </div>
-                   ))
-                 )}
+            <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/10 max-w-4xl w-full shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+               <h3 className="text-2xl font-['Russo_One'] text-white mb-8 text-center uppercase tracking-widest">Select Player to Swap Out</h3>
+               
+               <div className="mb-10">
+                  <div className="text-[10px] text-white/30 uppercase tracking-[0.3em] mb-4 px-2 font-black border-l-2 border-blue-500/50 ml-2">Players On Field</div>
+                  <div className="flex flex-wrap justify-center gap-x-6 gap-y-10 max-h-80 overflow-y-auto p-4 bg-black/20 rounded-2xl border border-white/5 custom-scrollbar">
+                    {gameState.playerField.flatMap(zone => 
+                      zone.slots.filter(slot => slot.playerCard).map(slot => (
+                        <div key={`${zone.zone}-${slot.position}`} className="relative group flex flex-col items-center">
+                          <motion.div 
+                            whileHover={{ scale: 1.1, y: -5 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleSubstituteTarget(slot.playerCard!.id)}
+                            className="cursor-pointer relative z-10"
+                          >
+                            <div className="absolute inset-0 bg-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
+                            <PlayerCardComponent card={slot.playerCard!} size="small" />
+                          </motion.div>
+                          <div className="mt-3 text-[9px] font-black text-white/40 uppercase tracking-tighter bg-white/5 px-2 py-0.5 rounded-full border border-white/5 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-all">
+                            Zone {zone.zone} • Slot {slot.position}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                </div>
-               <button onClick={handleCancelSubstitution} className="w-full py-3 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-lg">CANCEL</button>
+
+               {gameState.playerHand.length > 0 && (
+                 <div className="mb-10">
+                    <div className="text-[10px] text-white/30 uppercase tracking-[0.3em] mb-4 px-2 font-black border-l-2 border-green-500/50 ml-2">Players In Hand</div>
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-10 p-4 bg-black/20 rounded-2xl border border-white/5">
+                      {gameState.playerHand.map(card => (
+                        <div key={card.id} className="relative group flex flex-col items-center">
+                          <motion.div 
+                            whileHover={{ scale: 1.1, y: -5 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleSubstituteTarget(card.id)}
+                            className="cursor-pointer relative z-10"
+                          >
+                            <div className="absolute inset-0 bg-green-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
+                            <PlayerCardComponent card={card} size="small" />
+                          </motion.div>
+                          <div className="mt-3 text-[9px] font-black text-white/40 uppercase tracking-tighter bg-white/5 px-2 py-0.5 rounded-full border border-white/5 group-hover:text-green-400 group-hover:border-green-500/30 transition-all">
+                            In Hand
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                 </div>
+               )}
+
+               <button 
+                onClick={handleCancelSubstitution} 
+                className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white/50 hover:text-white font-['Russo_One'] rounded-xl border border-white/5 hover:border-white/20 transition-all uppercase tracking-[0.2em] text-xs"
+              >
+                Cancel Substitution
+              </button>
             </div>
           </motion.div>
         )}
@@ -1319,12 +1313,36 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
         }}
       />
 
+      {/* AI Card Play Notification */}
+      <AnimatePresence>
+        {aiJustPlacedCard && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed top-1/3 left-1/2 -translate-x-1/2 z-[150] pointer-events-none"
+          >
+            <div className="bg-gradient-to-r from-red-900/90 to-red-800/90 backdrop-blur-md border-2 border-red-500/50 rounded-xl px-6 py-4 shadow-2xl">
+              <div className="flex items-center gap-4">
+                <div className="text-3xl">🎴</div>
+                <div>
+                  <div className="text-red-300 text-xs font-bold tracking-wider">OPPONENT PLAYED</div>
+                  <div className="text-white text-lg font-black">{aiJustPlacedCard.name}</div>
+                  <div className="text-red-200 text-sm">{aiJustPlacedCard.positionLabel} - {aiJustPlacedCard.type}</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {gameState.phase === 'squadSelect' && (
         <SquadSelect
           allPlayers={[...gameState.playerHand, ...gameState.playerBench]}
           onConfirm={(starters, subs) => {
             dispatch({ type: 'FINISH_SQUAD_SELECT', starters, subs });
           }}
+          isHomeTeam={gameState.isHomeTeam}
         />
       )}
 
@@ -1342,7 +1360,43 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam }) => {
             playSound('draw');
           }}
           aiSelectedIndex={aiDraftSelectingIndex}
+          isHomeTeam={gameState.isHomeTeam}
         />
+
+      {/* Global Card Hover Preview */}
+      <AnimatePresence>
+        {hoveredCard && (
+          <motion.div
+            initial={{ opacity: 0, x: 20, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.8 }}
+            className="fixed z-[100] pointer-events-none"
+            style={{
+              left: hoveredCardPosition.x + 20,
+              top: hoveredCardPosition.y - 100,
+              maxWidth: '280px'
+            }}
+          >
+            <div className="relative">
+              {/* Glow effect */}
+               <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full" />
+               <PlayerCardComponent card={hoveredCard} size="large" faceDown={false} />
+               
+               {/* Status label */}
+              {gameState.aiBench.some(c => c.id === hoveredCard.id) && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-red-600 px-4 py-1 rounded-full text-white text-[10px] font-black uppercase tracking-widest border border-white/20 shadow-lg whitespace-nowrap">
+                  Opponent Substitute
+                </div>
+              )}
+              {gameState.playerBench.some(c => c.id === hoveredCard.id) && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-blue-600 px-4 py-1 rounded-full text-white text-[10px] font-black uppercase tracking-widest border border-white/20 shadow-lg whitespace-nowrap">
+                  Your Substitute
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -9,6 +9,7 @@ interface Props {
   isPlayerTurn: boolean;
   onSelect: (index: number) => void;
   aiSelectedIndex?: number | null;
+  isHomeTeam: boolean;
 }
 
 const StarCardDraft: React.FC<Props> = ({ 
@@ -16,7 +17,8 @@ const StarCardDraft: React.FC<Props> = ({
   round, 
   isPlayerTurn, 
   onSelect, 
-  aiSelectedIndex = null
+  aiSelectedIndex = null,
+  isHomeTeam
 }) => {
   if (cards.length === 0) return null;
 
@@ -34,6 +36,15 @@ const StarCardDraft: React.FC<Props> = ({
           className="bg-[#2a2a2a] rounded-2xl p-8 shadow-2xl border border-gray-700 max-w-5xl w-full"
         >
           <div className="text-center mb-10">
+            <div className="flex justify-center gap-4 mb-2">
+              <span className={`px-4 py-1 rounded-full text-xs font-black tracking-widest uppercase border ${
+                isHomeTeam 
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]' 
+                  : 'bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+              }`}>
+                {isHomeTeam ? '🏠 HOME TEAM' : '✈️ AWAY TEAM'}
+              </span>
+            </div>
             <div className="text-4xl font-bold text-yellow-400 mb-4 tracking-wider">
               ⭐ STAR CARD DRAFT - ROUND {round} ⭐
             </div>

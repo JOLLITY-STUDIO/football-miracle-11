@@ -1,5 +1,6 @@
 import React from 'react';
 import type { PlayerCard } from '../data/cards';
+import type { PlayerActionType } from '../game/gameLogic';
 import { GameField, COLS, ROWS } from './GameField';
 
 interface Props {
@@ -12,10 +13,11 @@ interface Props {
   turnPhase: string;
   isFirstTurn: boolean;
   lastPlacedCard: PlayerCard | null;
-  onCardMouseEnter: (card: PlayerCard) => void;
+  onCardMouseEnter: (card: PlayerCard, event?: React.MouseEvent) => void;
   onCardMouseLeave: () => void;
   onInstantShotClick?: (zone: number, slot: number) => void;
   instantShotMode?: any;
+  currentAction?: PlayerActionType;
   setupStep?: number;
   rotation?: number;
 }
@@ -45,7 +47,7 @@ export const CenterField: React.FC<Props> = ({
 
   return (
     <div 
-      className="relative bg-[#C62B1D] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-visible flex items-center justify-center flex-shrink-0 border-x border-white/10"
+      className="relative bg-[#C62B1D] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-visible flex items-center justify-center flex-shrink-0 border-x border-white/10 center-field-container"
       style={{ 
         width: `${PITCH_WIDTH + RED_PADDING * 2 + BORDER_THICKNESS * 2}px`,
         height: '100%' 

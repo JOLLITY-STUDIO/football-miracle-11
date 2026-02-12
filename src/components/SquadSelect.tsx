@@ -7,9 +7,10 @@ import { playSound } from '../utils/audio';
 interface Props {
   allPlayers: PlayerCard[];
   onConfirm: (starters: PlayerCard[], subs: PlayerCard[]) => void;
+  isHomeTeam: boolean;
 }
 
-const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm }) => {
+const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const sortedPlayers = useMemo(() => {
@@ -100,6 +101,15 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm }) => {
         >
           {/* Header */}
           <div className="relative z-10 flex flex-col items-center mb-4">
+            <div className="flex justify-center gap-4 mb-2">
+              <span className={`px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${
+                isHomeTeam 
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]' 
+                  : 'bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+              }`}>
+                {isHomeTeam ? '🏠 HOME TEAM' : '✈️ AWAY TEAM'}
+              </span>
+            </div>
             <motion.div 
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -135,9 +145,9 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm }) => {
               {sortedPlayers.map((card, index) => (
                 <motion.div
                   key={card.id}
-                  initial={{ opacity: 0, scale: 0.5, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ delay: index * 0.03, type: 'spring', damping: 15 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.floor(index / 7) * 0.1, duration: 0.4, ease: "easeOut" }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => toggleSelect(card)}

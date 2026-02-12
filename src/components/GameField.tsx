@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import type { FieldZone } from '../game/gameLogic';
+import type { FieldZone, PlayerActionType } from '../game/gameLogic';
 import { PlayerCardComponent } from './PlayerCard';
 import { TacticalConnections } from './TacticalConnections';
 import type { PlayerCard } from '../data/cards';
-import { getZoneName } from '../data/cards';
+import { canPlaceCardAtSlot } from '../data/cards';
 
 interface PlacedCard {
   card: PlayerCard;
@@ -25,11 +25,11 @@ interface Props {
   lastPlacedCard: PlayerCard | null;
   onDragStart?: (card: PlayerCard) => void;
   onDragEnd?: () => void;
-  onCardMouseEnter?: (card: PlayerCard) => void;
+  onCardMouseEnter?: (card: PlayerCard, event?: React.MouseEvent) => void;
   onCardMouseLeave?: () => void;
   onInstantShotClick?: (zone: number, slot: number) => void;
   instantShotMode?: any;
-  currentAction?: string | null;
+  currentAction?: PlayerActionType;
   setupStep?: number;
   rotation?: number;
 }
@@ -53,33 +53,6 @@ const getPlacedCards = (field: FieldZone[]): PlacedCard[] => {
   return placed;
 };
 
-// ... keep existing canPlaceAt function ...
-const canPlaceAt = (
-  card: PlayerCard,
-  zone: number,
-  startCol: number,
-  playerField: FieldZone[],
-  isFirstTurn: boolean,
-  placedCards: PlacedCard[]
-): boolean => {
-  if (!card.zones.includes(zone)) return false;
-
-  const normalizedCol = startCol % 2 === 0 ? startCol : startCol - 1;
-  if (normalizedCol < 0 || normalizedCol > COLS - 2) return false;
-
-  const slotPosition = Math.floor(normalizedCol / 2) + 1;
-
-  const occupied = placedCards.some(
-    p => p.zone === zone && (
-      (normalizedCol >= p.startCol && normalizedCol < p.startCol + 2) ||
-      (normalizedCol + 2 > p.startCol && normalizedCol + 2 <= p.startCol + 2)
-    )
-  );
-  if (occupied) return false;
-
-  return true;
-};
-
 export const GameField: React.FC<Props> = ({
   playerField,
   aiField,
@@ -96,17 +69,17 @@ export const GameField: React.FC<Props> = ({
   onCardMouseLeave,
   onInstantShotClick,
   instantShotMode,
+  currentAction,
   setupStep = 4,
   rotation = 0,
 }) => {
-  const [dragOverZone, setDragOverZone] = useState<number | null>(null);
-  const [dragOverCol, setDragOverCol] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const isRotated = rotation === 180;
 
   const canPlaceCards = (turnPhase === 'playerAction' || isFirstTurn) && currentTurn === 'player' && !currentAction;
-  const playerPlaced = getPlacedCards(playerField);
+    const canShowAttackButton = currentTurn === 'player' && !currentAction;
+    const playerPlaced = getPlacedCards(playerField);
   const aiPlaced = getPlacedCards(aiField);
 
   // Helper to render grid cells
@@ -140,10 +113,12 @@ export const GameField: React.FC<Props> = ({
             const row = zIdx; // 0 to 3
             
             const isZoneHighlight = selectedCard && selectedCard.zones.includes(zone.zone);
-            const isValidPlacement = selectedCard && canPlaceAt(selectedCard, zone.zone, colIdx, playerField, isFirstTurn, playerPlaced);
+            
+            const slotIdx = Math.floor(colIdx / 2);
+            const isValidPlacement = selectedCard && !isAi && 
+              canPlaceCardAtSlot(selectedCard, playerField, zone.zone, slotIdx + 1, isFirstTurn);
             
             // Determine if this cell is part of a slot (2 columns wide)
-            const slotIdx = Math.floor(colIdx / 2);
             const isSlotStart = colIdx % 2 === 0;
             
             // Find card in this slot
@@ -260,9 +235,9 @@ export const GameField: React.FC<Props> = ({
                         <PlayerCardComponent 
                           card={card} 
                           size="large"
-                          faceDown={false} // Field cards are always visible
-                          disabled={isAi} // AI cards are not interactive for player
-                          onMouseEnter={() => onCardMouseEnter?.(card)}
+                          faceDown={false}
+                          disabled={isAi}
+                          onMouseEnter={(e: React.MouseEvent) => onCardMouseEnter?.(card, e)}
                           onMouseLeave={() => onCardMouseLeave?.()}
                         />
 
@@ -294,7 +269,7 @@ export const GameField: React.FC<Props> = ({
                         )}
                         
                         {/* Attack Button Overlay */}
-                        {!isAi && canPlaceCards && card.icons.includes('attack') && (
+                        {!isAi && canShowAttackButton && card.icons.includes('attack') && (
                           <button
                             data-testid="shoot-button"
                             onClick={(e) => {

@@ -7,15 +7,17 @@ import { SquadSelection } from './SquadSelection';
 
 interface PreGameProps {
   onComplete: (playerStarters: PlayerCard[], playerSubs: PlayerCard[], initialField: any[]) => void;
+  onComplete3D: (playerStarters: PlayerCard[], playerSubs: PlayerCard[], initialField: any[]) => void;
   onBack: () => void;
 }
 
-type PreGamePhase = 'team-select' | 'star-draft' | 'squad-selection';
+type PreGamePhase = 'team-select' | 'star-draft' | 'squad-selection' | 'choose-renderer';
 
-export const PreGame: React.FC<PreGameProps> = ({ onComplete, onBack }) => {
+export const PreGame: React.FC<PreGameProps> = ({ onComplete, onComplete3D, onBack }) => {
   const [phase, setPhase] = useState<PreGamePhase>('team-select');
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [draftedStars, setDraftedStars] = useState<PlayerCard[]>([]);
+  const [finalSquad, setFinalSquad] = useState<{ starters: PlayerCard[]; substitutes: PlayerCard[]; field: any[] } | null>(null);
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
@@ -28,8 +30,35 @@ export const PreGame: React.FC<PreGameProps> = ({ onComplete, onBack }) => {
   };
 
   const handleSquadComplete = (starters: PlayerCard[], substitutes: PlayerCard[], field: any[]) => {
-    onComplete(starters, substitutes, field);
+    setFinalSquad({ starters, substitutes, field });
+    setPhase('choose-renderer');
   };
+
+  if (phase === 'choose-renderer' && finalSquad) {
+    return (
+      <div className="pre-game choose-renderer">
+        <div className="choose-renderer-container">
+          <h2>Choose Render Mode</h2>
+          <p>Select how you want to play the game</p>
+          <div className="renderer-options">
+            <div className="renderer-option" onClick={() => onComplete(finalSquad.starters, finalSquad.substitutes, finalSquad.field)}>
+              <div className="renderer-badge">2D</div>
+              <h3>Classic 2D</h3>
+              <p>CSS Transformations</p>
+              <p className="renderer-desc">Fast performance, simple UI</p>
+            </div>
+            <div className="renderer-option" onClick={() => onComplete3D(finalSquad.starters, finalSquad.substitutes, finalSquad.field)}>
+              <div className="renderer-badge">3D</div>
+              <h3>True 3D</h3>
+              <p>Three.js Rendering</p>
+              <p className="renderer-desc">Real 3D interaction, accurate clicks</p>
+            </div>
+          </div>
+          <button className="back-btn" onClick={() => setPhase('squad-selection')}>Back to Squad</button>
+        </div>
+      </div>
+    );
+  }
 
   if (phase === 'team-select') {
     return (

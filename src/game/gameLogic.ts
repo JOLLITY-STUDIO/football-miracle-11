@@ -1,5 +1,5 @@
 import type { PlayerCard, SynergyCard, TacticalIcon, ImmediateEffectType } from '../data/cards';
-import { playerCards, canPlaceCardInZone } from '../data/cards';
+import { playerCards, canPlaceCardAtSlot } from '../data/cards';
 import { getSynergyDeckFixed } from '../data/synergyConfig';
 
 export type ControlState = 'attack' | 'normal' | 'defense';
@@ -116,7 +116,8 @@ export const createInitialState = (
     ];
   }
 
-  const aiPlayers = [...playerCards.filter(c => c.unlocked && !c.isStar)].sort(() => Math.random() - 0.5);
+  const homeCards = playerCards.filter(c => !c.isStar && c.id.startsWith('H'));
+  const awayCards = playerCards.filter(c => !c.isStar && c.id.startsWith('A'));
 
   return {
     phase: 'setup',
@@ -127,9 +128,9 @@ export const createInitialState = (
     aiScore: 0,
     playerSubstitutionsLeft: 3,
     aiSubstitutionsLeft: 3,
-    isHomeTeam: false,
-    playerHand,
-    playerBench,
+    isHomeTeam: true, // Default to home for setup
+    playerHand: homeCards,
+    playerBench: [],
     playerSynergyHand: [],
     playerField,
     aiField: [
@@ -138,7 +139,7 @@ export const createInitialState = (
       { zone: 3, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
       { zone: 4, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
     ],
-    aiHand: aiPlayers.slice(0, 10),
+    aiHand: awayCards,
     aiBench: [],
     aiSynergyHand: [],
     synergyDeck: shuffledSynergy,
@@ -262,6 +263,18 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       const newState = { ...state };
       newState.playerHand = action.starters;
       newState.playerBench = action.subs;
+      
+      // Automatically select AI squad (10 starters, rest as subs)
+      // Prioritize star cards for starters
+      const sortedAIPlayers = [...state.aiHand].sort((a, b) => {
+        if (a.isStar && !b.isStar) return -1;
+        if (!a.isStar && b.isStar) return 1;
+        return 0;
+      });
+      
+      newState.aiHand = sortedAIPlayers.slice(0, 10);
+      newState.aiBench = sortedAIPlayers.slice(10);
+      
       newState.phase = 'firstHalf';
       // Rule: Skip team action on the first turn of the match
       newState.turnPhase = 'playerAction';
@@ -1190,8 +1203,16 @@ export const performAITurn = (state: GameState): GameState => {
   }
   
   if (newState.turnPhase === 'playerAction') {
-    const availableCards = newState.aiHand.filter(card => {
-      return newState.aiField.some(z => z.slots.some(s => !s.playerCard) && canPlaceCardInZone(card, z.zone));
+    const availablePlacements: { card: PlayerCard; zone: number; slot: number }[] = [];
+    
+    newState.aiHand.forEach(card => {
+      newState.aiField.forEach(z => {
+        z.slots.forEach(s => {
+          if (!s.playerCard && canPlaceCardAtSlot(card, newState.aiField, z.zone, s.position, newState.isFirstTurn)) {
+            availablePlacements.push({ card, zone: z.zone, slot: s.position });
+          }
+        });
+      });
     });
     
     const attackers: { zone: number; slot: number; card: PlayerCard }[] = [];
@@ -1203,15 +1224,11 @@ export const performAITurn = (state: GameState): GameState => {
       });
     });
     
-    if (availableCards.length > 0 && Math.random() > 0.3) {
-      const cardToPlace = availableCards[Math.floor(Math.random() * availableCards.length)]!;
-      const targetZone = newState.aiField.find(
-        z => z.slots.some(s => !s.playerCard) && canPlaceCardInZone(cardToPlace, z.zone)
-      );
-      const targetSlot = targetZone?.slots.find(s => !s.playerCard);
+    if (availablePlacements.length > 0 && Math.random() > 0.3) {
+      const placement = availablePlacements[Math.floor(Math.random() * availablePlacements.length)]!;
+      const cardToPlace = placement.card;
       
-      if (targetZone && targetSlot) {
-        newState = placeCard(newState, cardToPlace, targetZone.zone, targetSlot.position, false);
+      newState = placeCard(newState, cardToPlace, placement.zone, (placement.slot - 1) * 2, false);
         
         // Check for Immediate Shot Effect
         let shouldShoot = false;
@@ -1249,9 +1266,8 @@ export const performAITurn = (state: GameState): GameState => {
             aiSynergy.push(...fromHand);
           }
           
-          newState = performShot(newState, cardToPlace, targetZone.zone, targetSlot.position, aiSynergy, false, ignoreBaseDefense);
+          newState = performShot(newState, cardToPlace, placement.zone, placement.slot, aiSynergy, false, ignoreBaseDefense);
         }
-      }
     } else if (attackers.length > 0) {
       const attacker = attackers[Math.floor(Math.random() * attackers.length)]!;
       
@@ -1305,30 +1321,47 @@ export const substitutePlayer = (
   const newState = { ...state };
   const field = isPlayer ? [...newState.playerField] : [...newState.aiField];
   const bench = isPlayer ? [...newState.playerBench] : [...newState.aiBench];
+  const hand = isPlayer ? [...newState.playerHand] : [...newState.aiHand];
   
   const incomingCard = bench.find(c => c.id === incomingCardId);
   if (!incomingCard) return state;
   
+  let replaced = false;
+  // Try to replace on field
   for (const zone of field) {
     const slotIndex = zone.slots.findIndex(s => s.playerCard?.id === outgoingCardId);
     if (slotIndex >= 0) {
-      zone.slots[slotIndex]!.playerCard = incomingCard;
+      zone.slots[slotIndex] = { ...zone.slots[slotIndex], playerCard: incomingCard };
+      replaced = true;
       break;
     }
   }
   
+  // Try to replace in hand if not found on field
+  if (!replaced) {
+    const handIndex = hand.findIndex(c => c.id === outgoingCardId);
+    if (handIndex >= 0) {
+      hand[handIndex] = incomingCard;
+      replaced = true;
+    }
+  }
+
+  if (!replaced) return state;
+  
   const newBench = bench.filter(c => c.id !== incomingCardId);
   if (isPlayer) {
     newState.playerField = field;
+    newState.playerHand = hand;
     newState.playerBench = newBench;
     newState.playerSubstitutionsLeft -= 1;
   } else {
     newState.aiField = field;
+    newState.aiHand = hand;
     newState.aiBench = newBench;
     newState.aiSubstitutionsLeft -= 1;
   }
   
-  newState.message = `Substitution complete：${incomingCard.name} in`;
+  newState.message = `Substitution complete: ${incomingCard.name} in`;
   return newState;
 };
 

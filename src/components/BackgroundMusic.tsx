@@ -143,7 +143,7 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
     const startPlayback = async () => {
       if (currentTrack && audioRef.current && isBgmEnabled) {
         const base = import.meta.env.BASE_URL;
-        const trackPath = `${base}bgm/${currentTrack}`;
+        const trackPath = `${base}bgm/${encodeURIComponent(currentTrack)}`;
         audioRef.current.src = trackPath;
         audioRef.current.volume = volume;
         
@@ -192,11 +192,11 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
         if (!audioRef.current.src || audioRef.current.src === window.location.href) {
             // If no source is set yet, set it
             if (currentTrack) {
-                audioRef.current.src = `${base}bgm/${currentTrack}`;
+                audioRef.current.src = `${base}bgm/${encodeURIComponent(currentTrack)}`;
             } else if (PLAYLIST.length > 0) {
                 const track = pickRandomTrack();
                 setCurrentTrack(track);
-                audioRef.current.src = `${base}bgm/${track}`;
+                audioRef.current.src = `${base}bgm/${encodeURIComponent(track)}`;
             }
         }
         audioRef.current.play().catch(e => console.error("Play failed", e));

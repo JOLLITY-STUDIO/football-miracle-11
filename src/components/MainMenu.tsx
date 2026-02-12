@@ -2,12 +2,13 @@ import React from 'react';
 
 interface Props {
   onStartGame: () => void;
+  onStartGame3D: () => void;
   onStartAI: () => void;
   onViewRecords: () => void;
   onCardGuide: () => void;
 }
 
-export const MainMenu: React.FC<Props> = ({ onStartGame, onStartAI, onViewRecords, onCardGuide }) => {
+export const MainMenu: React.FC<Props> = ({ onStartGame, onStartGame3D, onStartAI, onViewRecords, onCardGuide }) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-400 to-green-600 flex flex-col items-center justify-center p-4">
       <div className="text-center mb-12">
@@ -22,8 +23,16 @@ export const MainMenu: React.FC<Props> = ({ onStartGame, onStartAI, onViewRecord
           onClick={onStartGame}
           className="btn btn-primary text-lg py-4"
         >
-          🎮 Quick Start
+          🎮 Quick Start (2D)
           <span className="block text-xs mt-1 opacity-70">Random Squad · Play Now</span>
+        </button>
+
+        <button
+          onClick={onStartGame3D}
+          className="btn bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-lg py-4 rounded-xl shadow-lg transition-all hover:scale-105"
+        >
+          🎲 Quick Start (3D)
+          <span className="block text-xs mt-1 opacity-70">Three.js · True 3D Interaction</span>
         </button>
         
         <button

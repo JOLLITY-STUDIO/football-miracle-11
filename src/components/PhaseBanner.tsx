@@ -11,7 +11,7 @@ interface Props {
 const PhaseBanner: React.FC<Props> = ({ text, subtitle, show, onComplete }) => {
   useEffect(() => {
     if (show && onComplete) {
-      const timer = setTimeout(onComplete, 2500);
+      const timer = setTimeout(onComplete, 2000);
       return () => clearTimeout(timer);
     }
   }, [show, onComplete]);

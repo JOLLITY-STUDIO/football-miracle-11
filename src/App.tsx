@@ -10,14 +10,23 @@ import type { GameRecord } from './game/gameRecorder';
 import type { PlayerCard } from './data/cards';
 
 type GameView = 'menu' | 'preGame' | 'game' | 'records' | 'replay' | 'cardGuide';
+type RenderMode = '2d' | '3d';
 
 function App() {
   const [currentView, setCurrentView] = useState<GameView>('menu');
   const [selectedRecord, setSelectedRecord] = useState<GameRecord | null>(null);
   const [playerTeam, setPlayerTeam] = useState<{ starters: PlayerCard[]; substitutes: PlayerCard[]; initialField?: any[] } | null>(null);
+  const [renderMode, setRenderMode] = useState<RenderMode>('2d');
 
   const handleQuickStart = () => {
     setPlayerTeam(null);
+    setRenderMode('2d');
+    setCurrentView('game');
+  };
+
+  const handleQuickStart3D = () => {
+    setPlayerTeam(null);
+    setRenderMode('3d');
     setCurrentView('game');
   };
 
@@ -27,6 +36,13 @@ function App() {
 
   const handleTeamComplete = (starters: PlayerCard[], substitutes: PlayerCard[], initialField: any[]) => {
     setPlayerTeam({ starters, substitutes, initialField });
+    setRenderMode('2d');
+    setCurrentView('game');
+  };
+
+  const handleTeamComplete3D = (starters: PlayerCard[], substitutes: PlayerCard[], initialField: any[]) => {
+    setPlayerTeam({ starters, substitutes, initialField });
+    setRenderMode('3d');
     setCurrentView('game');
   };
 
@@ -50,21 +66,22 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      {currentView !== 'game' && <BackgroundMusic />} {/* Global Music Player, hidden in game to use integrated one */}
+      {currentView !== 'game' && <BackgroundMusic />}
       <OrientationWarning />
       {currentView === 'menu' && (
         <MainMenu
           onStartGame={handleQuickStart}
+          onStartGame3D={handleQuickStart3D}
           onStartAI={handleStartAI}
           onViewRecords={handleViewRecords}
           onCardGuide={handleCardGuide}
         />
       )}
       {currentView === 'preGame' && (
-        <PreGame onComplete={handleTeamComplete} onBack={handleBackToMenu} />
+        <PreGame onComplete={handleTeamComplete} onComplete3D={handleTeamComplete3D} onBack={handleBackToMenu} />
       )}
       {currentView === 'game' && (
-        <GameBoard onBack={handleBackToMenu} playerTeam={playerTeam} />
+        <GameBoard onBack={handleBackToMenu} playerTeam={playerTeam} renderMode={renderMode} />
       )}
       {currentView === 'records' && (
         <GameRecordList

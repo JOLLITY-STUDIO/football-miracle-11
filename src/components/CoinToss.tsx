@@ -12,28 +12,26 @@ export const CoinToss: React.FC<Props> = ({ result, onComplete }) => {
   const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
-    // Play "ding" sound when toss starts
     playSound('ding');
 
     const timer1 = setTimeout(() => {
       setAnimationPhase('landed');
-      playSound('flip'); // Sound when landing
-    }, 2500);
+      playSound('flip');
+    }, 1200);
 
     const timer2 = setTimeout(() => {
       setAnimationPhase('result');
       setShowResult(true);
-      // Play result sound based on outcome
       if (result === 'home') {
         playSound('cheer');
       } else {
         playSound('swosh');
       }
-    }, 3000);
+    }, 1500);
 
     const timer3 = setTimeout(() => {
       onComplete();
-    }, 4500);
+    }, 2000);
 
     return () => {
       clearTimeout(timer1);
@@ -159,7 +157,7 @@ export const CoinToss: React.FC<Props> = ({ result, onComplete }) => {
 }
 
 .coin-spinning {
-  animation: coinSpin3D 2.5s ease-in-out forwards;
+  animation: coinSpin3D 1.2s ease-in-out forwards;
 }
 
 .coin-landed {
