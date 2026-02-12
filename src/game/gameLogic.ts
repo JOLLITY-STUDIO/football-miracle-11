@@ -356,7 +356,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newState.turnPhase = 'playerAction';
       newState.isFirstTurn = true;
       newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
-      newState.message = 'Match starts! First turn skips Team Action. Player Action now.';
+      newState.message = newState.isHomeTeam ? 'Your turn! Place a card.' : 'AI is thinking...';
+      // If AI starts, set aiActionStep to trigger AI actions
+      if (!newState.isHomeTeam) {
+        newState.aiActionStep = 'teamAction';
+      }
       newState.matchLogs = addLog(newState, `Match started!`);
       return newState;
     }

@@ -981,14 +981,14 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       {gameState.phase !== 'coinToss' && (
         <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 pointer-events-auto flex flex-col items-end gap-6">
           {/* Turn Information */}
-          <div className="text-right">
+          <div className="text-right min-w-[200px]">
               <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">TURN {gameState.turnCount}</div>
               <div className="text-2xl font-['Russo_One'] text-white drop-shadow-md mb-2 flex items-center justify-end gap-3">
                   {gameState.currentTurn === 'player' ? (
                     <span className="text-blue-400">YOUR TURN</span>
                   ) : (
                     <>
-                      <span className="text-red-400">OPP TURN</span>
+                      <span className="text-red-400">OPPONENT TURN</span>
                       {gameState.aiActionStep !== 'none' && (
                         <motion.div 
                           animate={{ opacity: [0.4, 1, 0.4] }}
@@ -1003,7 +1003,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                     </>
                   )}
               </div>
-              <div className="text-xs text-yellow-400 max-w-[150px] leading-tight ml-auto h-8 flex items-center justify-end">
+              <div className="text-xs text-yellow-400 max-w-[200px] leading-tight ml-auto h-8 flex items-center justify-end">
                 {gameState.message}
               </div>
           </div>
