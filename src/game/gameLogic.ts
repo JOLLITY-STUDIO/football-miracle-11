@@ -15,7 +15,7 @@ export type GamePhase =
 export type TurnPhase = 'teamAction' | 'playerAction' | 'shooting' | 'end';
 export type PlayerActionType = 'organizeAttack' | 'directAttack' | null;
 export type ShotResult = 'goal' | 'saved' | 'missed' | 'magicNumber';
-export type DuelPhase = 'none' | 'init' | 'reveal_attacker' | 'reveal_defender' | 'reveal_synergy' | 'reveal_skills' | 'result';
+export type DuelPhase = 'none' | 'init' | 'reveal_attacker' | 'reveal_defender' | 'reveal_synergy' | 'reveal_skills' | 'summary' | 'result';
 
 export interface FieldSlot {
   position: number;
@@ -259,7 +259,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'ADVANCE_DUEL': {
       if (state.duelPhase === 'none') return state;
-      const phases: DuelPhase[] = ['init', 'reveal_attacker', 'reveal_defender', 'reveal_synergy', 'reveal_skills', 'result'];
+      const phases: DuelPhase[] = ['init', 'reveal_attacker', 'reveal_defender', 'reveal_synergy', 'reveal_skills', 'summary', 'result'];
       const currentIndex = phases.indexOf(state.duelPhase);
       const nextPhase = phases[currentIndex + 1] || 'none';
       

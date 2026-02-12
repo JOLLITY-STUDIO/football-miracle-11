@@ -97,21 +97,19 @@ export const GameField: React.FC<Props> = ({
         style={{
           width: `${COLS * CELL_WIDTH}px`,
           height: `${ROWS * CELL_HEIGHT}px`,
+          zIndex: 100,
+          pointerEvents: 'auto'
         }}
       >
-        <svg
-          width={`${COLS * CELL_WIDTH}`}
-          height={`${ROWS * CELL_HEIGHT}`}
+        {/* Interactive Layer - HTML divs for reliable click detection */}
+        <div
+          className="absolute top-0 left-0 w-full h-full z-10 pointer-events-auto"
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            transformStyle: 'preserve-3d'
+            display: 'grid',
+            gridTemplateColumns: `repeat(${COLS}, ${CELL_WIDTH}px)`,
+            gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`
           }}
         >
-          {/* Zones & Slots */}
           {fieldData.map((zone, zIdx) => {
             const row = zIdx; // 0 to 3
             
@@ -131,48 +129,98 @@ export const GameField: React.FC<Props> = ({
                   const slot = zone.slots.find(s => s.position === slotIdx + 1);
                   const card = slot?.playerCard;
 
-                  // Interactive Cell
-                  const isShootingZone = row === 0 && colIdx > 0 && colIdx < 7;
-                  const isDefenseZone = row === 3 && colIdx > 0 && colIdx < 7;
+                  return (
+                    <div
+                      key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isAi && isValidPlacement) {
+                          console.log('Click at zone:', zone.zone, 'col:', colIdx);
+                          onSlotClick(zone.zone, colIdx);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: !isAi && isValidPlacement 
+                          ? 'rgba(34, 197, 94, 0.6)' // More vibrant green
+                          : (!isAi && selectedCard && !isValidPlacement && isZoneHighlight 
+                              ? 'rgba(239, 68, 68, 0.5)' 
+                              : ((row + slotIdx) % 2 === 0 ? 'rgba(46, 125, 50, 0.4)' : 'rgba(27, 94, 32, 0.4)')),
+                        border: !isAi && isValidPlacement 
+                          ? '2px solid #22c55e' 
+                          : '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '8px',
+                        cursor: !isAi && isValidPlacement ? 'pointer' : 'default',
+                        position: 'relative',
+                        zIndex: 10
+                      }}
+                    >
+                      {/* Slot Marker Icon (if empty) */}
+                      {isSlotStart && !card && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: 'rgba(255,255,255,0.1)',
+                            fontSize: '24px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          +
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* SVG 3D Visual Layer - for 3D effects only */}
+        <svg
+          width={`${COLS * CELL_WIDTH}`}
+          height={`${ROWS * CELL_HEIGHT}`}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            transformStyle: 'preserve-3d',
+            zIndex: 5,
+            pointerEvents: 'none'
+          }}
+        >
+          {/* Zones & Slots - Visual only */}
+          {fieldData.map((zone, zIdx) => {
+            const row = zIdx; // 0 to 3
+            
+            return (
+              <React.Fragment key={`svg-zone-${zone.zone}`}>
+                {Array.from({ length: COLS }).map((_, colIdx) => {
+                  const slotIdx = Math.floor(colIdx / 2);
+                  const isSlotStart = colIdx % 2 === 0;
                   
                   // Calculate cell position
                   const cellX = colIdx * CELL_WIDTH;
                   const cellY = row * CELL_HEIGHT;
 
                   return (
-                    <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
-                      {/* Cell Background */}
+                    <g key={`svg-${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
+                      {/* Cell Background - Visual only */}
                       <rect
                         x={cellX}
                         y={cellY}
                         width={CELL_WIDTH}
                         height={CELL_HEIGHT}
-                        fill={!isAi && isValidPlacement 
-                          ? 'rgba(34, 197, 94, 0.6)' // More vibrant green
-                          : (!isAi && selectedCard && !isValidPlacement && isZoneHighlight 
-                              ? 'rgba(239, 68, 68, 0.5)' 
-                              : ((row + slotIdx) % 2 === 0 ? 'rgba(46, 125, 50, 0.4)' : 'rgba(27, 94, 32, 0.4)'))}
-                        stroke={!isAi && isValidPlacement ? '#22c55e' : 'rgba(255,255,255,0.2)'} 
-                        strokeWidth={!isAi && isValidPlacement ? '2' : '1'}
+                        fill="transparent"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth="1"
                         rx="8"
                         ry="8"
-                        onClick={() => !isAi && isValidPlacement && onSlotClick(zone.zone, colIdx)}
-                        style={{ cursor: !isAi && isValidPlacement ? 'pointer' : 'default' }}
                       />
-                      
-                      {/* Slot Marker Icon (if empty) */}
-                      {isSlotStart && !card && (
-                        <text
-                          x={cellX + CELL_WIDTH / 2}
-                          y={cellY + CELL_HEIGHT / 2 + 5}
-                          textAnchor="middle"
-                          fill="rgba(255,255,255,0.1)"
-                          fontSize="24"
-                          fontWeight="bold"
-                        >
-                          +
-                        </text>
-                      )}
                     </g>
                   );
                 })}
@@ -185,7 +233,8 @@ export const GameField: React.FC<Props> = ({
         <div 
           className="relative w-full h-full"
           style={{
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            zIndex: 15
           }}
         >
           {fieldData.map((zone, zIdx) => {
@@ -216,7 +265,8 @@ export const GameField: React.FC<Props> = ({
                           top: `${cellY}px`,
                           transform: isAi ? 'rotateX(-20deg) rotate(180deg) translateZ(1px)' : 'rotateX(-20deg) translateZ(1px)',
                           transformOrigin: 'center center',
-                          filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))'
+                          filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
+                          zIndex: 20
                         }}
                       >
                          <motion.div
@@ -294,6 +344,9 @@ export const GameField: React.FC<Props> = ({
                                 }}
                                 className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-2 h-8 bg-red-600 hover:bg-red-500 text-white rounded-full shadow-[0_0_10px_rgba(220,38,38,0.8)] border-2 border-white z-20 animate-bounce flex items-center justify-center gap-1 overflow-hidden"
                                 title={`射门 (基础攻击力:${card.icons.filter(i => i === 'attack').length}${slot.shotMarkers > 0 ? ` -${slot.shotMarkers} = ${Math.max(0, card.icons.filter(i => i === 'attack').length - slot.shotMarkers)}` : ''})`}
+                                style={{
+                                  zIndex: 30
+                                }}
                               >
                                 <span className="text-lg filter drop-shadow-md">⚽</span>
                                 <span className="text-xs font-bold">
