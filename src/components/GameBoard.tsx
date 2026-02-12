@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { createInitialState } from '../game/gameLogic';
-import type { GameState } from '../game/gameLogic';
 import { canPlaceCardAtSlot, getImmediateEffectDescription, getIconDisplay } from '../data/cards';
 import type { PlayerCard, SynergyCard } from '../data/cards';
 import { GameField } from './GameField';
@@ -24,27 +23,15 @@ import { CardDealer } from './CardDealer';
 import { DuelOverlay } from './DuelOverlay';
 import { MatchLog } from './MatchLog';
 import { 
-  placeCard, 
-  performAITurn, 
-  performTeamAction, 
+  gameReducer, 
+  type GameState, 
+  type GameAction
+} from '../game/gameLogic';
+import { 
   getControlState, 
   countIcons,
-  getMaxSynergyCardsForAttack,
-  performShot,
-  resolveSynergyChoice,
-  applyImmediateEffect,
-  drawTwoSynergyCardsForChoice,
-  substitutePlayer,
-  resolvePenaltyKick,
-  aiPickDraftCard,
-  startDraftRound,
-  pickDraftCard,
-  stealSynergyCard,
-  startSecondHalf,
-  gameReducer,
-  type GameAction,
-  type DuelPhase,
-} from '../game/gameLogic';
+  getMaxSynergyCardsForAttack
+} from '../utils/gameUtils';
 import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
 import { useGameAudio } from '../hooks/useGameAudio';
 import { useCameraView } from '../hooks/useCameraView';
@@ -662,24 +649,48 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                 {[0, 1, 2, 3, 4, 5, 6, 7].map(col => {
                   const zone = row;
                   const slotIdx = Math.floor(col / 2);
-                  const slot = gameState.playerField[zone]?.slots.find(s => s.position === slotIdx + 1);
+                  const slot = gameState.playerField[zone]?.slots.find(s => s.position === slotIdx);
                   const hasCard = slot?.playerCard;
                   const isValidPlacement = gameState.selectedCard && 
                     !hasCard && 
-                    canPlaceCardAtSlot(gameState.selectedCard, gameState.playerField, zone, slotIdx + 1, gameState.isFirstTurn);
+                    canPlaceCardAtSlot(gameState.selectedCard, gameState.playerField, zone, slotIdx, gameState.isFirstTurn);
+                  
+                  const showFixedIcon = !hasCard && (
+                    (zone === 0 && col > 0 && col < 7) || 
+                    (zone === 3 && col > 0 && col < 7)
+                  );
+                  const fixedIconType = zone === 0 ? 'attack' : 'defense';
                   
                   return (
                     <div 
                       key={col}
                       className={clsx(
-                        "border border-white/10",
+                        "border border-white/10 relative",
                         isValidPlacement ? "bg-green-500/30 cursor-pointer" : "cursor-pointer"
                       )}
                       style={{
                         width: `${110 * autoScale}px`,
                         height: `${260 * autoScale}px`,
                       }}
-                    />
+                    >
+                      {showFixedIcon && (
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center opacity-20"
+                          style={{ zIndex: 0 }}
+                        >
+                          <img 
+                            src={getIconDisplay(fixedIconType).image} 
+                            alt={fixedIconType}
+                            style={{ 
+                              width: '40px', 
+                              height: '40px', 
+                              objectFit: 'contain',
+                              filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))'
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -1404,8 +1415,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           defender={gameState.pendingShot.defender}
           attackSynergy={gameState.pendingShot.attackSynergy}
           defenseSynergy={gameState.pendingShot.defenseSynergy}
-          attackPower={gameState.pendingShot.attackPower}
-          defensePower={gameState.pendingShot.defensePower}
+          attackPower={gameState.pendingShot.attackerPower}
+          defensePower={gameState.pendingShot.defenderPower}
           result={gameState.pendingShot.result}
           activatedSkills={gameState.pendingShot.activatedSkills}
           onAdvance={() => dispatch({ type: 'ADVANCE_DUEL' })}
@@ -1456,7 +1467,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
         )}
       </AnimatePresence>
 
-      {gameState.phase === 'squadSelect' && (
+      {gameState.phase === 'squadSelection' && (
         <SquadSelect
           allPlayers={[...gameState.playerHand, ...gameState.playerBench]}
           onConfirm={(starters, subs) => {

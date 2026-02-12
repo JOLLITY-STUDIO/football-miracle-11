@@ -1,6 +1,6 @@
 import React from 'react';
-import type { FieldZone } from '../game/gameLogic';
-import { countIcons } from '../game/gameLogic';
+import type { FieldZone } from '../types/game';
+import { countIcons } from '../utils/gameUtils';
 
 interface TacticalInfoProps {
   playerField: FieldZone[];

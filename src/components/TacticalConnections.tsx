@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldZone } from '../game/gameLogic';
+import type { FieldZone } from '../types/game';
 import type { TacticalIcon } from '../data/cards';
 import { getIconDisplay } from '../data/cards';
 

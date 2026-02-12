@@ -169,14 +169,14 @@ export function getImmediateEffectDescription(effect: ImmediateEffectType): stri
   }
 }
 
-export function getIconDisplay(icon: TacticalIcon): { symbol: string; color: string } {
+export function getIconDisplay(icon: TacticalIcon): { symbol: string; color: string; image: string } {
   switch (icon) {
-    case 'attack': return { symbol: '⚔', color: '#E53935' };
-    case 'defense': return { symbol: '🛡', color: '#1E88E5' };
-    case 'pass': return { symbol: '↔', color: '#43A047' };
-    case 'press': return { symbol: '↑', color: '#FB8C00' };
-    case 'breakthrough': return { symbol: '💨', color: '#9C27B0' };
-    case 'breakthroughAll': return { symbol: '💥', color: '#E91E63' };
+    case 'attack': return { symbol: '⚔', color: '#E53935', image: '/icons/attack_ball.svg' };
+    case 'defense': return { symbol: '🛡', color: '#1E88E5', image: '/icons/defense_shield.svg' };
+    case 'pass': return { symbol: '↔', color: '#43A047', image: '/icons/pass.svg' };
+    case 'press': return { symbol: '↑', color: '#FB8C00', image: '/icons/press.svg' };
+    case 'breakthrough': return { symbol: '💨', color: '#9C27B0', image: '/icons/breakthrough.svg' };
+    case 'breakthroughAll': return { symbol: '💥', color: '#E91E63', image: '/icons/breakthroughAll.svg' };
   }
 }
 

@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import type { FieldZone, PlayerActionType } from '../game/gameLogic';
+import type { FieldZone, PlayerActionType } from '../types/game';
 import { PlayerCardComponent } from './PlayerCard';
 import { TacticalConnections } from './TacticalConnections';
 import type { PlayerCard } from '../data/cards';
-import { canPlaceCardAtSlot } from '../data/cards';
+import { canPlaceCardAtSlot, getIconDisplay } from '../data/cards';
 
 interface PlacedCard {
   card: PlayerCard;
@@ -200,16 +200,50 @@ export const GameField: React.FC<Props> = ({
                       
                       {/* Slot Marker Icon (if empty) */}
                       {!card && (
-                        <text
-                          x={x}
-                          y={y + 5}
-                          textAnchor="middle"
-                          fill="rgba(255,255,255,0.1)"
-                          fontSize="24"
-                          fontWeight="bold"
-                        >
-                          +
-                        </text>
+                        <>
+                          <text
+                            x={x}
+                            y={y + 5}
+                            textAnchor="middle"
+                            fill="rgba(255,255,255,0.1)"
+                            fontSize="24"
+                            fontWeight="bold"
+                          >
+                            +
+                          </text>
+                          {/* Fixed Tactical Icons on Field */}
+                          {((row === 0 || row === 3) && colIdx > 0 && colIdx < 7) && (
+                            <foreignObject
+                              x={x - 20}
+                              y={y - 20}
+                              width={40}
+                              height={40}
+                              style={{ pointerEvents: 'none' }}
+                            >
+                              <div
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  opacity: 0.2
+                                }}
+                              >
+                                <img
+                                  src={getIconDisplay(row === 0 ? 'attack' : 'defense').image}
+                                  alt={row === 0 ? 'attack' : 'defense'}
+                                  style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    objectFit: 'contain',
+                                    filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))'
+                                  }}
+                                />
+                              </div>
+                            </foreignObject>
+                          )}
+                        </>
                       )}
                     </g>
                   );
@@ -420,11 +454,47 @@ export const GameField: React.FC<Props> = ({
 
       {/* Top Field (Opponent if normal, Player if rotated) */}
       <div className={clsx("flex-1 min-h-0 relative", isRotated ? "" : "rotate-180")}>
+        <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col items-center justify-center gap-0 z-30 pointer-events-none">
+          {[
+            { pos: 'DF', color: 'text-blue-400' },
+            { pos: 'MF', color: 'text-emerald-400' },
+            { pos: 'MF', color: 'text-emerald-400' },
+            { pos: 'FW', color: 'text-red-400' }
+          ].map((item, idx) => (
+            <div
+              key={`top-pos-${idx}`}
+              className="w-full h-[130px] flex items-center justify-center"
+              style={{ height: `${CELL_HEIGHT}px` }}
+            >
+              <span className={`${item.color} text-sm font-black tracking-wider uppercase`}>
+                {item.pos}
+              </span>
+            </div>
+          ))}
+        </div>
         {renderGrid(!isRotated)}
       </div>
 
       {/* Bottom Field (Player if normal, Opponent if rotated) */}
       <div className={clsx("flex-1 min-h-0 relative", isRotated ? "rotate-180" : "")}>
+        <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col items-center justify-center gap-0 z-30 pointer-events-none">
+          {[
+            { pos: 'FW', color: 'text-red-400' },
+            { pos: 'MF', color: 'text-emerald-400' },
+            { pos: 'MF', color: 'text-emerald-400' },
+            { pos: 'DF', color: 'text-blue-400' }
+          ].map((item, idx) => (
+            <div
+              key={`bottom-pos-${idx}`}
+              className="w-full h-[130px] flex items-center justify-center"
+              style={{ height: `${CELL_HEIGHT}px` }}
+            >
+              <span className={`${item.color} text-sm font-black tracking-wider uppercase`}>
+                {item.pos}
+              </span>
+            </div>
+          ))}
+        </div>
         {renderGrid(isRotated)}
       </div>
     </div>

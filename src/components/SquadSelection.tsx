@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { PlayerCard } from '../data/cards';
 import type { Team } from '../data/teams';
-import type { FieldZone } from '../game/gameLogic';
+import type { FieldZone } from '../types/game';
 
 interface SquadSelectionProps {
   team: Team;

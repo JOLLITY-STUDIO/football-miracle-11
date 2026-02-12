@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard, SynergyCard, ShotResult, DuelPhase } from '../game/gameLogic';
 import { PlayerCardComponent } from './PlayerCard';
 import { SynergyCardComponent } from './SynergyCard';
+import ShotIconSelector from './ShotIconSelector';
+import AnimatedCounter from './AnimatedCounter';
 import clsx from 'clsx';
 
 interface DuelOverlayProps {
@@ -43,12 +45,32 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
   const [displayDefensePower, setDisplayDefensePower] = useState(0);
   const [selectedShotIcon, setSelectedShotIcon] = useState<number | null>(null);
 
-  // Handle shot icon selection
+  // Enhanced shot icon selection with better visual feedback
+  const [isAIThinking, setIsAIThinking] = useState(false);
+  
+  // Screen shake effect for high-impact moments
+  const [shouldShake, setShouldShake] = useState(false);
+  
+  // Countdown progress bar state
+  const [progress, setProgress] = useState(100);
+  
   const handleShotIconConfirm = () => {
     if (selectedShotIcon !== null && onShotIconSelect) {
       onShotIconSelect(selectedShotIcon);
       setSelectedShotIcon(null);
     }
+  };
+
+  // Create enhanced shot icon data for the selector
+  const getShotIcons = () => {
+    const icons: any[] = (attacker as any).iconPositions || [];
+    return icons.map((iconPos: any, index: number) => ({
+      index,
+      type: iconPos.type,
+      isUsed: attackerUsedShotIcons?.includes(index) || false,
+      isSelected: selectedShotIcon === index,
+      isAvailable: iconPos.type === 'attack' && !attackerUsedShotIcons?.includes(index)
+    }));
   };
 
   // Auto-advance logic
@@ -67,25 +89,45 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
         'result': 0              // Wait for manual click
       };
       
+      const delay = delays[duelPhase] || 1500;
+      
+      // Reset progress and start countdown
+      setProgress(100);
+      const interval = setInterval(() => {
+        setProgress(prev => Math.max(0, prev - (100 / (delay / 50))));
+      }, 50);
+      
       const timer = setTimeout(() => {
         onAdvance();
-      }, delays[duelPhase] || 1500);
+      }, delay);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearInterval(interval);
+      };
     }
   }, [duelPhase, onAdvance]);
 
-  // AI auto-select shot icon with visible delay
+  // AI auto-select shot icon with visible delay and thinking state
   useEffect(() => {
     if (duelPhase === 'select_shot_icon' && !isPlayerAttacking && onShotIconSelect) {
+      setIsAIThinking(true);
       const allAttackIndices: number[] = ((attacker as any).iconPositions || [])
         .map((p: any, idx: number) => (p.type === 'attack' ? idx : -1))
         .filter((idx: number) => idx >= 0);
       const available = allAttackIndices.filter(idx => !(attackerUsedShotIcons || []).includes(idx));
       const choice = available[0] ?? null;
       if (choice !== null) {
-        const t = setTimeout(() => onShotIconSelect(choice), 1200);
-        return () => clearTimeout(t);
+        const t = setTimeout(() => {
+          setIsAIThinking(false);
+          onShotIconSelect(choice);
+        }, 1200);
+        return () => {
+          clearTimeout(t);
+          setIsAIThinking(false);
+        };
+      } else {
+        setIsAIThinking(false);
       }
     }
   }, [duelPhase, isPlayerAttacking, onShotIconSelect, attacker, attackerUsedShotIcons]);
@@ -127,6 +169,19 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
     }
   }, [duelPhase, attacker, defender, attackSynergy, defenseSynergy, attackPower, defensePower, activatedSkills]);
 
+  // Trigger screen shake on high-impact moments
+  useEffect(() => {
+    if (duelPhase === 'reveal_synergy') {
+      setShouldShake(true);
+      const timer = setTimeout(() => setShouldShake(false), 500);
+      return () => clearTimeout(timer);
+    } else if (duelPhase === 'result') {
+      setShouldShake(true);
+      const timer = setTimeout(() => setShouldShake(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [duelPhase]);
+
   if (duelPhase === 'none') return null;
 
   const getPhaseInfo = () => {
@@ -134,8 +189,9 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
       case 'init': return { stage: 'Stage 1: Preparation', step: 'Step 1.1: Initialization', desc: 'Attacker and Defender meet for a decisive moment.' };
       case 'reveal_attacker': return { stage: 'Stage 2: Base Power', step: 'Step 2.1: Attacker Base', desc: 'Calculating the striker\'s fundamental power.' };
       case 'reveal_defender': return { stage: 'Stage 2: Base Power', step: 'Step 2.2: Defender Base', desc: 'Measuring the wall\'s initial resistance.' };
-      case 'reveal_synergy': return { stage: 'Stage 3: Buffs', step: 'Step 3.1: Synergy Reveal', desc: 'Revealing face-down synergy cards for both teams.' };
-      case 'reveal_skills': return { stage: 'Stage 3: Buffs', step: 'Step 3.2: Skill Activation', desc: 'Special player abilities and mental triggers!' };
+      case 'defender_synergy_selection': return { stage: 'Stage 3: Buffs', step: 'Step 3.1: Defender Synergy Selection', desc: 'Defender chooses synergy cards to counter the attack.' };
+      case 'reveal_synergy': return { stage: 'Stage 3: Buffs', step: 'Step 3.2: Synergy Reveal', desc: 'Revealing face-down synergy cards for both teams.' };
+      case 'reveal_skills': return { stage: 'Stage 3: Buffs', step: 'Step 3.3: Skill Activation', desc: 'Special player abilities and mental triggers!' };
       case 'summary': return { stage: 'Stage 4: Conclusion', step: 'Step 4.1: Final Comparison', desc: 'Total forces compared. Who will prevail?' };
       case 'result': return { stage: 'Stage 4: Conclusion', step: 'Step 4.2: Final Outcome', desc: 'The dust settles. The whistle blows.' };
       default: return { stage: '', step: '', desc: '' };
@@ -145,7 +201,14 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
   const phaseInfo = getPhaseInfo();
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-xl overflow-hidden">
+    <motion.div 
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-xl overflow-hidden"
+      animate={shouldShake ? {
+        x: [0, -5, 5, -5, 5, -3, 3, 0],
+        y: [0, -5, 5, -5, 5, -3, 3, 0]
+      } : {}}
+      transition={{ duration: 0.5 }}
+    >
       {/* Background Particles/Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <motion.div 
@@ -157,6 +220,27 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
           className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-blue-500/20 via-transparent to-red-500/20 rounded-full blur-[120px]" 
         />
       </div>
+
+      {/* Heartbeat Animation - Pulsing Background */}
+      {duelPhase !== 'none' && duelPhase !== 'result' && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          animate={{
+            opacity: [0.1, 0.3, 0.1],
+            scale: [1, 1.05, 1]
+          }}
+          transition={{
+            duration: duelPhase === 'reveal_synergy' ? 0.8 : 
+                      duelPhase === 'reveal_skills' ? 0.6 : 
+                      duelPhase === 'summary' ? 0.4 : 1.2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          style={{
+            background: `radial-gradient(circle at center, ${duelPhase === 'reveal_synergy' || duelPhase === 'reveal_skills' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.2)'} 0%, transparent 70%)`
+          }}
+        />
+      )}
 
       <div className="relative w-full h-full max-w-7xl flex flex-col items-center justify-center">
         
@@ -173,6 +257,25 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
           </div>
           <div className="text-5xl font-black tracking-tighter text-white uppercase italic drop-shadow-2xl">{phaseInfo.step}</div>
           <div className="text-white/50 text-xs font-bold tracking-[0.2em] mt-1 uppercase">{phaseInfo.desc}</div>
+          
+          {/* Countdown Progress Bar */}
+          {duelPhase !== 'none' && duelPhase !== 'result' && duelPhase !== 'select_shot_icon' && (
+            <motion.div
+              initial={{ width: '100%' }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.05 }}
+              className="mt-3 h-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-full overflow-hidden"
+              style={{ width: '200px' }}
+            >
+              <motion.div
+                animate={{
+                  opacity: [0.5, 1, 0.5]
+                }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+                className="h-full bg-white/50"
+              />
+            </motion.div>
+          )}
         </motion.div>
 
         <div className="flex items-center justify-between w-full px-16 gap-4">
@@ -196,61 +299,44 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                />
                <PlayerCardComponent card={attacker} size="large" usedShotIcons={attackerUsedShotIcons} />
                
-               {/* Shot Icon Selection */}
+               {/* Enhanced Shot Icon Selection */}
                {duelPhase === 'select_shot_icon' && (
                  <motion.div 
                    initial={{ opacity: 0, scale: 0.8 }}
                    animate={{ opacity: 1, scale: 1 }}
-                   className="absolute -inset-4 bg-black/80 rounded-lg flex flex-col items-center justify-center gap-2 backdrop-blur-sm"
+                   className="absolute -inset-8"
                  >
-                   <div className="text-xs font-black text-white uppercase tracking-wider">Select Shot Icon</div>
-                  <div className="flex gap-1">
-                    {(attacker as any).iconPositions?.map((iconPos: any, index: number) => {
-                      if (iconPos.type === 'attack') {
-                        const isUsed = attackerUsedShotIcons?.includes(index);
-                        const isSelected = selectedShotIcon === index;
-                        return (
-                          <motion.button
-                            key={index}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setSelectedShotIcon(index)}
-                            className={clsx(
-                              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-                              isUsed ? "bg-gray-800 text-gray-400 cursor-not-allowed" : 
-                              isSelected ? "bg-blue-500 text-white ring-2 ring-blue-300" : 
-                              "bg-white text-blue-600 hover:bg-blue-100"
-                            )}
-                            disabled={isUsed}
-                          >
-                            ⚽
-                          </motion.button>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-                   {selectedShotIcon !== null && (
+                   <ShotIconSelector
+                     icons={getShotIcons()}
+                     onIconSelect={(index) => setSelectedShotIcon(index)}
+                     isPlayerTurn={isPlayerAttacking}
+                     isAIThinking={isAIThinking}
+                   />
+                   {selectedShotIcon !== null && isPlayerAttacking && (
                      <motion.button
                        initial={{ opacity: 0, y: 10 }}
                        animate={{ opacity: 1, y: 0 }}
                        onClick={handleShotIconConfirm}
-                       className="mt-2 px-4 py-1 bg-green-500 text-white text-xs font-black uppercase tracking-wider rounded-full hover:bg-green-600 transition-colors"
+                       className="mt-4 px-6 py-2 bg-green-500 text-white text-sm font-black uppercase tracking-wider rounded-full hover:bg-green-600 transition-colors mx-auto block"
                      >
-                       Confirm
+                       Confirm Shot
                      </motion.button>
                    )}
                  </motion.div>
                )}
                
-               {/* Attacker Power Badge */}
+               {/* Enhanced Attacker Power Badge with Animated Counter */}
                <motion.div 
-                 key={displayAttackPower}
+                 key={`attack-${displayAttackPower}`}
                  initial={{ scale: 0.5, opacity: 0, rotate: -20 }}
                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
                  className="absolute -top-8 -right-8 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 border-4 border-white flex flex-col items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.6)] z-20"
                >
-                 <span className="text-3xl font-black text-white italic">{displayAttackPower}</span>
+                 <AnimatedCounter 
+                   targetValue={displayAttackPower}
+                   className="text-3xl font-black text-white italic"
+                   duration={1500}
+                 />
                  <span className="text-[9px] font-black text-white/80 uppercase tracking-tighter">Power</span>
                </motion.div>
             </div>
@@ -283,9 +369,46 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     key={skill}
                     initial={{ opacity: 0, scale: 0, x: -20 }}
                     animate={{ opacity: 1, scale: 1, x: 0 }}
-                    className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black rounded-lg border border-white/40 shadow-xl uppercase tracking-[0.1em] italic"
+                    transition={{ delay: i * 0.2, type: 'spring', stiffness: 300 }}
+                    className="relative px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black rounded-lg border border-white/40 shadow-xl uppercase tracking-[0.1em] italic overflow-hidden"
                   >
-                    {skill}
+                    {/* Glow effect */}
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.5, 1],
+                        opacity: [0.5, 0.2, 0.5]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute inset-0 bg-blue-400 rounded-lg blur-md"
+                    />
+                    {/* Sparkle particles */}
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                      className="absolute inset-0"
+                    >
+                      {[...Array(4)].map((_, j) => (
+                        <motion.div
+                          key={j}
+                          animate={{ 
+                            scale: [0, 1, 0],
+                            opacity: [0, 1, 0]
+                          }}
+                          transition={{ 
+                            duration: 1.5, 
+                            repeat: Infinity, 
+                            delay: j * 0.3,
+                            ease: 'easeInOut'
+                          }}
+                          className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+                          style={{
+                            top: `${20 + j * 20}%`,
+                            left: `${10 + j * 25}%`
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                    <span className="relative z-10">{skill}</span>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -310,11 +433,23 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                       delay: i * 0.15 
                     }}
                   >
-                    <SynergyCardComponent 
-                      card={card} 
-                      size="small" 
-                      faceDown={duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender'}
-                    />
+                    <motion.div
+                      animate={{
+                        rotateY: (duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender') ? 180 : 0,
+                      }}
+                      transition={{ 
+                        type: 'spring', 
+                        stiffness: 260, 
+                        damping: 20,
+                        delay: i * 0.15 + (duelPhase === 'reveal_synergy' ? 0.5 : 0)
+                      }}
+                    >
+                      <SynergyCardComponent 
+                        card={card} 
+                        size="small" 
+                        faceDown={duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender'}
+                      />
+                    </motion.div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -370,7 +505,11 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     animate={{ scale: 1, opacity: 1, rotate: 0 }}
                     className="absolute -top-8 -left-8 w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-4 border-white flex flex-col items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.6)] z-20"
                   >
-                    <span className="text-3xl font-black text-white italic">{displayDefensePower}</span>
+                    <AnimatedCounter 
+                      targetValue={displayDefensePower}
+                      className="text-3xl font-black text-white italic"
+                      duration={1500}
+                    />
                     <span className="text-[9px] font-black text-white/80 uppercase tracking-tighter">Power</span>
                   </motion.div>
                 </>
@@ -410,9 +549,46 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     key={skill}
                     initial={{ opacity: 0, scale: 0, x: 20 }}
                     animate={{ opacity: 1, scale: 1, x: 0 }}
-                    className="px-4 py-1.5 bg-red-600 text-white text-[10px] font-black rounded-lg border border-white/40 shadow-xl uppercase tracking-[0.1em] italic"
+                    transition={{ delay: i * 0.2, type: 'spring', stiffness: 300 }}
+                    className="relative px-4 py-1.5 bg-red-600 text-white text-[10px] font-black rounded-lg border border-white/40 shadow-xl uppercase tracking-[0.1em] italic overflow-hidden"
                   >
-                    {skill}
+                    {/* Glow effect */}
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.5, 1],
+                        opacity: [0.5, 0.2, 0.5]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute inset-0 bg-red-400 rounded-lg blur-md"
+                    />
+                    {/* Sparkle particles */}
+                    <motion.div
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                      className="absolute inset-0"
+                    >
+                      {[...Array(4)].map((_, j) => (
+                        <motion.div
+                          key={j}
+                          animate={{ 
+                            scale: [0, 1, 0],
+                            opacity: [0, 1, 0]
+                          }}
+                          transition={{ 
+                            duration: 1.5, 
+                            repeat: Infinity, 
+                            delay: j * 0.3,
+                            ease: 'easeInOut'
+                          }}
+                          className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+                          style={{
+                            top: `${20 + j * 20}%`,
+                            right: `${10 + j * 25}%`
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                    <span className="relative z-10">{skill}</span>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -437,11 +613,23 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                       delay: i * 0.15 
                     }}
                   >
-                    <SynergyCardComponent 
-                      card={card} 
-                      size="small" 
-                      faceDown={duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender'}
-                    />
+                    <motion.div
+                      animate={{
+                        rotateY: (duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender') ? 180 : 0,
+                      }}
+                      transition={{ 
+                        type: 'spring', 
+                        stiffness: 260, 
+                        damping: 20,
+                        delay: i * 0.15 + (duelPhase === 'reveal_synergy' ? 0.5 : 0)
+                      }}
+                    >
+                      <SynergyCardComponent 
+                        card={card} 
+                        size="small" 
+                        faceDown={duelPhase === 'init' || duelPhase === 'reveal_attacker' || duelPhase === 'reveal_defender'}
+                      />
+                    </motion.div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -522,6 +710,176 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               className="absolute bottom-10 flex flex-col items-center gap-4 z-50"
             >
+              {/* Particle Explosion Effect */}
+              <div className="absolute inset-0 pointer-events-none">
+                {result === 'goal' && (
+                  <>
+                    {[...Array(30)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ 
+                          x: 0, 
+                          y: 0, 
+                          scale: 0, 
+                          opacity: 1 
+                        }}
+                        animate={{
+                          x: (Math.random() - 0.5) * 800,
+                          y: (Math.random() - 0.5) * 800,
+                          scale: [0, 1.5, 0],
+                          opacity: [1, 1, 0],
+                          rotate: Math.random() * 360
+                        }}
+                        transition={{ 
+                          duration: 1.5, 
+                          delay: i * 0.02,
+                          ease: "easeOut" 
+                        }}
+                        className="absolute w-4 h-4 rounded-full"
+                        style={{
+                          backgroundColor: ['#FFD700', '#FFA500', '#FF6347', '#FF4500'][Math.floor(Math.random() * 4)],
+                          left: '50%',
+                          top: '50%',
+                          filter: 'blur(1px)'
+                        }}
+                      />
+                    ))}
+                    {[...Array(20)].map((_, i) => (
+                      <motion.div
+                        key={`star-${i}`}
+                        initial={{ 
+                          x: 0, 
+                          y: 0, 
+                          scale: 0, 
+                          opacity: 1,
+                          rotate: 0
+                        }}
+                        animate={{
+                          x: (Math.random() - 0.5) * 600,
+                          y: (Math.random() - 0.5) * 600,
+                          scale: [0, 2, 0],
+                          opacity: [1, 0.8, 0],
+                          rotate: Math.random() * 720
+                        }}
+                        transition={{ 
+                          duration: 2, 
+                          delay: i * 0.03,
+                          ease: "easeOut" 
+                        }}
+                        className="absolute text-4xl"
+                        style={{
+                          left: '50%',
+                          top: '50%',
+                          filter: 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))'
+                        }}
+                      >
+                        ⭐
+                      </motion.div>
+                    ))}
+                  </>
+                )}
+                {result === 'saved' && (
+                  <>
+                    {[...Array(20)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ 
+                          x: 0, 
+                          y: 0, 
+                          scale: 0, 
+                          opacity: 1 
+                        }}
+                        animate={{
+                          x: (Math.random() - 0.5) * 600,
+                          y: (Math.random() - 0.5) * 600,
+                          scale: [0, 1.2, 0],
+                          opacity: [1, 1, 0],
+                          rotate: Math.random() * 360
+                        }}
+                        transition={{ 
+                          duration: 1.2, 
+                          delay: i * 0.03,
+                          ease: "easeOut" 
+                        }}
+                        className="absolute w-3 h-3 rounded-full"
+                        style={{
+                          backgroundColor: ['#3B82F6', '#60A5FA', '#93C5FD'][Math.floor(Math.random() * 3)],
+                          left: '50%',
+                          top: '50%',
+                          filter: 'blur(1px)'
+                        }}
+                      />
+                    ))}
+                    {[...Array(15)].map((_, i) => (
+                      <motion.div
+                        key={`shield-${i}`}
+                        initial={{ 
+                          x: 0, 
+                          y: 0, 
+                          scale: 0, 
+                          opacity: 1,
+                          rotate: 0
+                        }}
+                        animate={{
+                          x: (Math.random() - 0.5) * 500,
+                          y: (Math.random() - 0.5) * 500,
+                          scale: [0, 1.5, 0],
+                          opacity: [1, 0.8, 0],
+                          rotate: Math.random() * 540
+                        }}
+                        transition={{ 
+                          duration: 1.8, 
+                          delay: i * 0.04,
+                          ease: "easeOut" 
+                        }}
+                        className="absolute text-3xl"
+                        style={{
+                          left: '50%',
+                          top: '50%',
+                          filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.8))'
+                        }}
+                      >
+                        🛡️
+                      </motion.div>
+                    ))}
+                  </>
+                )}
+                {result === 'missed' && (
+                  <>
+                    {[...Array(15)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ 
+                          x: 0, 
+                          y: 0, 
+                          scale: 0, 
+                          opacity: 1 
+                        }}
+                        animate={{
+                          x: (Math.random() - 0.5) * 400,
+                          y: (Math.random() - 0.5) * 400,
+                          scale: [0, 1, 0],
+                          opacity: [1, 0.6, 0],
+                          rotate: Math.random() * 360
+                        }}
+                        transition={{ 
+                          duration: 1, 
+                          delay: i * 0.04,
+                          ease: "easeOut" 
+                        }}
+                        className="absolute w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor: ['#9CA3AF', '#6B7280', '#4B5563'][Math.floor(Math.random() * 3)],
+                          left: '50%',
+                          top: '50%',
+                          filter: 'blur(1px)'
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+
               <motion.div 
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 0.5, repeat: 3 }}
@@ -535,6 +893,72 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                 {result === 'saved' && "SAVED!"}
                 {result === 'missed' && "MISSED!"}
               </motion.div>
+
+              {/* Celebration Messages for Goals */}
+              {result === 'goal' && (
+                <div className="flex flex-col items-center gap-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-2xl font-black text-yellow-300 uppercase tracking-widest drop-shadow-lg"
+                  >
+                    ⚽ INCREDIBLE SHOT! ⚽
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                    className="text-lg font-bold text-white/80 uppercase tracking-wide"
+                  >
+                    The crowd goes wild!
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Celebration Messages for Saves */}
+              {result === 'saved' && (
+                <div className="flex flex-col items-center gap-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-2xl font-black text-blue-300 uppercase tracking-widest drop-shadow-lg"
+                  >
+                    🛡️ MAGNIFICENT SAVE! 🛡️
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                    className="text-lg font-bold text-white/80 uppercase tracking-wide"
+                  >
+                    The defense stands tall!
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Celebration Messages for Missed */}
+              {result === 'missed' && (
+                <div className="flex flex-col items-center gap-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-2xl font-black text-gray-400 uppercase tracking-widest drop-shadow-lg"
+                  >
+                    😢 SO CLOSE! 😢
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                    className="text-lg font-bold text-white/60 uppercase tracking-wide"
+                  >
+                    Better luck next time!
+                  </motion.div>
+                </div>
+              )}
               
               <div className="px-10 py-4 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-xl flex items-center gap-8 shadow-2xl">
                 <div className="flex flex-col items-center">
@@ -560,6 +984,6 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };
