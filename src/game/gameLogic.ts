@@ -15,6 +15,7 @@ export type GamePhase =
 export type TurnPhase = 'teamAction' | 'playerAction' | 'shooting' | 'end';
 export type PlayerActionType = 'organizeAttack' | 'directAttack' | null;
 export type ShotResult = 'goal' | 'saved' | 'missed' | 'magicNumber';
+export type DuelPhase = 'none' | 'init' | 'reveal_attacker' | 'reveal_defender' | 'reveal_synergy' | 'reveal_skills' | 'result';
 
 export interface FieldSlot {
   position: number;
@@ -77,6 +78,7 @@ export interface GameState {
   playerActiveSynergy: SynergyCard[];
   aiActiveSynergy: SynergyCard[];
   isDealing: boolean;
+  duelPhase: DuelPhase;
 }
 
 export const createInitialState = (
@@ -164,6 +166,7 @@ export const createInitialState = (
     playerActiveSynergy: [],
     aiActiveSynergy: [],
     isDealing: false,
+    duelPhase: 'none',
   };
 };
 
@@ -190,6 +193,7 @@ export type GameAction =
   | { type: 'AI_DRAFT_PICK' }
   | { type: 'AI_TURN' }
   | { type: 'SET_DEALING'; isDealing: boolean }
+  | { type: 'ADVANCE_DUEL' }
   | { type: 'FINISH_SETUP' };
 
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
@@ -246,6 +250,22 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'SET_DEALING':
       return { ...state, isDealing: action.isDealing };
+
+    case 'ADVANCE_DUEL': {
+      if (state.duelPhase === 'none') return state;
+      const phases: DuelPhase[] = ['init', 'reveal_attacker', 'reveal_defender', 'reveal_synergy', 'reveal_skills', 'result'];
+      const currentIndex = phases.indexOf(state.duelPhase);
+      const nextPhase = phases[currentIndex + 1] || 'none';
+      
+      let newState = { ...state, duelPhase: nextPhase };
+      
+      if (nextPhase === 'none') {
+        newState.turnPhase = 'end';
+        newState.pendingShot = state.pendingShot; // Keep for result display
+      }
+      
+      return newState;
+    }
 
     case 'CANCEL_INSTANT_SHOT':
       return { ...state, instantShotMode: null, message: 'Instant shot cancelled' };
@@ -320,9 +340,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       
       newState.currentAction = 'directAttack';
       
-      // Auto transition to 'end' phase for UI to show result
-      // The UI will then call END_TURN after a delay
-      newState.turnPhase = 'end';
+      // Removed auto transition to 'end' phase
+      // newState.turnPhase = 'end';
       newState.selectedSynergyCards = [];
       newState.instantShotMode = null;
       return newState;
@@ -348,6 +367,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newState.synergyChoice = null;
       newState.isFirstTurn = false;
       newState.pendingShot = null;
+      newState.duelPhase = 'none';
       
       // Swap turns
       const nextTurn = state.currentTurn === 'player' ? 'ai' : 'player';
@@ -1118,6 +1138,7 @@ export const performShot = (
   
   newState.message = resultMessage;
   newState.pendingShot = shotAttempt;
+  newState.duelPhase = 'init';
   
   return newState;
 };

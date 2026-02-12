@@ -27,7 +27,7 @@ interface Props {
   onDragEnd?: () => void;
   onCardMouseEnter?: (card: PlayerCard, event?: React.MouseEvent) => void;
   onCardMouseLeave?: () => void;
-  onInstantShotClick?: (zone: number, slot: number) => void;
+  onInstantShotClick?: ((zone: number, slot: number) => void) | undefined;
   instantShotMode?: any;
   currentAction?: PlayerActionType;
   setupStep?: number;
@@ -36,6 +36,8 @@ interface Props {
 
 export const COLS = 8;
 export const ROWS = 4;
+export const CELL_WIDTH = 99;
+export const CELL_HEIGHT = 130;
 
 const getPlacedCards = (field: FieldZone[]): PlacedCard[] => {
   const placed: PlacedCard[] = [];

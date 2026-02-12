@@ -1,21 +1,21 @@
 import React from 'react';
 import type { PlayerCard } from '../data/cards';
 import type { PlayerActionType } from '../game/gameLogic';
-import { GameField, COLS, ROWS } from './GameField';
+import { GameField, COLS, ROWS, CELL_WIDTH } from './GameField';
 
 interface Props {
   playerField: any;
   aiField: any;
   selectedCard: PlayerCard | null;
   onSlotClick: (zone: number, startCol: number) => void;
-  onAttackClick: (zone: number, slot: number) => void;
+  onAttackClick: (zone: number, startCol: number) => void;
   currentTurn: 'player' | 'ai';
   turnPhase: string;
   isFirstTurn: boolean;
   lastPlacedCard: PlayerCard | null;
   onCardMouseEnter: (card: PlayerCard, event?: React.MouseEvent) => void;
   onCardMouseLeave: () => void;
-  onInstantShotClick?: (zone: number, slot: number) => void;
+  onInstantShotClick?: ((zone: number, slot: number) => void) | undefined;
   instantShotMode?: any;
   currentAction?: PlayerActionType;
   setupStep?: number;
@@ -78,7 +78,7 @@ export const CenterField: React.FC<Props> = ({
                 transparent 2px
               )
             `,
-            backgroundSize: `${(PITCH_WIDTH / COLS) * 2}px 100%, 100% 2px`,
+            backgroundSize: `${CELL_WIDTH * 2}px 100%, 100% 2px`,
             backgroundColor: '#356b2d' // Natural lighter grass
           }}
         />

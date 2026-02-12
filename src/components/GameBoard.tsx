@@ -20,6 +20,7 @@ import { CoinToss } from './CoinToss';
 import { TurnTransition } from './TurnTransition';
 import SquadSelect from './SquadSelect';
 import { CardDealer } from './CardDealer';
+import { DuelOverlay } from './DuelOverlay';
 import { 
   placeCard, 
   performAITurn, 
@@ -40,13 +41,13 @@ import {
   startSecondHalf,
   gameReducer,
   type GameAction,
+  type DuelPhase,
 } from '../game/gameLogic';
 import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
 import { useGameAudio } from '../hooks/useGameAudio';
 import { useCameraView } from '../hooks/useCameraView';
 import { useGameState } from '../hooks/useGameState';
 import { CameraControls } from './CameraControls';
-import { GameScene3D } from './GameScene3D';
 
 interface Props {
   onBack: () => void;
@@ -1377,33 +1378,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Overlay 3D grid for precise positioning - Aligned with CSS 3D */}
-      <div className="absolute inset-0 flex items-center justify-center z-15 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
-        <div 
-          className="relative transform-style-3d transform-gpu flex items-center justify-center"
-          style={{
-            width: `${BASE_WIDTH}px`,
-            height: `${BASE_HEIGHT}px`,
-            transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height - 50}px) scale(${viewSettings.zoom})`,
-          }}
-        >
-          <GameScene3D
-              playerField={gameState.playerField}
-              aiField={gameState.aiField}
-              selectedCard={gameState.selectedCard}
-              onSlotClick={handleSlotClick}
-              onCardMouseEnter={setHoveredCard}
-              onCardMouseLeave={() => setHoveredCard(null)}
-              currentTurn={gameState.currentTurn}
-              turnPhase={gameState.turnPhase}
-              isFirstTurn={gameState.isFirstTurn}
-              currentAction={gameState.currentAction}
-              isHomeTeam={gameState.isHomeTeam}
-              onAttackClick={handleAttack}
-            />
-        </div>
-      </div>
     </div>
   );
 };
