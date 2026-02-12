@@ -24,6 +24,12 @@ interface DuelOverlayProps {
   isPlayerAttacking: boolean;
   attackerUsedShotIcons?: number[];
   onShotIconSelect?: (iconIndex: number) => void;
+  defenderSynergySelection?: boolean;
+  defenderAvailableSynergyCards?: SynergyCard[];
+  defenderSelectedSynergyCards?: SynergyCard[];
+  onSelectDefenderSynergyCard?: (cardIndex: number) => void;
+  onConfirmDefenderSynergy?: () => void;
+  isPlayerDefending?: boolean;
 }
 
 export const DuelOverlay: React.FC<DuelOverlayProps> = ({
@@ -39,7 +45,13 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
   onAdvance,
   isPlayerAttacking,
   attackerUsedShotIcons,
-  onShotIconSelect
+  onShotIconSelect,
+  defenderSynergySelection,
+  defenderAvailableSynergyCards,
+  defenderSelectedSynergyCards,
+  onSelectDefenderSynergyCard,
+  onConfirmDefenderSynergy,
+  isPlayerDefending
 }) => {
   const [displayAttackPower, setDisplayAttackPower] = useState(0);
   const [displayDefensePower, setDisplayDefensePower] = useState(0);
@@ -593,6 +605,84 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                 ))}
               </AnimatePresence>
             </div>
+
+            {/* Defender Synergy Selection UI */}
+            <AnimatePresence>
+              {duelPhase === 'defender_synergy_selection' && defenderSynergySelection && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                  className="absolute inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm"
+                >
+                  <div className="bg-gradient-to-b from-stone-800 to-stone-900 border-2 border-white/20 p-8 rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col items-center gap-6 max-w-lg w-full mx-4">
+                    <div className="text-red-400 font-black tracking-[0.4em] uppercase text-xs">Defense Synergy Selection</div>
+                    <div className="text-white/80 text-sm text-center px-4">
+                      {isPlayerDefending 
+                        ? 'Select up to 2 synergy cards to defend against the attack'
+                        : 'AI is selecting defense synergy cards...'}
+                    </div>
+                    
+                    {isPlayerDefending && defenderAvailableSynergyCards && (
+                      <div className="flex gap-4 flex-wrap justify-center">
+                        {defenderAvailableSynergyCards.map((card, index) => {
+                          const isSelected = defenderSelectedSynergyCards?.some(c => c.id === card.id);
+                          return (
+                            <motion.div
+                              key={card.id}
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: index * 0.1 }}
+                              onClick={() => onSelectDefenderSynergyCard?.(index)}
+                              className={clsx(
+                                "cursor-pointer transition-all duration-300",
+                                isSelected ? "scale-110 ring-4 ring-yellow-400" : "hover:scale-105"
+                              )}
+                            >
+                              <SynergyCardComponent card={card} size="medium" />
+                              {isSelected && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg"
+                                >
+                                  <span className="text-black font-black text-sm">✓</span>
+                                </motion.div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-white/60 text-xs font-bold uppercase tracking-widest">
+                        Selected: {defenderSelectedSynergyCards?.length || 0}/2
+                      </div>
+                    </div>
+
+                    {isPlayerDefending && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={onConfirmDefenderSynergy}
+                        disabled={!defenderSelectedSynergyCards || defenderSelectedSynergyCards.length === 0}
+                        className={clsx(
+                          "px-8 py-3 rounded-full font-black uppercase tracking-wider transition-all duration-300",
+                          defenderSelectedSynergyCards && defenderSelectedSynergyCards.length > 0
+                            ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:from-red-600 hover:to-red-700"
+                            : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                        )}
+                      >
+                        Confirm Defense
+                      </motion.button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Defense Synergy Reveal */}
             <div className="flex gap-3 h-28">

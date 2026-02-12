@@ -199,7 +199,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
   switch (action.type) {
     case 'ADVANCE_DUEL': {
       if (state.duelPhase === 'none') return state;
-      const phases: DuelPhase[] = ['init', 'select_shot_icon', 'reveal_attacker', 'reveal_defender', 'reveal_synergy', 'reveal_skills', 'summary', 'result'];
+      const phases: DuelPhase[] = ['init', 'select_shot_icon', 'reveal_attacker', 'reveal_defender', 'defender_synergy_selection', 'reveal_synergy', 'reveal_skills', 'summary', 'result'];
       const currentIndex = phases.indexOf(state.duelPhase);
       const nextPhase = phases[currentIndex + 1] || 'none';
       
@@ -225,6 +225,14 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               step: 'Reveal Defender',
               defender: defender?.name || 'Empty',
               message: `Defender revealed: ${defender?.name || 'Empty'}`
+            });
+            break;
+          case 'defender_synergy_selection':
+            newState.matchLogs = addLog(newState, {
+              type: 'action',
+              phase: 'Duel',
+              step: 'Defender Synergy Selection',
+              message: 'Defender is selecting synergy cards to counter the attack'
             });
             break;
           case 'reveal_synergy':

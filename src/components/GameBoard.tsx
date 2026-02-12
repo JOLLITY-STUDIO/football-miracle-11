@@ -1425,6 +1425,16 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           onShotIconSelect={(iconIndex) => {
             dispatch({ type: 'SELECT_SHOT_ICON', iconIndex });
           }}
+          defenderSynergySelection={gameState.defenderSynergySelection}
+          defenderAvailableSynergyCards={gameState.defenderAvailableSynergyCards}
+          defenderSelectedSynergyCards={gameState.defenderSelectedSynergyCards}
+          onSelectDefenderSynergyCard={(cardIndex) => {
+            dispatch({ type: 'SELECT_DEFENDER_SYNERGY_CARD', cardIndex });
+          }}
+          onConfirmDefenderSynergy={() => {
+            dispatch({ type: 'CONFIRM_DEFENDER_SYNERGY' });
+          }}
+          isPlayerDefending={gameState.currentTurn === 'ai'}
         />
       )}
 
