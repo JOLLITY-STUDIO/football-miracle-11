@@ -6,15 +6,16 @@ interface Props {
   subtitle?: string;
   show: boolean;
   onComplete?: () => void;
+  durationMs?: number;
 }
 
-const PhaseBanner: React.FC<Props> = ({ text, subtitle, show, onComplete }) => {
+const PhaseBanner: React.FC<Props> = ({ text, subtitle, show, onComplete, durationMs = 2000 }) => {
   useEffect(() => {
     if (show && onComplete) {
-      const timer = setTimeout(onComplete, 2000);
+      const timer = setTimeout(onComplete, durationMs);
       return () => clearTimeout(timer);
     }
-  }, [show, onComplete]);
+  }, [show, onComplete, durationMs]);
 
   return (
     <AnimatePresence mode="wait">

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import type { FieldZone, PlayerActionType } from '../game/gameLogic';
@@ -11,6 +11,7 @@ interface PlacedCard {
   card: PlayerCard;
   zone: number;
   startCol: number;
+  usedShotIcons?: number[];
 }
 
 interface Props {
@@ -47,7 +48,8 @@ const getPlacedCards = (field: FieldZone[]): PlacedCard[] => {
         placed.push({
           card: slot.playerCard,
           zone: zone.zone,
-          startCol: (slot.position - 1) * 2
+          startCol: (slot.position - 1) * 2,
+          usedShotIcons: slot.usedShotIcons
         });
       }
     });
@@ -77,16 +79,39 @@ export const GameField: React.FC<Props> = ({
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [isRotated, setIsRotated] = useState(false);
+  const [hoveredZone, setHoveredZone] = useState<number | null>(null);
+  const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
 
   const playerPlaced = getPlacedCards(playerField);
   const aiPlaced = getPlacedCards(aiField);
 
   const canPlaceCards = (turnPhase === 'playerAction' || isFirstTurn) && currentTurn === 'player' && !currentAction;
 
+  useEffect(() => {
+    if (!selectedCard) {
+      setHoveredZone(null);
+      setHoveredSlot(null);
+    }
+  }, [selectedCard]);
+
+  const handleCellMouseEnter = (zone: number, colIdx: number) => {
+    if (!selectedCard || currentTurn !== 'player') return;
+    const startCol = colIdx === 7 ? 6 : colIdx;
+    const isValid = canPlaceCardAtSlot(selectedCard, playerField, zone, startCol, isFirstTurn);
+    if (isValid) {
+      setHoveredZone(zone);
+      setHoveredSlot(startCol);
+    }
+  };
+
+  const handleCellMouseLeave = () => {
+    setHoveredZone(null);
+    setHoveredSlot(null);
+  };
+
   // Helper to render grid cells
   const renderGrid = (isAi: boolean) => {
     const fieldData = isAi ? aiField : playerField;
-    const placedCards = isAi ? aiPlaced : playerPlaced;
 
     return (
       <div 
@@ -101,15 +126,20 @@ export const GameField: React.FC<Props> = ({
           pointerEvents: 'auto'
         }}
       >
-        {/* Interactive Layer - HTML divs for reliable click detection */}
-        <div
-          className="absolute top-0 left-0 w-full h-full z-10 pointer-events-auto"
+        {/* SVG 3D渲染 */}
+        <svg
+          viewBox={`-${COLS * CELL_WIDTH / 2} -${ROWS * CELL_HEIGHT / 2} ${COLS * CELL_WIDTH} ${ROWS * CELL_HEIGHT}`}
           style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${COLS}, ${CELL_WIDTH}px)`,
-            gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            transformStyle: 'preserve-3d',
+            pointerEvents: 'auto'
           }}
         >
+          {/* Zones & Slots */}
           {fieldData.map((zone, zIdx) => {
             const row = zIdx; // 0 to 3
             
@@ -118,109 +148,69 @@ export const GameField: React.FC<Props> = ({
                 {Array.from({ length: COLS }).map((_, colIdx) => {
                   const isZoneHighlight = selectedCard && selectedCard.zones.includes(zone.zone);
                   
-                  const slotIdx = Math.floor(colIdx / 2);
+                  // For the last column (7), use startCol=6 to check placement
+                  const startCol = colIdx === 7 ? 6 : colIdx;
                   const isValidPlacement = selectedCard && !isAi && 
-                    canPlaceCardAtSlot(selectedCard, playerField, zone.zone, slotIdx + 1, isFirstTurn);
-                  
-                  // Determine if this cell is part of a slot (2 columns wide)
-                  const isSlotStart = colIdx % 2 === 0;
+                    canPlaceCardAtSlot(selectedCard, playerField, zone.zone, startCol, isFirstTurn);
                   
                   // Find card in this slot
-                  const slot = zone.slots.find(s => s.position === slotIdx + 1);
+                  const slot = zone.slots.find(s => s.position === startCol);
                   const card = slot?.playerCard;
 
+                  // Calculate cell position (centered coordinate system)
+                  const x = (colIdx - COLS / 2 + 0.5) * CELL_WIDTH;
+                  const y = (row - ROWS / 2 + 0.5) * CELL_HEIGHT;
+
                   return (
-                    <div
-                      key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isAi && isValidPlacement) {
-                          console.log('Click at zone:', zone.zone, 'col:', colIdx);
-                          onSlotClick(zone.zone, colIdx);
-                        }
-                      }}
-                      style={{
-                        backgroundColor: !isAi && isValidPlacement 
+                    <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
+                      {/* Cell Background */}
+                      <rect
+                        x={x - CELL_WIDTH / 2}
+                        y={y - CELL_HEIGHT / 2}
+                        width={CELL_WIDTH}
+                        height={CELL_HEIGHT}
+                        fill={!isAi && isValidPlacement 
                           ? 'rgba(34, 197, 94, 0.6)' // More vibrant green
                           : (!isAi && selectedCard && !isValidPlacement && isZoneHighlight 
                               ? 'rgba(239, 68, 68, 0.5)' 
-                              : ((row + slotIdx) % 2 === 0 ? 'rgba(46, 125, 50, 0.4)' : 'rgba(27, 94, 32, 0.4)')),
-                        border: !isAi && isValidPlacement 
-                          ? '2px solid #22c55e' 
-                          : '1px solid rgba(255,255,255,0.2)',
-                        borderRadius: '8px',
-                        cursor: !isAi && isValidPlacement ? 'pointer' : 'default',
-                        position: 'relative',
-                        zIndex: 10
-                      }}
-                    >
-                      {/* Slot Marker Icon (if empty) */}
-                      {isSlotStart && !card && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            color: 'rgba(255,255,255,0.1)',
-                            fontSize: '24px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          +
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            );
-          })}
-        </div>
-
-        {/* SVG 3D Visual Layer - for 3D effects only */}
-        <svg
-          width={`${COLS * CELL_WIDTH}`}
-          height={`${ROWS * CELL_HEIGHT}`}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            transformStyle: 'preserve-3d',
-            zIndex: 5,
-            pointerEvents: 'none'
-          }}
-        >
-          {/* Zones & Slots - Visual only */}
-          {fieldData.map((zone, zIdx) => {
-            const row = zIdx; // 0 to 3
-            
-            return (
-              <React.Fragment key={`svg-zone-${zone.zone}`}>
-                {Array.from({ length: COLS }).map((_, colIdx) => {
-                  const slotIdx = Math.floor(colIdx / 2);
-                  const isSlotStart = colIdx % 2 === 0;
-                  
-                  // Calculate cell position
-                  const cellX = colIdx * CELL_WIDTH;
-                  const cellY = row * CELL_HEIGHT;
-
-                  return (
-                    <g key={`svg-${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
-                      {/* Cell Background - Visual only */}
-                      <rect
-                        x={cellX}
-                        y={cellY}
-                        width={CELL_WIDTH}
-                        height={CELL_HEIGHT}
-                        fill="transparent"
-                        stroke="rgba(255,255,255,0.1)"
-                        strokeWidth="1"
+                              : ((row + colIdx) % 2 === 0 ? 'rgba(46, 125, 50, 0.4)' : 'rgba(27, 94, 32, 0.4)'))}
+                        stroke={!isAi && isValidPlacement ? '#22c55e' : 'rgba(255,255,255,0.2)'}
+                        strokeWidth={!isAi && isValidPlacement ? '2' : '1'}
                         rx="8"
                         ry="8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isAi && isValidPlacement) {
+                            // Use the adjusted startCol (6 for last column)
+                            console.log('SVG Click at zone:', zone.zone, 'col:', colIdx, 'startCol:', startCol);
+                            onSlotClick(zone.zone, startCol);
+                          }
+                        }}
+                        onMouseEnter={() => {
+                          if (!isAi && isValidPlacement) {
+                            handleCellMouseEnter(zone.zone, startCol);
+                          }
+                        }}
+                        onMouseLeave={handleCellMouseLeave}
+                        style={{ 
+                          cursor: !isAi && isValidPlacement ? 'pointer' : 'default',
+                          pointerEvents: 'auto'
+                        }}
                       />
+                      
+                      {/* Slot Marker Icon (if empty) */}
+                      {!card && (
+                        <text
+                          x={x}
+                          y={y + 5}
+                          textAnchor="middle"
+                          fill="rgba(255,255,255,0.1)"
+                          fontSize="24"
+                          fontWeight="bold"
+                        >
+                          +
+                        </text>
+                      )}
                     </g>
                   );
                 })}
@@ -241,28 +231,30 @@ export const GameField: React.FC<Props> = ({
             const row = zIdx; // 0 to 3
             
             return (
-              <React.Fragment key={`cards-${zone.zone}`}>
+              <React.Fragment key={`${isAi ? 'ai' : 'p'}-cards-${zone.zone}`}>
                 {Array.from({ length: COLS }).map((_, colIdx) => {
-                  const slotIdx = Math.floor(colIdx / 2);
-                  const isSlotStart = colIdx % 2 === 0;
-                  
                   // Find card in this slot
-                  const slot = zone.slots.find(s => s.position === slotIdx + 1);
+                  const slot = zone.slots.find(s => s.position === colIdx);
                   const card = slot?.playerCard;
 
                   // Calculate cell position
                   const cellX = colIdx * CELL_WIDTH;
                   const cellY = row * CELL_HEIGHT;
 
-                  // Render Card if it exists and we are at start of slot
-                  if (isSlotStart && card) {
+                  // Render Card if it exists and we are at start of card (check if previous column has same card)
+                  const prevSlot = zone.slots.find(s => s.position === colIdx - 1);
+                  const isCardStart = card && (!prevSlot?.playerCard || prevSlot.playerCard.id !== card.id);
+
+                  if (isCardStart) {
                     return (
                       <div 
-                        key={`card-${zone.zone}-${slotIdx}`}
+                        key={`${isAi ? 'ai' : 'p'}-card-${zone.zone}-${colIdx}`}
                         className={clsx("absolute left-0 top-0 w-[200%] h-full pointer-events-auto transform-style-3d backface-hidden flex items-center justify-center")}
                         style={{
                           left: `${cellX}px`,
                           top: `${cellY}px`,
+                          width: `${CELL_WIDTH * 2}px`,
+                          height: `${CELL_HEIGHT}px`,
                           transform: isAi ? 'rotateX(-20deg) rotate(180deg) translateZ(1px)' : 'rotateX(-20deg) translateZ(1px)',
                           transformOrigin: 'center center',
                           filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
@@ -303,7 +295,8 @@ export const GameField: React.FC<Props> = ({
                               size="large"
                               faceDown={false}
                               disabled={isAi}
-                              onMouseEnter={(e: React.MouseEvent) => onCardMouseEnter?.(card, e)}
+                              usedShotIcons={slot.usedShotIcons}
+                              onMouseEnter={() => onCardMouseEnter?.(card)}
                               onMouseLeave={() => onCardMouseLeave?.()}
                             />
 
@@ -336,25 +329,67 @@ export const GameField: React.FC<Props> = ({
                             
                             {/* Attack Button Overlay */}
                             {!isAi && canPlaceCards && card.icons.includes('attack') && (
-                              <button
+                              <svg
                                 data-testid="shoot-button"
+                                width="80"
+                                height="32"
+                                viewBox="0 0 80 32"
+                                className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-30 cursor-pointer animate-bounce"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onAttackClick(zone.zone, slot.position);
-                                }}
-                                className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-2 h-8 bg-red-600 hover:bg-red-500 text-white rounded-full shadow-[0_0_10px_rgba(220,38,38,0.8)] border-2 border-white z-20 animate-bounce flex items-center justify-center gap-1 overflow-hidden"
-                                title={`射门 (基础攻击力:${card.icons.filter(i => i === 'attack').length}${slot.shotMarkers > 0 ? ` -${slot.shotMarkers} = ${Math.max(0, card.icons.filter(i => i === 'attack').length - slot.shotMarkers)}` : ''})`}
-                                style={{
-                                  zIndex: 30
+                                  onAttackClick(zone.zone, colIdx);
                                 }}
                               >
-                                <span className="text-lg filter drop-shadow-md">⚽</span>
-                                <span className="text-xs font-bold">
+                                <defs>
+                                  <linearGradient id={`attackButtonGradient-${zone.zone}-${colIdx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#dc2626" />
+                                    <stop offset="100%" stopColor="#b91c1c" />
+                                  </linearGradient>
+                                </defs>
+                                {/* Button Background */}
+                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill={`url(#attackButtonGradient-${zone.zone}-${colIdx})`} stroke="white" strokeWidth="2" />
+                                {/* Button Shadow */}
+                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill="none" stroke="rgba(220,38,38,0.8)" strokeWidth="4" filter="blur(2px)" />
+                                {/* Soccer Ball Icon */}
+                                <text x="20" y="22" textAnchor="middle" fill="white" fontSize="14" fontFamily="sans-serif">⚽</text>
+                                {/* Attack Power */}
+                                <text x="60" y="22" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="sans-serif">
                                   {Math.max(0, card.icons.filter(i => i === 'attack').length - slot.shotMarkers)}
-                                </span>
-                              </button>
+                                </text>
+                              </svg>
                             )}
                          </motion.div>
+                      </div>
+                    );
+                  }
+
+                  // Render card preview when hovering over valid placement
+                  const startCol = colIdx === 7 ? 6 : colIdx;
+                  // Only show preview at the correct position (for col 7, show at col 6; for others, show at their own position)
+                  const shouldShowPreview = !card && !isAi && selectedCard && hoveredZone === zone.zone && hoveredSlot === startCol && startCol === colIdx;
+                  if (shouldShowPreview) {
+                    return (
+                      <div 
+                        key={`${isAi ? 'ai' : 'p'}-preview-${zone.zone}-${startCol}`}
+                        className="absolute left-0 top-0 w-[200%] h-full pointer-events-none transform-style-3d backface-hidden flex items-center justify-center"
+                        style={{
+                          left: `${cellX}px`,
+                          top: `${cellY}px`,
+                          width: `${CELL_WIDTH * 2}px`,
+                          height: `${CELL_HEIGHT}px`,
+                          transform: 'rotateX(-20deg) translateZ(1px)',
+                          transformOrigin: 'center center',
+                          filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
+                          zIndex: 25,
+                          opacity: 0.6
+                        }}
+                      >
+                        <PlayerCardComponent 
+                          card={selectedCard} 
+                          size="large"
+                          faceDown={false}
+                          disabled={true}
+                        />
                       </div>
                     );
                   }

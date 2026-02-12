@@ -17,10 +17,12 @@ import { BackgroundMusic } from './BackgroundMusic';
 import StarCardDraft from './StarCardDraft';
 import PhaseBanner from './PhaseBanner';
 import { CoinToss } from './CoinToss';
+import { RockPaperScissors } from './RockPaperScissors';
 import { TurnTransition } from './TurnTransition';
 import SquadSelect from './SquadSelect';
 import { CardDealer } from './CardDealer';
 import { DuelOverlay } from './DuelOverlay';
+import { MatchLog } from './MatchLog';
 import { 
   placeCard, 
   performAITurn, 
@@ -96,6 +98,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
   const [setupStep, setSetupStep] = useState(0); // 0: not started, 1: board, 2: control, 3: cards, 4: done
   const [tossResult, setTossResult] = useState<'home' | 'away' | null>(null);
   const [aiDraftSelectingIndex, setAiDraftSelectingIndex] = useState<number | null>(null);
+  const [playerDraftSelectingIndex, setPlayerDraftSelectingIndex] = useState<number | null>(null);
+  const [rpsInProgress, setRpsInProgress] = useState(false);
 
   useEffect(() => {
     // If we skip setup phase (e.g. from pre-game), force setupStep to 4
@@ -121,6 +125,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
   const [lastPhase, setLastPhase] = useState<string>('');
   const [viewingPile, setViewingPile] = useState<'deck' | 'discard' | null>(null);
   const [shownStoppageTime, setShownStoppageTime] = useState(false);
+  const [showMatchLog, setShowMatchLog] = useState(false);
+  const [showLeftControls, setShowLeftControls] = useState(true);
   
   // Audio Feedback for card actions (hand changes)
   const prevPlayerHandCount = useRef(gameState.playerHand.length);
@@ -221,6 +227,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
     if (gameState.turnPhase !== lastPhase) {
         let text = '';
         let subtitle = '';
+        let duration = 2000;
         if (gameState.turnPhase === 'teamAction') {
           text = 'TACTICAL PHASE';
           subtitle = 'Choose Team Action: Pass or Press';
@@ -234,6 +241,11 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
         else if (gameState.turnPhase === 'shooting') {
           text = 'BATTLE PHASE';
           subtitle = 'Shot Attempt in Progress!';
+        }
+        else if (gameState.turnPhase === 'end') {
+          text = 'ACTION COMPLETE';
+          subtitle = 'Turn ending...';
+          duration = 1000; // Show for 1 second
         }
         
         if (text) {
@@ -291,9 +303,11 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
 
       const pickTimer = setTimeout(() => {
         dispatch({ type: 'AI_DRAFT_PICK' });
-        setAiDraftSelectingIndex(null);
         playSound('draw');
-      }, 2000); // Increased from 1500 to 2000 for better visibility
+        // 保留AI选中标识一段时间，避免立即清除导致玩家看不到标记
+        const clearTimer = setTimeout(() => setAiDraftSelectingIndex(null), 800);
+        return () => clearTimeout(clearTimer);
+      }, 1800);
 
       return () => {
         clearTimeout(selectTimer);
@@ -301,6 +315,14 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       };
     }
   }, [gameState.phase, gameState.currentTurn, gameState.draftStep, gameState.availableDraftCards.length, dispatch]);
+
+  // Reset draft selection when round or step changes
+  useEffect(() => {
+    if (gameState.phase === 'draft') {
+      setPlayerDraftSelectingIndex(null);
+      setAiDraftSelectingIndex(null);
+    }
+  }, [gameState.phase, gameState.draftRound, gameState.draftStep]);
 
   // AI Turn Logic
   useEffect(() => {
@@ -405,6 +427,22 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
     }
   }, [tossResult, dispatch, playSound]);
 
+  const handleRockPaperScissorsComplete = useCallback((winner: 'player' | 'ai', choice: 'rock' | 'paper' | 'scissors' | 'home' | 'away' | null) => {
+    setRpsInProgress(false);
+    let isHomeTeam: boolean;
+    
+    if (winner === 'player') {
+      // Player chose their side
+      isHomeTeam = choice === 'home';
+    } else {
+      // AI chose their side
+      isHomeTeam = choice === 'home';
+    }
+    
+    dispatch({ type: 'COIN_TOSS', isHomeTeam });
+    playSound('whistle');
+  }, [dispatch, playSound]);
+
   useEffect(() => {
     if (gameState.phase !== 'coinToss' && tossResult !== null) {
       setTossResult(null);
@@ -412,8 +450,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
   }, [gameState.phase, tossResult]);
 
   const startToss = () => {
-    const result = Math.random() < 0.5 ? 'home' : 'away';
-    setTossResult(result);
+    setRpsInProgress(true);
   };
 
   useEffect(() => {
@@ -496,7 +533,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       </div>
 
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
-      <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
+      {gameState.phase !== 'coinToss' && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
         <div 
           className={clsx("relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center", viewSettings.pitch === 0 ? "pointer-events-auto" : "pointer-events-none")}
           style={{
@@ -542,6 +580,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                   onHoverEnter={handleHoverEnterCard}
                   onHoverLeave={handleHoverLeaveCard}
                   onSubstituteSelect={handleSubstituteSelect}
+                  onToggleMatchLog={() => setShowMatchLog(!showMatchLog)}
+                  onToggleLeftControls={() => setShowLeftControls(true)}
                 />
 
                 {/* Always show 2D CenterField for card display */}
@@ -576,14 +616,14 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                 animate={setupStep >= 1 ? { x: 0, opacity: 1 } : { x: 200, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 100, damping: 20 }}
               >
-                <RightPanel
+                <RightPanel 
                   aiSynergyHand={gameState.aiSynergyHand}
                   playerSynergyHand={gameState.playerSynergyHand}
                   selectedSynergyCards={gameState.selectedSynergyCards}
                   onSynergySelect={handleSynergySelect}
                   synergyDeckCount={gameState.synergyDeck.length}
                   synergyDiscardCount={gameState.synergyDiscard.length}
-                  onOpenPile={(p) => setViewingPile(p)}
+                  onOpenPile={setViewingPile}
                   turnPhase={gameState.turnPhase}
                   playerActiveSynergy={gameState.playerActiveSynergy}
                   aiActiveSynergy={gameState.aiActiveSynergy}
@@ -591,7 +631,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
               </motion.div>
              </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* 2D Click Overlay for 3D perspective issues (only in 2D mode) */}
       {renderMode === '2d' && viewSettings.pitch !== 0 && (
@@ -648,7 +689,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       )}
 
       {/* Left Side Controls - Vertically Centered */}
-      <div className="fixed top-1/2 left-4 -translate-y-1/2 z-[60] flex flex-col gap-3 items-center pointer-events-none">
+      {showLeftControls && gameState.phase !== 'coinToss' && (
+        <div className="fixed top-1/2 left-4 -translate-y-1/2 z-[60] flex flex-col gap-2 items-center pointer-events-none">
         {/* 1. Exit/Surrender Button */}
         <button 
           data-testid="back-button"
@@ -670,7 +712,19 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           </span>
         </button>
 
-        {/* 2. Audio & BGM Player */}
+        {/* 2. Match Log Button */}
+        <button
+          onClick={() => setShowMatchLog(!showMatchLog)}
+          className={clsx(
+            "w-full h-10 rounded-xl flex items-center justify-center transition-all bg-stone-900/80 backdrop-blur-md border border-white/20 shadow-xl pointer-events-auto",
+            showMatchLog ? "text-blue-400 bg-white/10" : "text-white/20 hover:bg-white/5"
+          )}
+          title="Toggle Match Log"
+        >
+          <span className="text-xl">📋</span>
+        </button>
+
+        {/* 3. Audio & BGM Player */}
         <div className="w-36 flex flex-col gap-2 pointer-events-auto">
            {/* SFX Quick Toggle */}
            <button
@@ -697,13 +751,24 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           <span className="text-lg group-hover:scale-110 transition-transform">📷</span>
           <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">View</span>
         </button>
+
+        {/* 4. Back Button */}
+        <button
+          onClick={() => setShowLeftControls(false)}
+          className="w-36 bg-stone-800/90 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-xl flex items-center gap-2 group pointer-events-auto"
+          title="Hide Controls"
+        >
+          <span className="text-lg group-hover:-translate-x-1 transition-transform">⬅️</span>
+          <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">Back</span>
+        </button>
       </div>
+      )}
 
 
 
       {/* Camera Controls Panel */}
       <AnimatePresence>
-        {showViewControls && (
+        {showViewControls && gameState.phase !== 'coinToss' && (
           <motion.div 
             drag
             dragMomentum={false}
@@ -825,7 +890,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       </AnimatePresence>
 
       {/* 2. HUD Layer - Top (Opponent) */}
-      <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
+      {gameState.phase !== 'coinToss' && (
+        <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
 
 
          {/* Top Center: Opponent Hand (Fanned - Horizontal) */}
@@ -865,10 +931,12 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                  OPP HAND: {gameState.aiHand.length}
              </div>
          </div>
-      </div>
+        </div>
+      )}
 
       {/* 3. HUD Layer - Bottom (Player) */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none" data-testid="game-board">
+      {gameState.phase !== 'coinToss' && (
+        <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none" data-testid="game-board">
 
 
          {/* Bottom Center: Player Hand */}
@@ -906,10 +974,12 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
               ))}
             </AnimatePresence>
          </div>
-      </div>
+        </div>
+      )}
 
       {/* Right Side: Turn Info & Action Buttons Container */}
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 pointer-events-auto flex flex-col items-end gap-6">
+      {gameState.phase !== 'coinToss' && (
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 pointer-events-auto flex flex-col items-end gap-6">
           {/* Turn Information */}
           <div className="text-right">
               <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">TURN {gameState.turnCount}</div>
@@ -938,38 +1008,42 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
               </div>
           </div>
 
-          {/* Action Buttons Panel */}
-          <div className="w-40 flex flex-col gap-3">
-                {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' ? (
-                  <div className="flex flex-col gap-3 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
-                    <div className="flex justify-between items-center mb-1 px-1">
-                      <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Tactical Action</div>
-                      <div className="group relative">
-                        <span className="text-white/20 text-[10px] cursor-help hover:text-white/50 transition-colors">ⓘ</span>
-                        <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-stone-900 border border-white/10 rounded-lg text-[9px] text-white/70 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-                          <p className="mb-1"><strong className="text-green-400">PASS:</strong> Draw synergy cards based on icons on field.</p>
-                          <p><strong className="text-amber-400">PRESS:</strong> Move control marker towards opponent.</p>
-                        </div>
+          {/* Team Action Modal - Centered */}
+          {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' && (passCount > 0 || pressCount > 0) && (
+            <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-md">
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                className="bg-[#1a1a1a] p-8 rounded-2xl border-2 border-gray-600 max-w-md w-full shadow-2xl"
+              >
+                <h2 className="text-3xl font-['Russo_One'] text-white mb-6 text-center">TACTICAL ACTION</h2>
+                <div className="mb-8 text-center">
+                  <p className="text-yellow-400 font-bold mb-4">CHOOSE YOUR TACTICAL APPROACH</p>
+                  <div className="flex flex-col gap-2 text-sm text-gray-300">
+                    <p><strong className="text-green-400">PASS:</strong> Draw synergy cards based on icons on field.</p>
+                    <p><strong className="text-amber-400">PRESS:</strong> Move control marker towards opponent.</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <button
+                      data-testid="team-action-pass"
+                      onClick={() => handleTeamAction('pass')}
+                      disabled={passCount === 0}
+                      className="w-full h-24 bg-gradient-to-br from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
+                      <span className="text-sm tracking-widest group-hover:scale-110 transition-transform">PASS</span>
+                      <span className="text-[10px] font-bold text-green-200/80 mt-1">DRAW SYNERGY</span>
+                      <div className="mt-2 flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
+                        <span className="text-[9px] font-black">{Math.min(passCount, 5 - gameState.playerSynergyHand.length)}</span>
+                        <span className="text-[8px] opacity-60">CARDS</span>
                       </div>
-                    </div>
+                    </button>
                     <button
-                        data-testid="team-action-pass"
-                        onClick={() => handleTeamAction('pass')}
-                        disabled={!canDoTeamAction || passCount === 0}
-                        className="w-full h-24 bg-gradient-to-br from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                      >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
-                        <span className="text-sm tracking-widest group-hover:scale-110 transition-transform">PASS</span>
-                        <span className="text-[10px] font-bold text-green-200/80 mt-1">DRAW SYNERGY</span>
-                        <div className="mt-2 flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
-                          <span className="text-[9px] font-black">{Math.min(passCount, 5 - gameState.playerSynergyHand.length)}</span>
-                          <span className="text-[8px] opacity-60">CARDS</span>
-                        </div>
-                      </button>
-                      <button
                         data-testid="team-action-press"
                         onClick={() => handleTeamAction('press')}
-                        disabled={!canDoTeamAction || pressCount === 0}
+                        disabled={pressCount === 0}
                         className="w-full h-24 bg-gradient-to-br from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
@@ -980,16 +1054,22 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                           <span className="text-[8px] opacity-60">STEPS</span>
                         </div>
                       </button>
-                    
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Action Buttons Panel */}
+          <div className="w-40 flex flex-col gap-3">
+                {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' && passCount === 0 && pressCount === 0 ? (
+                  <div className="flex flex-col gap-3 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
                     {/* Auto-skip hint if both are 0 */}
-                    {passCount === 0 && pressCount === 0 && (
-                      <button
-                        onClick={() => dispatch({ type: 'TEAM_ACTION', action: 'pass' })} // This will trigger performTeamAction which sets phase to playerAction
-                        className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
-                      >
-                        No actions available - Skip ➔
-                      </button>
-                    )}
+                    <button
+                      onClick={() => dispatch({ type: 'TEAM_ACTION', action: 'pass' })} // This will trigger performTeamAction which sets phase to playerAction
+                      className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
+                    >
+                      No actions available - Skip ➔
+                    </button>
                   </div>
                 ) : (
                   <button
@@ -1004,6 +1084,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                 )}
               </div>
           </div>
+        )}
         
         {/* Setup Overlay */}
       <AnimatePresence>
@@ -1062,22 +1143,22 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-[100]"
           >
-            {!tossResult ? (
+            {!rpsInProgress ? (
               <motion.div 
                 initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-                className="bg-[#1a1a1a] p-10 rounded-3xl border-2 border-yellow-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] text-center"
+                className="bg-[#1a1a1a] p-10 rounded-3xl border-2 border-green-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] text-center"
               >
-                <h2 className="text-4xl font-['Russo_One'] text-white mb-8 tracking-wider">COIN TOSS</h2>
-                <p className="text-gray-400 mb-10 text-lg">Click to determine Home/Away team</p>
+                <h2 className="text-4xl font-['Russo_One'] text-white mb-8 tracking-wider">ROCK PAPER SCISSORS</h2>
+                <p className="text-gray-400 mb-10 text-lg">Play to determine Home/Away team</p>
                 <button 
                   onClick={startToss}
-                  className="px-12 py-5 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-black text-2xl rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
+                  className="px-12 py-5 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-black font-black text-2xl rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
                 >
-                  Toss Coin
+                  Play Game
                 </button>
               </motion.div>
             ) : (
-              <CoinToss result={tossResult} onComplete={handleCoinTossComplete} />
+              <RockPaperScissors onComplete={handleRockPaperScissorsComplete} />
             )}
           </motion.div>
         )}
@@ -1306,6 +1387,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
         text={phaseBannerText}
         subtitle={phaseBannerSubtitle}
         show={showPhaseBanner}
+        durationMs={phaseBannerText === 'ACTION COMPLETE' ? 1000 : 2000}
         onComplete={() => {
           setShowPhaseBanner(false);
           if (gameState.phase === 'draft' && gameState.draftStep === 0) {
@@ -1317,15 +1399,21 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       {/* Duel Overlay */}
       {gameState.pendingShot && (
         <DuelOverlay
-          isOpen={gameState.duelPhase !== 'none'}
           duelPhase={gameState.duelPhase}
-          shotAttempt={gameState.pendingShot}
+          attacker={gameState.pendingShot.attacker}
+          defender={gameState.pendingShot.defender}
+          attackSynergy={gameState.pendingShot.attackSynergy}
+          defenseSynergy={gameState.pendingShot.defenseSynergy}
+          attackPower={gameState.pendingShot.attackPower}
+          defensePower={gameState.pendingShot.defensePower}
+          result={gameState.pendingShot.result}
+          activatedSkills={gameState.pendingShot.activatedSkills}
           onAdvance={() => dispatch({ type: 'ADVANCE_DUEL' })}
-          onClose={() => {
-            // This is called when result phase is over or user clicks close
-            dispatch({ type: 'ADVANCE_DUEL' });
-          }}
           isPlayerAttacking={gameState.currentTurn === 'player' || (gameState.currentTurn === 'ai' && gameState.turnPhase === 'end')}
+          attackerUsedShotIcons={gameState.pendingShot.attackerUsedShotIcons || []}
+          onShotIconSelect={(iconIndex) => {
+            dispatch({ type: 'SELECT_SHOT_ICON', iconIndex });
+          }}
         />
       )}
 
@@ -1352,6 +1440,22 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
         )}
       </AnimatePresence>
 
+
+
+      {/* Match Log HUD */}
+      <AnimatePresence>
+        {showMatchLog && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="fixed bottom-20 right-6 z-[90] w-[300px] h-[400px]"
+          >
+            <MatchLog logs={gameState.matchLogs} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {gameState.phase === 'squadSelect' && (
         <SquadSelect
           allPlayers={[...gameState.playerHand, ...gameState.playerBench]}
@@ -1372,10 +1476,12 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           round={gameState.draftRound}
           isPlayerTurn={gameState.currentTurn === 'player' && gameState.draftStep > 0}
           onSelect={(index) => {
+            setPlayerDraftSelectingIndex(index);
             dispatch({ type: 'PICK_DRAFT_CARD', cardIndex: index });
             playSound('draw');
           }}
           aiSelectedIndex={aiDraftSelectingIndex}
+          playerSelectedIndex={playerDraftSelectingIndex}
           isHomeTeam={gameState.isHomeTeam}
         />
 
@@ -1414,5 +1520,5 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
         )}
       </AnimatePresence>
     </div>
-  );
-};
+  )
+}

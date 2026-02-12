@@ -1,0 +1,17 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 剪刀 -->
+  <circle cx="50" cy="50" r="45" fill="#4ECDC4" stroke="black" stroke-width="3"/>
+  
+  <!-- 剪刀刀片1 -->
+  <path d="M30 70 L50 50 L45 45 L25 65 Z" fill="#7EDCD4" stroke="black" stroke-width="2"/>
+  <!-- 剪刀刀片2 -->
+  <path d="M70 70 L50 50 L55 45 L75 65 Z" fill="#7EDCD4" stroke="black" stroke-width="2"/>
+  
+  <!-- 剪刀手柄1 -->
+  <ellipse cx="30" cy="75" rx="8" ry="6" fill="#2A9D8F" stroke="black" stroke-width="2"/>
+  <!-- 剪刀手柄2 -->
+  <ellipse cx="70" cy="75" rx="8" ry="6" fill="#2A9D8F" stroke="black" stroke-width="2"/>
+  
+  <!-- 剪刀连接点 -->
+  <circle cx="50" cy="50" r="5" fill="#1A6B5E" stroke="black" stroke-width="2"/>
+</svg>

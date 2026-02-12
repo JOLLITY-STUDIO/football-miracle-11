@@ -15,12 +15,13 @@ export type GamePhase =
 export type TurnPhase = 'teamAction' | 'playerAction' | 'shooting' | 'end';
 export type PlayerActionType = 'organizeAttack' | 'directAttack' | null;
 export type ShotResult = 'goal' | 'saved' | 'missed' | 'magicNumber';
-export type DuelPhase = 'none' | 'init' | 'reveal_attacker' | 'reveal_defender' | 'reveal_synergy' | 'reveal_skills' | 'summary' | 'result';
+export type DuelPhase = 'none' | 'init' | 'select_shot_icon' | 'reveal_attacker' | 'reveal_defender' | 'reveal_synergy' | 'reveal_skills' | 'summary' | 'result';
 
 export interface FieldSlot {
   position: number;
   playerCard: PlayerCard | null;
   shotMarkers: number;
+  usedShotIcons: number[]; // Track which shot icon indices have been used
 }
 
 export interface FieldZone {
@@ -40,6 +41,9 @@ export interface ShotAttempt {
     attackerSkills: string[];
     defenderSkills: string[];
   };
+  attackerUsedShotIcons?: number[];
+  attackerZone?: number;
+  attackerSlot?: number;
 }
 
 export interface GameState {
@@ -84,6 +88,7 @@ export interface GameState {
   isDealing: boolean;
   duelPhase: DuelPhase;
   aiActionStep: 'teamAction' | 'placeCard' | 'shot' | 'endTurn' | 'none';
+  matchLogs: string[];
 }
 
 export const createInitialState = (
@@ -106,20 +111,20 @@ export const createInitialState = (
     playerHand = [...playerStarters];
     playerBench = [...playerSubstitutes];
     playerField = [
-      { zone: 1, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 2, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 3, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 4, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
+      { zone: 1, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 2, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 3, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 4, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
     ];
   } else {
     const shuffledPlayers = [...playerCards.filter(c => c.unlocked && !c.isStar)].sort(() => Math.random() - 0.5);
     playerHand = shuffledPlayers.slice(0, 10);
     playerBench = [];
     playerField = [
-      { zone: 1, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 2, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 3, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 4, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
+      { zone: 1, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 2, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 3, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 4, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
     ];
   }
 
@@ -141,10 +146,10 @@ export const createInitialState = (
     playerSynergyHand: [],
     playerField,
     aiField: [
-      { zone: 1, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 2, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 3, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 4, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
+      { zone: 1, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 2, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 3, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
+      { zone: 4, slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) },
     ],
     aiHand: awayCards,
     aiBench: [],
@@ -173,6 +178,7 @@ export const createInitialState = (
     isDealing: false,
     duelPhase: 'none',
     aiActionStep: 'none',
+    matchLogs: ['Game started'],
   };
 };
 
@@ -184,6 +190,7 @@ export type GameAction =
   | { type: 'TEAM_ACTION'; action: 'pass' | 'press' }
   | { type: 'PLACE_CARD'; card: PlayerCard; zone: number; slot: number }
   | { type: 'PERFORM_SHOT'; zone: number; slot: number; synergyCards: SynergyCard[] }
+  | { type: 'SELECT_SHOT_ICON'; iconIndex: number }
   | { type: 'END_TURN' }
   | { type: 'SUBSTITUTE'; incomingCardId: string; outgoingCardId: string }
   | { type: 'TRIGGER_EFFECT'; choice?: number }
@@ -201,6 +208,12 @@ export type GameAction =
   | { type: 'SET_DEALING'; isDealing: boolean }
   | { type: 'ADVANCE_DUEL' }
   | { type: 'FINISH_SETUP' };
+
+const addLog = (state: GameState, log: string): string[] => {
+  const newLogs = [...state.matchLogs, log];
+  if (newLogs.length > 50) newLogs.shift(); // Keep last 50 logs
+  return newLogs;
+};
 
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
   switch (action.type) {
@@ -259,11 +272,36 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'ADVANCE_DUEL': {
       if (state.duelPhase === 'none') return state;
-      const phases: DuelPhase[] = ['init', 'reveal_attacker', 'reveal_defender', 'reveal_synergy', 'reveal_skills', 'summary', 'result'];
+      const phases: DuelPhase[] = ['init', 'select_shot_icon', 'reveal_attacker', 'reveal_defender', 'reveal_synergy', 'reveal_skills', 'summary', 'result'];
       const currentIndex = phases.indexOf(state.duelPhase);
       const nextPhase = phases[currentIndex + 1] || 'none';
       
       let newState = { ...state, duelPhase: nextPhase };
+      
+      // Log duel steps
+      if (state.pendingShot) {
+        const { attacker, defender, attackPower, defensePower, result } = state.pendingShot;
+        switch (nextPhase) {
+          case 'reveal_attacker':
+            newState.matchLogs = addLog(newState, `[Duel] Attacker revealed: ${attacker.name}`);
+            break;
+          case 'reveal_defender':
+            newState.matchLogs = addLog(newState, `[Duel] Defender revealed: ${defender?.name || 'Empty'}`);
+            break;
+          case 'reveal_synergy':
+            newState.matchLogs = addLog(newState, `[Duel] Synergy cards revealed.`);
+            break;
+          case 'reveal_skills':
+            newState.matchLogs = addLog(newState, `[Duel] Skill effects triggered.`);
+            break;
+          case 'summary':
+            newState.matchLogs = addLog(newState, `[Duel] Final calculations: ${attackPower} vs ${defensePower}`);
+            break;
+          case 'result':
+            newState.matchLogs = addLog(newState, `[Duel] Outcome: ${result === 'goal' ? 'GOAL!' : 'No goal.'}`);
+            break;
+        }
+      }
       
       if (nextPhase === 'none') {
         newState.turnPhase = 'end';
@@ -276,14 +314,26 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'CANCEL_INSTANT_SHOT':
       return { ...state, instantShotMode: null, message: 'Instant shot cancelled' };
 
-    case 'COIN_TOSS':
-      return performCoinToss(state, action.isHomeTeam);
+    case 'COIN_TOSS': {
+      let newState = performCoinToss(state, action.isHomeTeam);
+      newState.matchLogs = addLog(newState, `Coin toss: Player is ${action.isHomeTeam ? 'Home' : 'Away'}`);
+      return newState;
+    }
     
-    case 'START_DRAFT_ROUND':
-      return startDraftRound(state);
+    case 'START_DRAFT_ROUND': {
+      let newState = startDraftRound(state);
+      newState.matchLogs = addLog(newState, `Draft Round ${newState.draftRound} started`);
+      return newState;
+    }
     
-    case 'PICK_DRAFT_CARD':
-      return pickDraftCard(state, action.cardIndex, true);
+    case 'PICK_DRAFT_CARD': {
+      const card = state.availableDraftCards[action.cardIndex];
+      let newState = pickDraftCard(state, action.cardIndex, true);
+      if (card) {
+        newState.matchLogs = addLog(newState, `Player picked: ${card.name}`);
+      }
+      return newState;
+    }
     
     case 'FINISH_SQUAD_SELECT': {
       const newState = { ...state };
@@ -307,6 +357,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newState.isFirstTurn = true;
       newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
       newState.message = 'Match starts! First turn skips Team Action. Player Action now.';
+      newState.matchLogs = addLog(newState, `Match started!`);
       return newState;
     }
     
@@ -314,7 +365,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (state.turnPhase !== 'teamAction') return state;
       {
         let newState = performTeamAction(state, action.action);
+        const actor = state.currentTurn === 'player' ? 'You' : 'AI';
+        const actionName = action.action === 'pass' ? 'Pass' : 'Press';
         newState.turnPhase = 'playerAction';
+        newState.matchLogs = addLog(newState, `${actor} executed ${actionName}`);
         return newState;
       }
     
@@ -322,7 +376,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (state.turnPhase !== 'playerAction' || state.currentAction) return state;
       const slotPosition = Math.floor(action.slot / 2) + 1;
       let newState = placeCard(state, action.card, action.zone, action.slot, true);
+      const actor = state.currentTurn === 'player' ? 'You' : 'AI';
       newState.currentAction = 'organizeAttack';
+      newState.matchLogs = addLog(newState, `${actor} placed ${action.card.name} at line ${action.zone}`);
 
       if (action.card.immediateEffect !== 'none') {
         newState.pendingImmediateEffect = { card: action.card, zone: action.zone, slot: slotPosition };
@@ -336,15 +392,19 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'PERFORM_SHOT': {
-      if (state.turnPhase !== 'playerAction' || state.currentAction !== null) return state;
+      if ((state.turnPhase !== 'playerAction' && !state.instantShotMode) || state.currentAction !== null) return state;
       
       const zone = state.playerField.find(z => z.zone === action.zone);
       const slot = zone?.slots.find(s => s.position === action.slot);
-      if (!slot?.playerCard) return state;
+      if (!slot?.playerCard && !state.instantShotMode) return state;
 
-      let newState = performShot(state, slot.playerCard, action.zone, action.slot, action.synergyCards, true);
-      
+      const shotCard = state.instantShotMode ? state.instantShotMode.card : (slot?.playerCard ?? null);
+      if (!shotCard) return state;
+
+      let newState = performShot(state, shotCard, action.zone, action.slot, action.synergyCards, true);
+      const actor = state.currentTurn === 'player' ? 'You' : 'AI';
       newState.currentAction = 'directAttack';
+      newState.matchLogs = addLog(newState, `${actor} initiated a shot! Duel starts...`);
       
       // Removed auto transition to 'end' phase
       // newState.turnPhase = 'end';
@@ -353,8 +413,31 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return newState;
     }
 
+    case 'SELECT_SHOT_ICON': {
+      if (!state.pendingShot) return state;
+      
+      let newState = { ...state };
+      const updatedShot = { ...state.pendingShot };
+      updatedShot.attackerUsedShotIcons = [action.iconIndex];
+      newState.pendingShot = updatedShot;
+
+      // Sync selection to field state for visual blackening and persistence
+      const isPlayer = state.currentTurn === 'player';
+      const zone = state.pendingShot.attackerZone!;
+      const slot = state.pendingShot.attackerSlot!;
+      newState = selectShotIcon(newState, isPlayer, zone, slot, action.iconIndex);
+      
+      // Log the shot icon selection
+      const actor = state.currentTurn === 'player' ? 'You' : 'AI';
+      newState.matchLogs = addLog(newState, `${actor} selected shot icon ${action.iconIndex + 1}`);
+      
+      // Advance to next duel phase
+      return { ...newState, duelPhase: 'reveal_attacker' as DuelPhase };
+    }
+
     case 'END_TURN': {
       let newState = { ...state };
+      const actor = state.currentTurn === 'player' ? 'You' : 'AI';
       
       // Cleanup active synergy cards to discard pile
       newState.synergyDiscard = [
@@ -375,6 +458,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newState.pendingShot = null;
       newState.duelPhase = 'none';
       
+      // Increment turn count
+      newState.turnCount += 1;
+      
       // Swap turns
       const nextTurn = state.currentTurn === 'player' ? 'ai' : 'player';
       newState.currentTurn = nextTurn;
@@ -385,6 +471,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       const passCount = countIcons(field, 'pass');
       const pressCount = countIcons(field, 'press');
       
+      newState.matchLogs = addLog(newState, `${actor} ended turn. Turn ${newState.turnCount} begins.`);
+
       if (passCount === 0 && pressCount === 0) {
         newState.turnPhase = 'playerAction';
         newState.message = nextTurn === 'player' 
@@ -402,10 +490,13 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'SUBSTITUTE':
       if (state.playerSubstitutionsLeft <= 0) return state;
-      return {
+      let newState = {
         ...substitutePlayer(state, action.outgoingCardId, action.incomingCardId, true),
         substitutionMode: null
       };
+      const actor = state.currentTurn === 'player' ? 'You' : 'AI';
+      newState.matchLogs = addLog(newState, `${actor} substituted a player`);
+      return newState;
 
     case 'TRIGGER_EFFECT': {
       if (!state.pendingImmediateEffect) return state;
@@ -417,20 +508,26 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (effect === 'draw_synergy_2_choose_1') {
         const { state: drawState, drawnCards } = drawTwoSynergyCardsForChoice(state, true);
         if (drawnCards.length >= 2) {
-          return { ...drawState, synergyChoice: { cards: drawnCards, sourceCard: card }, pendingImmediateEffect: null };
+          let nextState = { ...drawState, synergyChoice: { cards: drawnCards, sourceCard: card }, pendingImmediateEffect: null };
+          nextState.matchLogs = addLog(nextState, `Triggered ${card.name} effect: Draw 2 choose 1`);
+          return nextState;
         } else {
           let finalState = applyImmediateEffect(state, effect, true);
           finalState.message = `Deck insufficient, drew ${drawnCards.length} synergy card(s)`;
           newState = { ...finalState, pendingImmediateEffect: null };
         }
       } else if (effect === 'instant_shot') {
-        return { ...state, instantShotMode: { card, zone, slot }, pendingImmediateEffect: null, message: `Select synergy cards to boost instant shot (ignores base defense)` };
+        let nextState = { ...state, instantShotMode: { card, zone, slot }, pendingImmediateEffect: null, message: `Select synergy cards to boost instant shot (ignores base defense)` };
+        nextState.matchLogs = addLog(nextState, `Triggered ${card.name} effect: Instant Shot!`);
+        return nextState;
       } else if (effect === 'steal_synergy') {
         const { state: stealState, stolenCard } = stealSynergyCard(state, true);
         newState = { ...stealState, message: stolenCard ? `Stole synergy card: ${stolenCard.name}` : stealState.message, pendingImmediateEffect: null };
+        newState.matchLogs = addLog(newState, stolenCard ? `Stole synergy card: ${stolenCard.name}` : `Failed to steal synergy card`);
       } else {
         newState = applyImmediateEffect(state, effect, true);
         newState.pendingImmediateEffect = null;
+        newState.matchLogs = addLog(newState, `Triggered ${card.name} effect: ${effect}`);
       }
 
       // Transition to 'end' phase for auto-end turn timer
@@ -443,6 +540,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'SKIP_EFFECT': {
       const newState = { ...state, pendingImmediateEffect: null, message: `Skipped ${state.pendingImmediateEffect?.card.name}'s effect` };
+      newState.matchLogs = addLog(newState, `Skipped ${state.pendingImmediateEffect?.card.name}'s effect`);
       return {
         ...newState,
         turnPhase: 'end',
@@ -454,6 +552,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (!state.synergyChoice) return state;
       let newState = resolveSynergyChoice(state, state.synergyChoice.cards, action.index, true);
       newState.synergyChoice = null;
+      const chosenCard = state.synergyChoice.cards[action.index];
+      if (chosenCard) {
+        newState.matchLogs = addLog(newState, `Chose synergy card: ${chosenCard.name}`);
+      }
       // Transition to 'end' phase for auto-end turn timer
       return {
         ...newState,
@@ -464,7 +566,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
     case 'PENALTY_COMPLETE': {
       const isPlayerKicker = state.currentTurn === 'player';
-      return resolvePenaltyKick(state, action.playerPoints, action.aiPoints, isPlayerKicker);
+      let newState = resolvePenaltyKick(state, action.playerPoints, action.aiPoints, isPlayerKicker);
+      newState.matchLogs = addLog(newState, `Penalty shootout complete: ${action.playerPoints} - ${action.aiPoints}`);
+      return newState;
     }
 
     default:
@@ -497,7 +601,7 @@ export const performCoinToss = (state: GameState, isHomeTeam: boolean): GameStat
   const newState = {
     ...state,
     isHomeTeam,
-    phase: 'draft',
+    phase: 'draft' as GamePhase,
     draftRound: 1,
     draftStep: 0,
     message: isHomeTeam ? 'You are Home Team! Draft starts' : 'You are Away Team! Draft starts',
@@ -535,6 +639,12 @@ export const startDraftRound = (state: GameState): GameState => {
     newState.turnPhase = 'teamAction';
     newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
     newState.message = 'Draft complete! Game starts - Team Action first';
+    
+    // Set aiActionStep if AI starts
+    if (newState.currentTurn === 'ai') {
+      newState.aiActionStep = 'teamAction';
+    }
+    
     return newState;
   }
   
@@ -992,11 +1102,17 @@ export const placeCard = (
   const field = isPlayer ? [...newState.playerField] : [...newState.aiField];
   const hand = isPlayer ? [...newState.playerHand] : [...newState.aiHand];
   
-  const slotPosition = Math.floor(startCol / 2) + 1;
   const targetZone = field.find(z => z.zone === zone);
-  const targetSlot = targetZone?.slots.find(s => s.position === slotPosition);
-  if (targetZone && targetSlot && !targetSlot.playerCard) {
-    targetSlot.playerCard = card;
+  if (!targetZone) return newState;
+  
+  // Place card in two slots (startCol and startCol+1)
+  const slot1 = targetZone.slots.find(s => s.position === startCol);
+  const slot2 = targetZone.slots.find(s => s.position === startCol + 1);
+  
+  if (slot1 && slot2 && !slot1.playerCard && !slot2.playerCard) {
+    slot1.playerCard = card;
+    slot2.playerCard = card; // Same card in both slots
+    
     newState.playerField = isPlayer ? field : newState.playerField;
     newState.aiField = isPlayer ? newState.aiField : field;
     
@@ -1007,7 +1123,7 @@ export const placeCard = (
       newState.aiHand = newHand;
     }
     
-    newState.message = `Placed ${card.name} at ${zone} Zone Slot${slotPosition}`;
+    newState.message = `Placed ${card.name} at ${zone} Zone Column${startCol}`;
   }
   
   return newState;
@@ -1064,6 +1180,8 @@ export const performShot = (
     currentShotMarkers
   );
   
+  const attackerFieldSlot = attackerFieldZone?.slots.find(s => s.position === attackerSlot);
+  
   // Rule Check: If attack power > 11 (Out of bounds), Tackle does not work
   if (hasTackleCard && attackPower <= 11) {
     const usedAttackIds = attackSynergy.map(c => c.id);
@@ -1114,7 +1232,10 @@ export const performShot = (
     activatedSkills: {
       attackerSkills,
       defenderSkills
-    }
+    },
+    attackerUsedShotIcons: attackerFieldSlot?.usedShotIcons || [],
+    attackerZone,
+    attackerSlot
   };
   
   if (result === 'goal' || result === 'magicNumber') {
@@ -1126,9 +1247,9 @@ export const performShot = (
   }
   
   // 累加射门标记 (本次射门后 +1)
-  const attackerFieldSlot = attackerFieldZone?.slots.find(s => s.position === attackerSlot);
-  if (attackerFieldSlot) {
+  if (attackerFieldSlot && attackerFieldSlot.playerCard) {
     attackerFieldSlot.shotMarkers += 1;
+    // 注意：射门图标的选择现在需要在射门动作之前由玩家/AI手动选择
   }
   
   const usedAttackIds = attackSynergy.map(c => c.id);
@@ -1204,9 +1325,10 @@ export const startSecondHalf = (state: GameState): GameState => {
     phase: 'secondHalf',
     turnPhase: 'teamAction',
     currentTurn: 'ai',
+    aiActionStep: 'teamAction',
     controlPosition: 5,
-    playerField: state.playerField.map(z => ({ ...z, slots: z.slots.map(s => ({ ...s, playerCard: null, shotMarkers: 0 })) })),
-    aiField: state.aiField.map(z => ({ ...z, slots: z.slots.map(s => ({ ...s, playerCard: null, shotMarkers: 0 })) })),
+    playerField: state.playerField.map(z => ({ ...z, slots: z.slots.map(s => ({ ...s, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) })),
+    aiField: state.aiField.map(z => ({ ...z, slots: z.slots.map(s => ({ ...s, playerCard: null, shotMarkers: 0, usedShotIcons: [] })) })),
     playerSynergyHand: state.playerSynergyHand,
     aiSynergyHand: state.aiSynergyHand,
     synergyDeck: shuffledSynergy,
@@ -1218,16 +1340,45 @@ export const startSecondHalf = (state: GameState): GameState => {
 };
 
 export const endGame = (state: GameState): GameState => {
+  if (state.playerScore === state.aiScore) {
+    // 比分相同，进入点球大战
+    return {
+      ...state,
+      phase: 'penalty' as GamePhase,
+      turnPhase: 'end',
+      message: 'Score is tied! Penalty shootout begins!',
+    };
+  }
+  
   return {
     ...state,
     phase: 'finished',
     turnPhase: 'end',
     message: state.playerScore > state.aiScore 
       ? '🎉 Congratulations! You win！' 
-      : state.playerScore < state.aiScore 
-        ? '😢 You lose' 
-        : '🤝 Draw！',
+      : '😢 You lose',
   };
+};
+
+export const selectShotIcon = (
+  state: GameState,
+  isPlayer: boolean,
+  zone: number,
+  slot: number,
+  iconIndex: number
+): GameState => {
+  const newState = { ...state };
+  const field = isPlayer ? newState.playerField : newState.aiField;
+  const targetZone = field.find(z => z.zone === zone);
+  const targetSlot = targetZone?.slots.find(s => s.position === slot);
+  
+  if (targetSlot && !targetSlot.usedShotIcons.includes(iconIndex)) {
+    targetSlot.usedShotIcons = [...targetSlot.usedShotIcons, iconIndex];
+    newState.message = `Selected shot icon ${iconIndex + 1} for ${targetSlot.playerCard?.name || 'player'}`;
+    newState.matchLogs = addLog(newState, `Shot icon ${iconIndex + 1} selected for ${isPlayer ? 'player' : 'AI'} at zone ${zone} slot ${slot}`);
+  }
+  
+  return isPlayer ? { ...newState, playerField: field } : { ...newState, aiField: field };
 };
 
 export const performAITurn = (state: GameState): GameState => {
@@ -1254,21 +1405,21 @@ export const performAITurn = (state: GameState): GameState => {
   
   // Phase 2: Place Player Card
   if (newState.aiActionStep === 'placeCard') {
-    const availablePlacements: { card: PlayerCard; zone: number; slot: number }[] = [];
+    const availablePlacements: { card: PlayerCard; zone: number; startCol: number }[] = [];
     
     newState.aiHand.forEach(card => {
       newState.aiField.forEach(z => {
-        z.slots.forEach(s => {
-          if (!s.playerCard && canPlaceCardAtSlot(card, newState.aiField, z.zone, s.position, newState.isFirstTurn)) {
-            availablePlacements.push({ card, zone: z.zone, slot: s.position });
+        for (let col = 0; col <= 6; col++) {
+          if (canPlaceCardAtSlot(card, newState.aiField, z.zone, col, newState.isFirstTurn)) {
+            availablePlacements.push({ card, zone: z.zone, startCol: col });
           }
-        });
+        }
       });
     });
     
     if (availablePlacements.length > 0 && Math.random() > 0.3) {
       const placement = availablePlacements[Math.floor(Math.random() * availablePlacements.length)]!;
-      newState = placeCard(newState, placement.card, placement.zone, (placement.slot - 1) * 2, false);
+      newState = placeCard(newState, placement.card, placement.zone, placement.startCol, false);
       
       // After placing, decide if this card or another card should shoot
       newState.aiActionStep = 'shot';
@@ -1374,7 +1525,15 @@ export const substitutePlayer = (
   for (const zone of field) {
     const slotIndex = zone.slots.findIndex(s => s.playerCard?.id === outgoingCardId);
     if (slotIndex >= 0) {
-      zone.slots[slotIndex] = { ...zone.slots[slotIndex], playerCard: incomingCard };
+      const slot = zone.slots[slotIndex];
+      if (slot) {
+        zone.slots[slotIndex] = {
+          position: slot.position,
+          playerCard: incomingCard,
+          shotMarkers: 0,
+          usedShotIcons: [] // Reset used shot icons when substituting
+        };
+      }
       replaced = true;
       break;
     }

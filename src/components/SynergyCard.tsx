@@ -141,7 +141,7 @@ export const SynergyCardComponent: React.FC<Props> = ({
           />
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-16 h-16 rounded-full border-4 border-white/10 flex items-center justify-center">
-              <span className="text-3xl grayscale opacity-30">🃏</span>
+              <img src="/icons/synergy_plus_ring.svg" alt="Synergy" className="w-10 h-10 opacity-40" />
             </div>
           </div>
         </div>

@@ -17,6 +17,7 @@ interface Props {
   onDragEnd?: () => void;
   disabled?: boolean;
   variant?: 'home' | 'away';
+  usedShotIcons?: number[]; // Array of indices of used shot icons
 }
 
 const getRoleName = (type: string) => {
@@ -37,14 +38,14 @@ const getCardBgColor = (type: string) => {
   }
 };
 
-const getIconSymbol = (icon: TacticalIcon): string => {
+const getIconImage = (icon: TacticalIcon): string => {
   switch (icon) {
-    case 'attack': return '⚽';
-    case 'defense': return '🛡️';
-    case 'pass': return '👟';
-    case 'press': return '⚡';
-    case 'breakthrough': return '💨';
-    case 'breakthroughAll': return '💥';
+    case 'attack': return '/icons/attack_ball.svg';
+    case 'defense': return '/icons/defense_shield.svg';
+    case 'pass': return '/cards/skills/icon-pass.png';
+    case 'press': return '/icons/press_up.svg';
+    case 'breakthrough': return '/cards/skills/icon-shoot.svg';
+    case 'breakthroughAll': return '/cards/skills/icon-shoot.svg';
   }
 };
 
@@ -98,7 +99,8 @@ export const PlayerCardComponent: React.FC<Props> = ({
   onDragStart,
   onDragEnd,
   disabled = false,
-  variant = 'home'
+  variant = 'home',
+  usedShotIcons
 }) => {
   const roleName = getRoleName(card.type);
   const cardBg = getCardBgColor(card.type);
@@ -122,93 +124,50 @@ export const PlayerCardComponent: React.FC<Props> = ({
   const renderHalfIcon = (iconPos: { type: TacticalIcon; position: IconPosition }, index: number) => {
     const info = getHalfIconInfo(iconPos.position);
     const iconColor = getIconColor(iconPos.type);
-    const iconSymbol = getIconSymbol(iconPos.type);
+    const iconImage = getIconImage(iconPos.type);
     const radius = halfIconSize / 2;
     
-    let containerStyle: React.CSSProperties = {};
-    let iconStyle: React.CSSProperties = {};
+    // Check if this is a shot icon and if it's been used
+    const isShotIcon = iconPos.type === 'attack';
+    const isUsed = isShotIcon && (usedShotIcons?.includes(index) || false);
     
-    const baseStyle: React.CSSProperties = {
+    // SVG half-circle mask approach
+    const svgHalfCircle = (edge: 'top' | 'bottom' | 'left' | 'right', r: number) => {
+      const d = r * 2;
+      if (edge === 'top') return `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${d},0 A${r},${r} 0 0,1 0,${r} Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
+      if (edge === 'bottom') return `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,${r} A${r},${r} 0 0,1 ${d},${r} L${d},0 L0,0 Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
+      if (edge === 'left') return `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${r},${r} L0,${d} Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
+      // right
+      return `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M${r},0 L${r},${d} L0,${r} Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
+    };
+
+    const containerStyle: React.CSSProperties = {
       position: 'absolute',
+      width: info.edge === 'top' || info.edge === 'bottom' ? `${halfIconSize}px` : `${radius}px`,
+      height: info.edge === 'top' || info.edge === 'bottom' ? `${radius}px` : `${halfIconSize}px`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 10,
-      backgroundColor: '#ffffff', // 保持纯白色底色
+      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))',
+      transform: info.edge === 'top' || info.edge === 'bottom' ? 'translateX(-50%)' : 'translateY(-50%)',
+      ...(info.edge === 'top' ? { top: 0, left: info.pos } :
+          info.edge === 'bottom' ? { bottom: 0, left: info.pos } :
+          info.edge === 'left' ? { top: info.pos, left: 0 } :
+          { top: info.pos, right: 0 })
     };
-
-    if (info.edge === 'top') {
-      containerStyle = {
-        ...baseStyle,
-        top: '0px',
-        left: info.pos,
-        width: `${halfIconSize}px`,
-        height: `${radius}px`,
-        transform: 'translateX(-50%)',
-        borderRadius: `0 0 ${radius}px ${radius}px`,
-        boxShadow: `inset 0 -1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1)`
-      };
-      iconStyle = {
-        fontSize: '12px',
-        transform: 'translateY(1px)',
-        color: iconColor
-      };
-    } else if (info.edge === 'bottom') {
-      containerStyle = {
-        ...baseStyle,
-        bottom: '0px',
-        left: info.pos,
-        width: `${halfIconSize}px`,
-        height: `${radius}px`,
-        transform: 'translateX(-50%)',
-        borderRadius: `${radius}px ${radius}px 0 0`,
-        boxShadow: `inset 0 1px 3px rgba(0,0,0,0.2), 0 -1px 2px rgba(0,0,0,0.1)`
-      };
-      iconStyle = {
-        fontSize: '12px',
-        transform: 'translateY(-1px)',
-        color: iconColor
-      };
-    } else if (info.edge === 'left') {
-      containerStyle = {
-        ...baseStyle,
-        top: info.pos,
-        left: '0px',
-        width: `${radius}px`,
-        height: `${halfIconSize}px`,
-        transform: 'translateY(-50%)',
-        borderRadius: `0 ${radius}px ${radius}px 0`,
-        boxShadow: `inset -1px 0 3px rgba(0,0,0,0.2), 1px 0 2px rgba(0,0,0,0.1)`
-      };
-      iconStyle = {
-        fontSize: '12px',
-        transform: 'translateX(1px)',
-        color: iconColor
-      };
-    } else {
-      containerStyle = {
-        ...baseStyle,
-        top: info.pos,
-        right: '0px',
-        width: `${radius}px`,
-        height: `${halfIconSize}px`,
-        transform: 'translateY(-50%)',
-        borderRadius: `${radius}px 0 0 ${radius}px`,
-        boxShadow: `inset 1px 0 3px rgba(0,0,0,0.2), -1px 0 2px rgba(0,0,0,0.1)`
-      };
-      iconStyle = {
-        fontSize: '12px',
-        transform: 'translateX(-1px)',
-        color: iconColor
-      };
-    }
 
     return (
       <div
         key={`half-${iconPos.position}-${index}`}
         style={containerStyle}
+        dangerouslySetInnerHTML={{ __html: svgHalfCircle(info.edge, radius) }}
       >
-        <span style={iconStyle}>{iconSymbol}</span>
+        <img
+          src={iconImage}
+          alt={iconPos.type}
+          style={{ width: '16px', height: '16px', objectFit: 'contain', position: 'absolute' }}
+        />
       </div>
     );
   };
@@ -242,13 +201,12 @@ export const PlayerCardComponent: React.FC<Props> = ({
         {/* Front Face - 横版布局 左右各半 */}
         <div 
           className={clsx(
-            "absolute inset-0 backface-hidden flex rounded-lg overflow-hidden border-2 border-stone-800",
-            cardBg
+            "absolute inset-0 backface-hidden flex rounded-lg overflow-hidden border-2 border-stone-800"
           )}
           style={{ backfaceVisibility: 'hidden' }}
         >
-          {/* 左边一半：球员画像区域 */}
-          <div className="relative w-1/2 h-full bg-black/30 border-r border-black/30">
+          {/* 左边1/2：背景色区域 */}
+          <div className={clsx("relative w-1/2 h-full border-r border-black/30", cardBg)}>
             {card.imageUrl ? (
               <img 
                 src={card.imageUrl} 
@@ -256,7 +214,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-stone-600">
+              <div className="w-full h-full flex items-center justify-center">
                 <span className="text-3xl">👤</span>
               </div>
             )}
@@ -276,24 +234,24 @@ export const PlayerCardComponent: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* 右边一半：信息区域 */}
-          <div className="relative w-1/2 h-full flex flex-col justify-center items-center text-white px-1">
+          {/* 右边1/2：纯白色信息区域 */}
+          <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-2">
             <div className="flex flex-col items-center justify-center space-y-1">
               {/* 位置标签 - 徽章样式 */}
-              <div className="bg-white/90 px-2 py-0.5 rounded-md shadow-sm mb-1">
-                <span className="text-xs font-black tracking-wider leading-none" style={{ color: themeColor }}>
+              <div className="bg-stone-800 px-2 py-0.5 rounded-md shadow-sm mb-1">
+                <span className="text-xs font-black tracking-wider leading-none text-white">
                   {card.positionLabel}
                 </span>
               </div>
               
-              {/* 绰号/角色 - 变大 */}
-              <div className="text-sm font-black tracking-widest drop-shadow-sm leading-none" style={textStrokeStyle}>
-                {roleName}
+              {/* 角色/类型 */}
+              <div className="text-xs font-black tracking-widest leading-none" style={textStrokeStyle}>
+                {getRoleName(card.type)}
               </div>
 
-              {/* 球员名字 - 变小 */}
+              {/* 球员名字 */}
               <div className="text-[9px] font-bold text-center leading-tight truncate w-full px-1" style={textStrokeStyle}>
-                {card.name}
+                {card.realName}
               </div>
 
               {/* 技能图标区域 - 与文字信息紧凑排列 */}
@@ -301,19 +259,19 @@ export const PlayerCardComponent: React.FC<Props> = ({
                 {/* 完整图标（球员自带技能） */}
                 {card.completeIcon && (
                   <div 
-                    className="w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-lg"
+                    className="w-5 h-5 rounded-full flex items-center justify-center border-2 shadow-lg"
                     style={{
                       backgroundColor: '#ffffff',
                       borderColor: getIconColor(card.completeIcon)
                     }}
                   >
-                    <span className="text-sm">{getIconSymbol(card.completeIcon)}</span>
+                    <img src={getIconImage(card.completeIcon)} alt={card.completeIcon} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
                   </div>
                 )}
 
                 {/* 技能效果徽章 */}
                 {card.immediateEffect !== 'none' && (
-                  <div className="w-7 h-7 flex items-center justify-center">
+                  <div className="w-5 h-5 flex items-center justify-center">
                     <SkillEffectBadge 
                       effect={card.immediateEffect} 
                       size="small"
@@ -334,10 +292,11 @@ export const PlayerCardComponent: React.FC<Props> = ({
           className="absolute inset-0 backface-hidden bg-stone-800 flex items-center justify-center overflow-hidden rounded-lg border-2 border-stone-700"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-          <div className="w-12 h-12 rounded-full border-4 border-white/10 flex items-center justify-center">
-            <span className="text-2xl grayscale opacity-20">⚽</span>
-          </div>
+          <img 
+            src="/icons/home_card_back.svg" 
+            alt="Card Back (Home)" 
+            className="w-full h-full object-cover"
+          />
         </div>
       </motion.div>
     </div>

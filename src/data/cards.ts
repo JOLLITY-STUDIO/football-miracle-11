@@ -98,10 +98,12 @@ export const starPlayerCards: PlayerCard[] = [
   { id: 'SM1', name: '明星中场-指挥', realName: '莫德里奇', type: 'midfielder', positionLabel: 'DMF', attack: 2, defense: 3, zones: [2, 3], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['press', 'pass', 'pass', 'pass', 'press'], iconPositions: [{ type: 'press', position: 'slot1-topLeft' }, { type: 'pass', position: 'slot1-topRight' }, { type: 'pass', position: 'slot1-middleLeft' }, { type: 'pass', position: 'slot1-middleRight' }, { type: 'press', position: 'slot1-bottomLeft' }], completeIcon: 'pass', immediateEffect: 'instant_shot', imageUrl: '/images/cards/players/star-dmf-cannon-shot.png' },
   { id: 'SM2', name: '明星中场-核心', realName: '德布劳内', type: 'midfielder', positionLabel: 'AMF', attack: 3, defense: 2, zones: [2, 3], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['attack', 'attack', 'pass', 'press'], iconPositions: [{ type: 'attack', position: 'slot1-topLeft' }, { type: 'attack', position: 'slot1-topRight' }, { type: 'pass', position: 'slot1-middleLeft' }, { type: 'press', position: 'slot1-bottomLeft' }], completeIcon: 'attack', immediateEffect: 'none', imageUrl: '/images/cards/players/player-home-am-chancemaker.png' },
   { id: 'SM3', name: '明星中场-铁闸', realName: '坎特', type: 'midfielder', positionLabel: 'DMF', attack: 1, defense: 4, zones: [2, 3], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['pass', 'press', 'pass', 'pass', 'pass'], iconPositions: [{ type: 'pass', position: 'slot1-topLeft' }, { type: 'press', position: 'slot1-topRight' }, { type: 'pass', position: 'slot1-middleLeft' }, { type: 'pass', position: 'slot1-middleRight' }, { type: 'pass', position: 'slot1-bottomLeft' }], completeIcon: 'pass', immediateEffect: 'draw_synergy_2_choose_1', imageUrl: '/images/cards/players/player-home-dmf-tempo.png' },
+  { id: 'SM4', name: '明星中场-杀手传球', realName: '齐达内', type: 'midfielder', positionLabel: 'AMF', attack: 4, defense: 1, zones: [2, 3], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['attack', 'attack', 'attack', 'attack', 'press', 'press'], iconPositions: [{ type: 'attack', position: 'slot1-topLeft' }, { type: 'attack', position: 'slot1-topRight' }, { type: 'attack', position: 'slot1-middleLeft' }, { type: 'attack', position: 'slot1-middleRight' }, { type: 'press', position: 'slot1-bottomLeft' }, { type: 'press', position: 'slot1-bottomRight' }], completeIcon: 'attack', immediateEffect: 'draw_synergy_2_choose_1', imageUrl: '/images/cards/players/star-amf-killer-pass.png' },
   
   { id: 'SB1', name: '明星后卫-铁壁', realName: '范迪克', type: 'defender', positionLabel: 'CB', attack: 1, defense: 4, zones: [3, 4], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['defense', 'defense', 'pass', 'pass', 'defense', 'defense'], iconPositions: [{ type: 'defense', position: 'slot1-topLeft' }, { type: 'defense', position: 'slot1-topRight' }, { type: 'pass', position: 'slot1-middleLeft' }, { type: 'pass', position: 'slot1-middleRight' }, { type: 'defense', position: 'slot1-bottomLeft' }, { type: 'defense', position: 'slot1-bottomRight' }], completeIcon: 'defense', immediateEffect: 'steal_synergy', imageUrl: '/images/cards/players/star-cb-sweeper.png' },
   { id: 'SB2', name: '明星后卫-飞翼', realName: '阿方索', type: 'defender', positionLabel: 'LB', attack: 2, defense: 3, zones: [3, 4], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['press', 'pass', 'defense'], iconPositions: [{ type: 'press', position: 'slot1-topRight' }, { type: 'pass', position: 'slot1-middleRight' }, { type: 'defense', position: 'slot1-bottomRight' }], completeIcon: 'pass', immediateEffect: 'draw_synergy_1', imageUrl: '/images/cards/players/player-home-lb-fullback.png' },
   { id: 'SB3', name: '明星后卫-屏障', realName: '鲁本迪亚斯', type: 'defender', positionLabel: 'CB', attack: 0, defense: 5, zones: [3, 4], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['defense', 'defense', 'pass', 'pass', 'defense', 'defense'], iconPositions: [{ type: 'defense', position: 'slot1-topLeft' }, { type: 'defense', position: 'slot1-topRight' }, { type: 'pass', position: 'slot1-middleLeft' }, { type: 'pass', position: 'slot1-middleRight' }, { type: 'defense', position: 'slot1-bottomLeft' }, { type: 'defense', position: 'slot1-bottomRight' }], completeIcon: 'defense', immediateEffect: 'steal_synergy', imageUrl: '/images/cards/players/star-cb-sweeper.png' },
+  { id: 'SB4', name: '明星后卫-重叠', realName: '罗伯逊', type: 'defender', positionLabel: 'LB', attack: 1, defense: 3, zones: [3, 4], isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['press'], iconPositions: [{ type: 'press', position: 'slot1-topRight' }], completeIcon: 'press', immediateEffect: 'draw_synergy_1', imageUrl: '/images/cards/players/star-lb-overlapping.png' },
 ];
 
 export const playerCards: PlayerCard[] = [...basePlayerCards, ...starPlayerCards];
@@ -172,7 +174,7 @@ export function getIconDisplay(icon: TacticalIcon): { symbol: string; color: str
     case 'attack': return { symbol: '⚔', color: '#E53935' };
     case 'defense': return { symbol: '🛡', color: '#1E88E5' };
     case 'pass': return { symbol: '↔', color: '#43A047' };
-    case 'press': return { symbol: '⚡', color: '#FB8C00' };
+    case 'press': return { symbol: '↑', color: '#FB8C00' };
     case 'breakthrough': return { symbol: '💨', color: '#9C27B0' };
     case 'breakthroughAll': return { symbol: '💥', color: '#E91E63' };
   }
@@ -182,14 +184,22 @@ export function canPlaceCardAtSlot(
   card: PlayerCard,
   fieldSlots: { zone: number; slots: { position: number; playerCard: PlayerCard | null }[] }[],
   zone: number,
-  slotPosition: number,
+  startCol: number,
   isFirstTurn: boolean
 ): boolean {
   const targetZone = fieldSlots.find(z => z.zone === zone);
   if (!targetZone) return false;
-  const targetSlot = targetZone.slots.find(s => s.position === slotPosition);
-  if (!targetSlot || targetSlot.playerCard) return false;
+  
+  // Check if card can be placed at this column (0-6)
+  if (startCol < 0 || startCol > 6) return false;
   if (!card.zones.includes(zone)) return false;
+
+  // Check if the two columns (startCol and startCol+1) are not occupied
+  const slot1 = targetZone.slots.find(s => s.position === startCol);
+  const slot2 = targetZone.slots.find(s => s.position === startCol + 1);
+  
+  if (!slot1 || !slot2) return false;
+  if (slot1.playerCard || slot2.playerCard) return false;
 
   // 规则：Zone 1 (前线) 必须有邻居（同区域或后方区域）
   // 且第一张卡牌不能放置在 Zone 1
@@ -202,10 +212,10 @@ export function canPlaceCardAtSlot(
     const zone2 = fieldSlots.find(z => z.zone === 2);
     
     const hasAdjacentInZone1 = zone1?.slots.some(s => 
-      s.playerCard && Math.abs(s.position - slotPosition) === 1
+      s.playerCard && Math.abs(s.position - startCol) <= 1
     );
     const hasBehindInZone2 = zone2?.slots.some(s => 
-      s.playerCard && Math.abs(s.position - slotPosition) === 0
+      s.playerCard && Math.abs(s.position - startCol) <= 1
     );
     
     if (!hasAdjacentInZone1 && !hasBehindInZone2) return false;

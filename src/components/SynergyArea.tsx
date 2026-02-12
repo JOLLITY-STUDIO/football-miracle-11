@@ -45,7 +45,7 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
             <div className="flex-shrink-0 w-12 flex items-center justify-center relative h-full">
               <div className={`w-4 h-full ${row.color} border-x-[3px] border-white relative flex items-center justify-center ${i === 0 ? 'rounded-t-full border-t-[3px]' : ''} ${i === rows.length - 1 ? 'rounded-b-full border-b-[3px]' : ''}`}>
                 <div className={`w-10 h-10 rounded-full bg-white flex items-center justify-center border-[3px] border-black/10 shadow-md absolute z-10`}>
-                  <span className="text-2xl filter drop-shadow-sm select-none">⚽</span>
+                  <img src="/icons/attack_ball.svg" alt="Attack" className="w-6 h-6" />
                 </div>
               </div>
             </div>
@@ -57,9 +57,25 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
                 <div className={`flex-1 h-full flex items-center justify-center relative border-dashed border-white/40 border-r-2`}>
                   <div className="flex flex-wrap items-center justify-center gap-1.5 p-1">
                     {row.leftIcons.map((icon, idx) => (
-                      <span key={idx} className={`text-white text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] filter brightness-110`}>
-                        {icon === '📚' ? '🃏' : icon}
-                      </span>
+                      icon === '📚' ? (
+                        <img
+                          key={idx}
+                          src="/icons/synergy_plus_ring.svg"
+                          alt="Synergy"
+                          className="w-6 h-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                        />
+                      ) : icon === '✋' ? (
+                        <img
+                          key={idx}
+                          src="/icons/defense_shield.svg"
+                          alt="Defense"
+                          className="w-6 h-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                        />
+                      ) : (
+                        <span key={idx} className="text-white text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] filter brightness-110">
+                          {icon}
+                        </span>
+                      )
                     ))}
                   </div>
                 </div>
@@ -68,9 +84,25 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
                 <div className="flex-1 h-full flex items-center justify-center relative">
                   <div className="flex flex-wrap items-center justify-center gap-1.5 p-1">
                     {row.rightIcons.map((icon, idx) => (
-                      <span key={idx} className={`text-white text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] filter brightness-110`}>
-                        {icon === '📚' ? '🃏' : icon}
-                      </span>
+                      icon === '📚' ? (
+                        <img
+                          key={idx}
+                          src="/icons/synergy_plus_ring.svg"
+                          alt="Synergy"
+                          className="w-6 h-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                        />
+                      ) : icon === '✋' ? (
+                        <img
+                          key={idx}
+                          src="/icons/defense_shield.svg"
+                          alt="Defense"
+                          className="w-6 h-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                        />
+                      ) : (
+                        <span key={idx} className="text-white text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] filter brightness-110">
+                          {icon}
+                        </span>
+                      )
                     ))}
                   </div>
                 </div>
@@ -86,7 +118,9 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
                     : 'bg-transparent border-transparent opacity-0 scale-75'
                 }`}
               >
-                <span className="text-xl text-white filter drop-shadow-md select-none">🛡️</span>
+                {row.hasDefense && (
+                  <img src="/icons/defense_shield.svg" alt="Defense" className="w-6 h-6" />
+                )}
               </div>
             </div>
           </div>

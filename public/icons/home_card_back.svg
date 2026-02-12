@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <!-- Card Background -->
+  <rect x="4" y="4" width="312" height="192" rx="14" ry="14" fill="#0b0b0f" stroke="#2b2b2f" stroke-width="3"/>
+  
+  <!-- Jersey -->
+  <g transform="translate(60,30)">
+    <!-- Body split red shades -->
+    <path d="M20,20 L60,0 L120,0 L160,20 L160,160 L0,160 L0,20 Z" fill="#c82034"/>
+    <path d="M80,0 L120,0 L160,20 L160,160 L80,160 L80,0 Z" fill="#a81d30"/>
+    <!-- Collar and sleeve bands -->
+    <path d="M56,6 C70,-6 110,-6 124,6" stroke="#ffdfe2" stroke-width="10" fill="none" />
+    <path d="M10,40 L10,60" stroke="#ffdfe2" stroke-width="10" />
+    <path d="M150,40 L150,60" stroke="#ffdfe2" stroke-width="10" />
+    <!-- White stripes -->
+    <rect x="15" y="78" width="130" height="10" fill="#ffdfe2"/>
+    <rect x="15" y="130" width="130" height="10" fill="#ffdfe2"/>
+    <!-- Text -->
+    <text x="80" y="110" font-family="Verdana, Arial, sans-serif" font-size="34" font-weight="900" text-anchor="middle" fill="#ffffff">HOME</text>
+    <text x="80" y="152" font-family="Verdana, Arial, sans-serif" font-size="28" font-weight="900" text-anchor="middle" fill="#ffffff">PLAYER</text>
+  </g>
+</svg>

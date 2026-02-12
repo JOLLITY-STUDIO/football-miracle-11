@@ -67,35 +67,19 @@ export const CenterField: React.FC<Props> = ({
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: `
-              linear-gradient(90deg, 
-                rgba(0,0,0,0.05) 50%, 
-                transparent 50%
-              ),
               repeating-linear-gradient(0deg,
-                rgba(255,255,255,0.02) 0px,
-                rgba(255,255,255,0.02) 1px,
-                transparent 1px,
-                transparent 2px
+                #356b2d 0px,
+                #356b2d 130px,
+                #2d5a27 130px,
+                #2d5a27 260px
               )
             `,
-            backgroundSize: `${CELL_WIDTH * 2}px 100%, 100% 2px`,
-            backgroundColor: '#356b2d' // Natural lighter grass
-          }}
-        />
-
-        {/* Noise/Texture for Grass */}
-        <div 
-          className="absolute inset-0 pointer-events-none opacity-[0.15] mix-blend-overlay"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+            backgroundSize: '100% 260px'
           }}
         />
         
         {/* Field Lines & Overlays */}
         <div className="absolute inset-0 pointer-events-none z-30">
-          {/* Mowed lines effect */}
-          <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent 0, transparent 40px, rgba(0,0,0,0.1) 40px, rgba(0,0,0,0.1) 80px)' }} />
-          
           {/* Outer Boundary Glow */}
           <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.3)]" />
         </div>
@@ -111,33 +95,27 @@ export const CenterField: React.FC<Props> = ({
         {/* Goals and Areas (Proportional to cells) */}
         {/* Opponent Area */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-30">
-          {/* Penalty Area */}
-          <div 
-            className="border-b-[4px] border-x-[4px] border-white/80 bg-white/5 shadow-[inset_0_-20px_50px_rgba(255,255,255,0.05)]"
-            style={{ width: '500px', height: '180px' }}
-          />
           {/* Goal Area */}
           <div 
             className="absolute top-0 border-b-[4px] border-x-[4px] border-white/80 bg-white/5"
             style={{ width: '240px', height: '70px' }}
           />
+          {/* Penalty Area */}
+          <div 
+            className="border-b-[4px] border-x-[4px] border-white/80 bg-white/5 shadow-[inset_0_-20px_50px_rgba(255,255,255,0.05)]"
+            style={{ width: '500px', height: '180px' }}
+          />
+          {/* Penalty Spot */}
+          <div className="absolute top-[140px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
           {/* Penalty Arc */}
           <div 
             className="absolute top-[180px] left-1/2 -translate-x-1/2 w-[160px] h-[60px] border-b-[4px] border-white/80 rounded-b-full bg-transparent"
             style={{ clipPath: 'inset(0 0 -100% 0)' }}
           />
-          {/* Penalty Spot */}
-          <div className="absolute top-[140px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
         </div>
 
         {/* Player Area */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-30">
-          {/* Penalty Arc */}
-          <div 
-            className="absolute bottom-[180px] left-1/2 -translate-x-1/2 w-[160px] h-[60px] border-t-[4px] border-white/80 rounded-t-full bg-transparent"
-          />
-          {/* Penalty Spot */}
-          <div className="absolute bottom-[140px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
           {/* Goal Area */}
           <div 
             className="absolute bottom-0 border-t-[4px] border-x-[4px] border-white/80 bg-white/5"
@@ -147,6 +125,12 @@ export const CenterField: React.FC<Props> = ({
           <div 
             className="border-t-[4px] border-x-[4px] border-white/80 bg-white/5 shadow-[inset_0_20px_50px_rgba(255,255,255,0.05)]"
             style={{ width: '500px', height: '180px' }}
+          />
+          {/* Penalty Spot */}
+          <div className="absolute bottom-[140px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+          {/* Penalty Arc */}
+          <div 
+            className="absolute bottom-[180px] left-1/2 -translate-x-1/2 w-[160px] h-[60px] border-t-[4px] border-white/80 rounded-t-full bg-transparent"
           />
         </div>
         

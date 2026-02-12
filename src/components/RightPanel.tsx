@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SynergyPanel } from './SynergyPanel';
 import { BaseCard } from './BaseCard';
 import { penaltyCards, type SynergyCard } from '../data/cards';
@@ -35,6 +35,7 @@ export const RightPanel: React.FC<Props> = ({
   aiActiveSynergy,
 }) => {
   const isEndPhase = turnPhase === 'end';
+  const [showSynergyDetails, setShowSynergyDetails] = useState(false);
 
   return (
     <div
@@ -43,65 +44,167 @@ export const RightPanel: React.FC<Props> = ({
     >
       <div className="absolute inset-y-0 left-0 right-[-100px] bg-gradient-to-l from-stone-900 via-stone-900/90 to-transparent pointer-events-none" />
       
-      <div className="relative flex h-full w-full p-6 gap-8 z-10 justify-center">
-        
-        {/* 1. Synergy Board - Unified Board */}
-        <div className="relative w-[320px] flex flex-col bg-[#C62918] rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 flex-shrink-0">
-          
-          <div className="relative flex-1 flex flex-col justify-between py-6">
-            {/* Opponent Label (Upside down for them) */}
-            <div className="py-2 flex flex-col items-center">
-              <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] rotate-180">
-                Opponent Synergy
+      <div className="relative flex h-full w-full p-6 gap-6 z-10">
+        <div className="flex-1 flex flex-col gap-6">
+          {/* 1. Opponent Synergy Hand - Horizontal Version */}
+          <div className="bg-stone-900/80 rounded-2xl border border-white/10 shadow-xl p-4">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">
+                Opponent Synergy Hand
               </div>
-              <div className="w-12 h-1 bg-white/10 rounded-full mt-1 rotate-180" />
             </div>
-
-            <div className="flex-1 flex flex-col justify-start">
-              <SynergyPanel
-                synergyHand={isEndPhase ? aiActiveSynergy : aiSynergyHand}
-                isAi={true}
-                revealed={isEndPhase}
-                transparent={true}
-              />
-            </div>
-            
-            <div className="flex items-center justify-center py-4">
-              <div className="w-full border-t-2 border-dashed border-white/10 relative">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-1 bg-[#C62918] rounded-full border border-white/10 shadow-lg">
-                  <span className="text-white/40 text-[9px] font-black tracking-[0.5em] uppercase whitespace-nowrap">
-                    BATTLE FRONT
-                  </span>
+            <div className="relative" style={{ height: `70px` }}>
+              {aiSynergyHand.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-[10px] text-white/5 font-black uppercase tracking-widest">
+                  EMPTY
                 </div>
-              </div>
-            </div>
-            
-            <div className="flex-1 flex flex-col justify-end">
-              <SynergyPanel
-                synergyHand={isEndPhase ? playerActiveSynergy : playerSynergyHand}
-                selectedCards={selectedSynergyCards}
-                onSelect={onSynergySelect}
-                isAi={false}
-                revealed={isEndPhase}
-                transparent={true}
-              />
-            </div>
-
-            {/* Player Label */}
-            <div className="py-2 flex flex-col items-center">
-              <div className="w-12 h-1 bg-white/10 rounded-full mb-1" />
-              <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">
-                Your Synergy
-              </div>
+              ) : (
+                <div className="relative h-full flex items-center">
+                  {aiSynergyHand.map((card, i) => (
+                    <div 
+                      key={card.id}
+                      className="absolute group" 
+                      style={{
+                        zIndex: i,
+                        left: `${i * 12}px`,
+                        transform: `translateY(-${i * 1}px)`,
+                      }}
+                    >
+                      <img 
+                        src="/cards/synergy/synergy_back.png" 
+                        alt="Synergy Card" 
+                        className="w-[96px] h-[62px] object-contain"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Decorative shine */}
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none" />
+          {/* 2. Battle Front - Middle Section */}
+          <div className="flex-1 bg-[#C62918] rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20">
+            <div className="relative flex-1 flex flex-col justify-center py-6">
+              {/* Your Battle Front */}
+              <div className="flex-1 flex flex-col justify-center items-center">
+                <div className="py-2 flex flex-col items-center mb-3">
+                  <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">
+                    Your Battle Front
+                  </div>
+                </div>
+                <SynergyPanel
+                  synergyHand={playerActiveSynergy}
+                  selectedCards={selectedSynergyCards}
+                  onSelect={onSynergySelect}
+                  isAi={false}
+                  revealed={isEndPhase}
+                  transparent={true}
+                />
+              </div>
+            </div>
+            {/* Decorative shine */}
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none" />
+          </div>
+
+          {/* 3. Your Synergy Hand - Horizontal Version */}
+          <div className="bg-stone-900/80 rounded-2xl border border-white/10 shadow-xl p-4">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">
+                Your Synergy Hand
+              </div>
+              <button
+                onClick={() => setShowSynergyDetails(!showSynergyDetails)}
+                className="text-xs text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
+              >
+                {showSynergyDetails ? 'Hide' : 'Details'}
+              </button>
+            </div>
+            <div className="relative" style={{ height: `70px` }}>
+              {playerSynergyHand.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-[10px] text-white/5 font-black uppercase tracking-widest">
+                  EMPTY
+                </div>
+              ) : (
+                <div className="relative h-full flex items-center">
+                  {playerSynergyHand.map((card, i) => (
+                    <div 
+                      key={card.id}
+                      className="absolute cursor-pointer group" 
+                      style={{
+                        zIndex: i,
+                        left: `${i * 12}px`,
+                        transform: `translateY(-${i * 1}px)`,
+                      }}
+                      onClick={() => onSynergySelect(card)}
+                    >
+                      <img 
+                        src={card.imageUrl} 
+                        alt={card.name} 
+                        className="w-[96px] h-[62px] object-contain transition-transform group-hover:scale-105"
+                        style={{
+                          border: selectedSynergyCards.some(c => c.id === card.id) ? '2px solid yellow' : '2px solid transparent',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 3. Synergy Details Modal */}
+          {showSynergyDetails && (
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-md">
+              <div className="bg-stone-900 rounded-2xl border border-white/10 shadow-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-['Russo_One'] text-white">Your Synergy Cards</h2>
+                  <button
+                    onClick={() => setShowSynergyDetails(false)}
+                    className="text-white/40 hover:text-white text-lg"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {playerSynergyHand.length === 0 ? (
+                    <div className="text-center py-8 text-white/40">
+                      No synergy cards in hand
+                    </div>
+                  ) : (
+                    playerSynergyHand.map((card, index) => (
+                      <div key={card.id} className="flex items-center gap-3 p-3 bg-stone-800/50 rounded-lg border border-white/5">
+                        <div className="w-16 h-16 flex-shrink-0">
+                          <img 
+                            src={card.imageUrl} 
+                            alt={card.name} 
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-white font-bold">{card.name}</div>
+                          <div className="text-white/60 text-sm">Type: {card.type}</div>
+                          <div className="text-white/60 text-sm">Stars: {card.stars}</div>
+                        </div>
+                        <div className="text-yellow-400 font-bold">+{card.stars}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setShowSynergyDetails(false)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 2. Draw Area - Vertical Stacks outside synergy panel */}
-        <div className="flex-shrink-0 w-[160px] flex flex-col justify-around py-2 items-center">
+        {/* 4. Draw Area - Right Side */}
+        <div className="flex-shrink-0 w-[160px] flex flex-col justify-center gap-6">
           
           {/* Penalty Kick Stack (Top) - Blue Stack */}
           <div className="relative flex flex-col items-center group">
@@ -149,36 +252,36 @@ export const RightPanel: React.FC<Props> = ({
                   </div>
 
                   {/* Corner detail */}
-                  <div className="absolute top-0 right-0 w-6 h-6 bg-[#0E598B]/20 rounded-bl-2xl" />
-                  <div className="absolute bottom-0 left-0 w-6 h-6 bg-[#0E598B]/20 rounded-tr-2xl" />
+                  <div className="absolute top-1 left-1 w-3 h-3 border-t-2 border-l-2 border-white/30 rounded-tl-md" />
+                  <div className="absolute bottom-1 right-1 w-3 h-3 border-b-2 border-r-2 border-white/30 rounded-br-md" />
                 </div>
               ))}
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-white text-stone-900 font-black text-xs rounded-full flex items-center justify-center border-2 border-stone-900 shadow-xl z-20">
-                {penaltyCards.length}
-              </div>
             </div>
           </div>
 
-          {/* Synergy Card Deck (Middle) - Green Stack */}
-          <div className="relative flex flex-col items-center cursor-pointer group" onClick={() => onOpenPile('deck')}>
+          {/* Synergy Deck Stack (Middle) - Red Stack */}
+          <div 
+            className="relative flex flex-col items-center group cursor-pointer"
+            onClick={() => onOpenPile('deck')}
+          >
             <span className="text-[10px] text-white/40 font-bold mb-1 uppercase tracking-tighter">Synergy Deck</span>
             <div className="relative" style={{ width: `${STACK_W}px`, height: `${STACK_H}px` }}>
-              {[5, 4, 3, 2, 1, 0].map((i) => (
+              {[3, 2, 1, 0].map((i) => (
                 <div 
                   key={i}
                   className="absolute inset-0 border-[1.5px] border-black/80 rounded-lg shadow-md flex flex-col items-center justify-center overflow-hidden transition-transform group-hover:translate-y-[-2px]"
                   style={{ 
                     transform: `translate(${i * -1.5}px, ${i * -2.5}px)`,
                     zIndex: 10 - i,
-                    backgroundColor: '#106327',
+                    backgroundColor: '#C62918',
                     boxShadow: i === 0 ? '0 4px 6px -1px rgba(0, 0, 0, 0.5)' : 'none'
                   }}
                 >
                   {/* Card Back Design */}
-                  <div className="absolute inset-0 bg-[#106327]" />
+                  <div className="absolute inset-0 bg-[#C62918]" />
                   
-                  {/* Dark Green Accents */}
-                  <div className="absolute inset-2 border border-[#083d18]/30 rounded-md" />
+                  {/* Dark Red Accents */}
+                  <div className="absolute inset-2 border border-[#7E1D13]/30 rounded-md" />
                   
                   <div className="relative flex flex-col items-center p-2 text-center h-full justify-between w-full">
                     {/* Top Text */}
@@ -187,52 +290,52 @@ export const RightPanel: React.FC<Props> = ({
                       <span className="text-[7px] text-white/80 font-bold uppercase tracking-[0.1em]">DECK</span>
                     </div>
 
-                    {/* Synergy Symbol with Dark Background */}
+                    {/* Large Card Icon with Dark Background */}
                     <div className="relative w-16 h-16 flex items-center justify-center">
-                      <div className="absolute inset-0 bg-[#083d18] rounded-full opacity-40 blur-sm" />
-                      <div className="relative w-14 h-14 bg-[#083d18] rounded-full flex items-center justify-center border-2 border-white/20">
+                      <div className="absolute inset-0 bg-[#7E1D13] rounded-full opacity-40 blur-sm" />
+                      <div className="relative w-14 h-14 bg-[#7E1D13] rounded-full flex items-center justify-center border-2 border-white/20">
                         <span className="text-4xl filter drop-shadow-md">🃏</span>
                       </div>
                     </div>
 
-                    {/* Bottom detail */}
+                    {/* Count and Bottom Text */}
                     <div className="flex flex-col items-center gap-1">
-                      <span className="text-[7px] text-white/60 font-black tracking-widest">山札</span>
+                      <span className="text-[14px] text-white font-bold">{synergyDeckCount}</span>
                       <div className="w-8 h-0.5 bg-white/40 rounded-full" />
                     </div>
                   </div>
 
                   {/* Corner detail */}
-                  <div className="absolute top-0 right-0 w-6 h-6 bg-[#083d18]/20 rounded-bl-2xl" />
-                  <div className="absolute bottom-0 left-0 w-6 h-6 bg-[#083d18]/20 rounded-tr-2xl" />
+                  <div className="absolute top-1 left-1 w-3 h-3 border-t-2 border-l-2 border-white/30 rounded-tl-md" />
+                  <div className="absolute bottom-1 right-1 w-3 h-3 border-b-2 border-r-2 border-white/30 rounded-br-md" />
                 </div>
               ))}
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-white text-stone-900 font-black text-xs rounded-full flex items-center justify-center border-2 border-stone-900 shadow-xl z-20">
-                {synergyDeckCount}
-              </div>
             </div>
           </div>
 
-          {/* Synergy Discard (Bottom) - Grey Stack */}
-          <div className="relative flex flex-col items-center cursor-pointer group" onClick={() => onOpenPile('discard')}>
+          {/* Discard Pile Stack (Bottom) - Black Stack */}
+          <div 
+            className="relative flex flex-col items-center group cursor-pointer"
+            onClick={() => onOpenPile('discard')}
+          >
             <span className="text-[10px] text-white/40 font-bold mb-1 uppercase tracking-tighter">Discard Pile</span>
             <div className="relative" style={{ width: `${STACK_W}px`, height: `${STACK_H}px` }}>
-              {[2, 1, 0].map((i) => (
+              {[3, 2, 1, 0].map((i) => (
                 <div 
                   key={i}
                   className="absolute inset-0 border-[1.5px] border-black/80 rounded-lg shadow-md flex flex-col items-center justify-center overflow-hidden transition-transform group-hover:translate-y-[-2px]"
                   style={{ 
                     transform: `translate(${i * -1.5}px, ${i * -2.5}px)`,
                     zIndex: 10 - i,
-                    backgroundColor: synergyDiscardCount > 0 ? '#333' : '#444',
+                    backgroundColor: '#333333',
                     boxShadow: i === 0 ? '0 4px 6px -1px rgba(0, 0, 0, 0.5)' : 'none'
                   }}
                 >
                   {/* Card Back Design */}
-                  <div className="absolute inset-0 bg-[#333]" />
+                  <div className="absolute inset-0 bg-[#333333]" />
                   
-                  {/* Dark Accents */}
-                  <div className="absolute inset-2 border border-black/30 rounded-md" />
+                  {/* Dark Gray Accents */}
+                  <div className="absolute inset-2 border border-[#1A1A1A]/30 rounded-md" />
                   
                   <div className="relative flex flex-col items-center p-2 text-center h-full justify-between w-full">
                     {/* Top Text */}
@@ -241,42 +344,30 @@ export const RightPanel: React.FC<Props> = ({
                       <span className="text-[7px] text-white/80 font-bold uppercase tracking-[0.1em]">PILE</span>
                     </div>
 
-                    {/* Glove Symbol with Dark Background */}
+                    {/* Large Trash Icon with Dark Background */}
                     <div className="relative w-16 h-16 flex items-center justify-center">
-                      <div className="absolute inset-0 bg-black rounded-full opacity-40 blur-sm" />
-                      <div className="relative w-14 h-14 bg-black rounded-full flex items-center justify-center border-2 border-white/20">
-                        <span className="text-4xl filter drop-shadow-md">🧤</span>
+                      <div className="absolute inset-0 bg-[#1A1A1A] rounded-full opacity-40 blur-sm" />
+                      <div className="relative w-14 h-14 bg-[#1A1A1A] rounded-full flex items-center justify-center border-2 border-white/20">
+                        <span className="text-4xl filter drop-shadow-md">🗑️</span>
                       </div>
                     </div>
 
-                    {/* Bottom detail */}
+                    {/* Count and Bottom Text */}
                     <div className="flex flex-col items-center gap-1">
-                      <span className="text-[7px] text-white/60 font-black tracking-widest">墓地</span>
+                      <span className="text-[14px] text-white font-bold">{synergyDiscardCount}</span>
                       <div className="w-8 h-0.5 bg-white/40 rounded-full" />
                     </div>
                   </div>
 
                   {/* Corner detail */}
-                  <div className="absolute top-0 right-0 w-6 h-6 bg-black/20 rounded-bl-2xl" />
-                  <div className="absolute bottom-0 left-0 w-6 h-6 bg-black/20 rounded-tr-2xl" />
+                  <div className="absolute top-1 left-1 w-3 h-3 border-t-2 border-l-2 border-white/30 rounded-tl-md" />
+                  <div className="absolute bottom-1 right-1 w-3 h-3 border-b-2 border-r-2 border-white/30 rounded-br-md" />
                 </div>
               ))}
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-white text-stone-900 font-black text-xs rounded-full flex items-center justify-center border-2 border-stone-900 shadow-xl z-20">
-                {synergyDiscardCount}
-              </div>
             </div>
           </div>
-
         </div>
       </div>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
-        .vertical-text {
-          writing-mode: vertical-rl;
-          text-orientation: mixed;
-          transform: rotate(180deg);
-        }
-      `}} />
     </div>
   );
 };

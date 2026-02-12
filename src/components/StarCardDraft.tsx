@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard } from '../data/cards';
 import { PlayerCardComponent } from './PlayerCard';
+import { playSound } from '../utils/audio';
 
 interface Props {
   cards: PlayerCard[];
@@ -9,7 +10,9 @@ interface Props {
   isPlayerTurn: boolean;
   onSelect: (index: number) => void;
   aiSelectedIndex?: number | null;
+  playerSelectedIndex?: number | null;
   isHomeTeam: boolean;
+  onRoundStart?: () => void;
 }
 
 const StarCardDraft: React.FC<Props> = ({ 
@@ -18,9 +21,57 @@ const StarCardDraft: React.FC<Props> = ({
   isPlayerTurn, 
   onSelect, 
   aiSelectedIndex = null,
-  isHomeTeam
+  playerSelectedIndex = null,
+  isHomeTeam,
+  onRoundStart
 }) => {
+  const [isShuffling, setIsShuffling] = useState(true);
+  const [shuffledCards, setShuffledCards] = useState<PlayerCard[]>([]);
+  const [showDiscard, setShowDiscard] = useState(false);
+  const [lastAiSelectedIndex, setLastAiSelectedIndex] = useState<number | null>(null);
+
+  // 当轮次变化时重置所有状态
+  useEffect(() => {
+    setIsShuffling(true);
+    setShowDiscard(false);
+    setLastAiSelectedIndex(null);
+  }, [round]);
+
+  useEffect(() => {
+    if (cards.length > 0 && isShuffling) {
+      playSound('shuffle');
+      const shuffled = [...cards]; // 取消洗牌随机旋转，保持稳定顺序
+      setShuffledCards(shuffled);
+      const timer = setTimeout(() => setIsShuffling(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [cards, isShuffling, round]);
+
+  // 当卡组变化（例如AI或玩家已选）时，同步显示数组，避免显示未移除的卡
+  useEffect(() => {
+    if (!isShuffling) {
+      setShuffledCards(prev => prev.filter(c => cards.some(k => k.id === c.id)));
+    }
+  }, [cards, isShuffling]);
+
+  useEffect(() => {
+    if (aiSelectedIndex !== null) {
+      setLastAiSelectedIndex(aiSelectedIndex);
+    }
+    if (playerSelectedIndex !== null && lastAiSelectedIndex !== null && !showDiscard) {
+      const t = setTimeout(() => {
+        setShowDiscard(true);
+        playSound('discard');
+        // 清理AI标识
+        setTimeout(() => setLastAiSelectedIndex(null), 400);
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, [playerSelectedIndex, aiSelectedIndex, showDiscard]);
+
   if (cards.length === 0) return null;
+
+  const displayCards = isShuffling ? cards : shuffledCards;
 
   return (
     <AnimatePresence>
@@ -48,50 +99,66 @@ const StarCardDraft: React.FC<Props> = ({
             <div className="text-4xl font-bold text-yellow-400 mb-4 tracking-wider">
               ⭐ STAR CARD DRAFT - ROUND {round} ⭐
             </div>
-            <div className={`text-2xl font-bold ${isPlayerTurn ? 'text-green-400' : 'text-red-400'}`}>
-              {isPlayerTurn ? 'YOUR TURN TO PICK!' : 'AI IS CHOOSING...'}
-            </div>
+            {isShuffling ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-2xl font-bold text-green-400"
+              >
+                SHUFFLING CARDS...
+              </motion.div>
+            ) : (
+              <div className={`text-2xl font-bold ${isPlayerTurn ? 'text-green-400' : 'text-red-400'}`}>
+                {isPlayerTurn ? 'YOUR TURN TO PICK!' : 'AI IS CHOOSING...'}
+              </div>
+            )}
           </div>
           
           <div className="flex gap-8 justify-center items-center mb-8">
-            {cards.map((card, index) => (
-              <motion.div 
-                key={card.id}
-                data-testid="star-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: aiSelectedIndex === index ? -20 : 0,
-                  scale: aiSelectedIndex === index ? 1.05 : 1
-                }}
-                transition={{ delay: index * 0.1 }}
-                className={`relative transition-all duration-300 ${
-                  isPlayerTurn 
-                    ? 'cursor-pointer' 
-                    : aiSelectedIndex === index ? 'opacity-100 scale-105' : 'opacity-70 grayscale-[0.5]'
-                }`}
-                whileHover={isPlayerTurn ? { 
-                  scale: 1.25, 
-                  y: -20,
-                  zIndex: 50,
-                  transition: { type: "spring", stiffness: 400, damping: 25 }
-                } : {}}
-                onClick={() => isPlayerTurn && onSelect(index)}
-              >
-                {(isPlayerTurn || aiSelectedIndex === index) && (
-                   <motion.div 
-                     className={`absolute -inset-6 ${aiSelectedIndex === index ? 'bg-red-500/30' : 'bg-yellow-500/20'} rounded-xl blur-2xl`}
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: aiSelectedIndex === index ? 1 : 0 }}
-                     whileHover={isPlayerTurn ? { opacity: 1, scale: 1.1 } : {}}
-                   />
-                )}
-                <div className="relative z-10">
-                  <PlayerCardComponent
-                    card={card}
-                    size="large"
-                  />
-                  {isPlayerTurn && (
+            {displayCards.map((card, index) => {
+              const isPlayerSelected = playerSelectedIndex === index;
+              const isAiSelected = aiSelectedIndex === index;
+              const isDiscarded = showDiscard && !isPlayerSelected && !isAiSelected;
+              
+              return (
+                <motion.div 
+                  key={card.id}
+                  data-testid="star-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: isShuffling ? 0.6 : (isDiscarded ? 0.3 : 1),
+                    y: isShuffling ? 0 : ((isAiSelected || lastAiSelectedIndex === index) ? -10 : (isPlayerSelected ? -10 : 0)),
+                    scale: isShuffling ? 1 : ((isAiSelected || lastAiSelectedIndex === index || isPlayerSelected) ? 1.03 : 1),
+                    rotate: 0
+                  }}
+                  transition={{ 
+                    delay: isShuffling ? index * 0.03 : index * 0.08,
+                    duration: isShuffling ? 0.2 : 0.2
+                  }}
+                  className={`relative transition-all duration-300 ${
+                    isPlayerTurn && !isDiscarded
+                      ? 'cursor-pointer' 
+                      : (isAiSelected && !isDiscarded) || (isPlayerSelected && !isDiscarded) ? 'opacity-100' : 'opacity-80'
+                  }`}
+                  whileHover={isPlayerTurn && !isDiscarded ? { scale: 1.06, y: -6 } : {}}
+                  onClick={() => isPlayerTurn && !isDiscarded && onSelect(index)}
+                >
+                  {(isPlayerSelected || isAiSelected || lastAiSelectedIndex === index) && !isDiscarded && (
+                     <motion.div 
+                       className={`absolute -inset-6 ${(isAiSelected || lastAiSelectedIndex === index) ? 'bg-red-500/20' : 'bg-green-500/20'} rounded-xl blur-xl`}
+                       initial={{ opacity: 0 }}
+                       animate={{ opacity: (isAiSelected || isPlayerSelected || lastAiSelectedIndex === index) ? 1 : 0 }}
+                     />
+                  )}
+                  
+                  <div className={`relative z-10 transition-all duration-300 ${isDiscarded ? 'grayscale brightness-50' : ''}`}>
+                    <PlayerCardComponent
+                      card={card}
+                      size="large"
+                    />
+                  </div>
+                  
+                  {isPlayerTurn && !isDiscarded && (
                     <motion.div 
                       className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-yellow-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg"
                       initial={{ opacity: 0, y: -10 }}
@@ -100,7 +167,8 @@ const StarCardDraft: React.FC<Props> = ({
                       SELECT
                     </motion.div>
                   )}
-                  {aiSelectedIndex === index && (
+                  
+                  {(isAiSelected || lastAiSelectedIndex === index) && !isDiscarded && (
                     <motion.div 
                       className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg"
                       initial={{ opacity: 0, y: 10 }}
@@ -109,13 +177,35 @@ const StarCardDraft: React.FC<Props> = ({
                       AI PICKING...
                     </motion.div>
                   )}
-                </div>
-              </motion.div>
-            ))}
+                  
+                  {isPlayerSelected && !isDiscarded && (
+                    <motion.div 
+                      className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-green-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      YOU PICKED
+                    </motion.div>
+                  )}
+                  
+                  {isDiscarded && (
+                    <motion.div 
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="absolute inset-0 flex items-center justify-center z-20"
+                    >
+                      <div className="bg-black/70 backdrop-blur-sm text-white text-2xl font-bold px-6 py-3 rounded-xl border-4 border-red-500">
+                        DISCARDED
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
           
           <div className="text-center text-gray-500 text-sm tracking-wider uppercase">
-            {cards.length} cards available • Pick 1 • Remaining card will be removed
+            {isShuffling ? 'Shuffling...' : `${displayCards.length} cards available • Pick 1 • Remaining card will be removed`}
           </div>
         </motion.div>
       </motion.div>

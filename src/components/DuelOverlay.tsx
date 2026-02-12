@@ -20,6 +20,8 @@ interface DuelOverlayProps {
   };
   onAdvance: () => void;
   isPlayerAttacking: boolean;
+  attackerUsedShotIcons?: number[];
+  onShotIconSelect?: (iconIndex: number) => void;
 }
 
 export const DuelOverlay: React.FC<DuelOverlayProps> = ({
@@ -33,10 +35,21 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
   result,
   activatedSkills,
   onAdvance,
-  isPlayerAttacking
+  isPlayerAttacking,
+  attackerUsedShotIcons,
+  onShotIconSelect
 }) => {
   const [displayAttackPower, setDisplayAttackPower] = useState(0);
   const [displayDefensePower, setDisplayDefensePower] = useState(0);
+  const [selectedShotIcon, setSelectedShotIcon] = useState<number | null>(null);
+
+  // Handle shot icon selection
+  const handleShotIconConfirm = () => {
+    if (selectedShotIcon !== null && onShotIconSelect) {
+      onShotIconSelect(selectedShotIcon);
+      setSelectedShotIcon(null);
+    }
+  };
 
   // Auto-advance logic
   useEffect(() => {
@@ -44,12 +57,13 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
       // Different delays for different phases for better rhythm
       const delays: Record<DuelPhase, number> = {
         'none': 0,
-        'init': 2000,           // Longer intro
-        'reveal_attacker': 1800,
-        'reveal_defender': 1800,
-        'reveal_synergy': 2500,  // Longer for synergy reveal
-        'reveal_skills': 2000,   // Longer for skill activation
-        'summary': 2500,         // Time for summary
+        'init': 2500,           // Longer intro
+        'select_shot_icon': 0,   // Manual selection - no auto advance
+        'reveal_attacker': 2000,
+        'reveal_defender': 2000,
+        'reveal_synergy': 3500,  // Longer for synergy reveal & flip
+        'reveal_skills': 3000,   // Longer for skill activation
+        'summary': 4000,         // Time for summary reading
         'result': 0              // Wait for manual click
       };
       
@@ -60,6 +74,21 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
       return () => clearTimeout(timer);
     }
   }, [duelPhase, onAdvance]);
+
+  // AI auto-select shot icon with visible delay
+  useEffect(() => {
+    if (duelPhase === 'select_shot_icon' && !isPlayerAttacking && onShotIconSelect) {
+      const allAttackIndices: number[] = ((attacker as any).iconPositions || [])
+        .map((p: any, idx: number) => (p.type === 'attack' ? idx : -1))
+        .filter((idx: number) => idx >= 0);
+      const available = allAttackIndices.filter(idx => !(attackerUsedShotIcons || []).includes(idx));
+      const choice = available[0] ?? null;
+      if (choice !== null) {
+        const t = setTimeout(() => onShotIconSelect(choice), 1200);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [duelPhase, isPlayerAttacking, onShotIconSelect, attacker, attackerUsedShotIcons]);
 
   // Power counter animation
   useEffect(() => {
@@ -102,13 +131,13 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
 
   const getPhaseInfo = () => {
     switch (duelPhase) {
-      case 'init': return { stage: 'Stage 1: Preparation', step: 'Step 1: Confrontation', desc: 'Attacker and Defender meet for a decisive moment.' };
-      case 'reveal_attacker': return { stage: 'Stage 2: Base Power', step: 'Step 2: Attacker Strength', desc: 'Calculating the base power of the striker.' };
-      case 'reveal_defender': return { stage: 'Stage 2: Base Power', step: 'Step 3: Defensive Wall', desc: 'Total defensive strength of the opponent.' };
-      case 'reveal_synergy': return { stage: 'Stage 3: Boosts', step: 'Step 4: Synergy Power', desc: 'Team synergy cards are revealed and added!' };
-      case 'reveal_skills': return { stage: 'Stage 3: Boosts', step: 'Step 5: Skills Trigger', desc: 'Special player abilities are activated!' };
-      case 'summary': return { stage: 'Stage 4: Conclusion', step: 'Step 6: Duel Summary', desc: 'Final calculations before the outcome is revealed.' };
-      case 'result': return { stage: 'Stage 4: Conclusion', step: 'Step 7: The Outcome', desc: 'The dust settles. What is the result?' };
+      case 'init': return { stage: 'Stage 1: Preparation', step: 'Step 1.1: Initialization', desc: 'Attacker and Defender meet for a decisive moment.' };
+      case 'reveal_attacker': return { stage: 'Stage 2: Base Power', step: 'Step 2.1: Attacker Base', desc: 'Calculating the striker\'s fundamental power.' };
+      case 'reveal_defender': return { stage: 'Stage 2: Base Power', step: 'Step 2.2: Defender Base', desc: 'Measuring the wall\'s initial resistance.' };
+      case 'reveal_synergy': return { stage: 'Stage 3: Buffs', step: 'Step 3.1: Synergy Reveal', desc: 'Revealing face-down synergy cards for both teams.' };
+      case 'reveal_skills': return { stage: 'Stage 3: Buffs', step: 'Step 3.2: Skill Activation', desc: 'Special player abilities and mental triggers!' };
+      case 'summary': return { stage: 'Stage 4: Conclusion', step: 'Step 4.1: Final Comparison', desc: 'Total forces compared. Who will prevail?' };
+      case 'result': return { stage: 'Stage 4: Conclusion', step: 'Step 4.2: Final Outcome', desc: 'The dust settles. The whistle blows.' };
       default: return { stage: '', step: '', desc: '' };
     }
   };
@@ -165,7 +194,54 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                  transition={{ duration: 4, repeat: Infinity }}
                  className="absolute -inset-8 bg-blue-500/20 rounded-full blur-[60px] group-hover:bg-blue-500/30 transition-all duration-500" 
                />
-               <PlayerCardComponent card={attacker} size="large" />
+               <PlayerCardComponent card={attacker} size="large" usedShotIcons={attackerUsedShotIcons} />
+               
+               {/* Shot Icon Selection */}
+               {duelPhase === 'select_shot_icon' && (
+                 <motion.div 
+                   initial={{ opacity: 0, scale: 0.8 }}
+                   animate={{ opacity: 1, scale: 1 }}
+                   className="absolute -inset-4 bg-black/80 rounded-lg flex flex-col items-center justify-center gap-2 backdrop-blur-sm"
+                 >
+                   <div className="text-xs font-black text-white uppercase tracking-wider">Select Shot Icon</div>
+                  <div className="flex gap-1">
+                    {(attacker as any).iconPositions?.map((iconPos: any, index: number) => {
+                      if (iconPos.type === 'attack') {
+                        const isUsed = attackerUsedShotIcons?.includes(index);
+                        const isSelected = selectedShotIcon === index;
+                        return (
+                          <motion.button
+                            key={index}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setSelectedShotIcon(index)}
+                            className={clsx(
+                              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
+                              isUsed ? "bg-gray-800 text-gray-400 cursor-not-allowed" : 
+                              isSelected ? "bg-blue-500 text-white ring-2 ring-blue-300" : 
+                              "bg-white text-blue-600 hover:bg-blue-100"
+                            )}
+                            disabled={isUsed}
+                          >
+                            ⚽
+                          </motion.button>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                   {selectedShotIcon !== null && (
+                     <motion.button
+                       initial={{ opacity: 0, y: 10 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       onClick={handleShotIconConfirm}
+                       className="mt-2 px-4 py-1 bg-green-500 text-white text-xs font-black uppercase tracking-wider rounded-full hover:bg-green-600 transition-colors"
+                     >
+                       Confirm
+                     </motion.button>
+                   )}
+                 </motion.div>
+               )}
                
                {/* Attacker Power Badge */}
                <motion.div 
@@ -397,18 +473,29 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                 </div>
                 <div className="w-full h-[1px] bg-white/10" />
                 
-                <div className="w-full flex flex-col gap-2">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white/40">
-                    <span>Base Power</span>
-                    <span className="text-white">{attacker.icons.filter(i => i === 'attack').length} vs {defender ? defender.icons.filter(i => i === 'defense').length : 0}</span>
+                <div className="w-full flex flex-col gap-3">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-blue-400/80">
+                      <span>Attacker Breakdown</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-white/80 bg-white/5 px-3 py-1.5 rounded border border-white/5">
+                      <span>Base + Synergy + Skills</span>
+                      <span className="font-mono">
+                        {attacker.icons.filter(i => i === 'attack').length} + {attackSynergy.reduce((sum, c) => sum + c.stars, 0)} + {activatedSkills.attackerSkills.length} = {attackPower}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-blue-400/60">
-                    <span>Synergy Boost</span>
-                    <span>+{attackSynergy.reduce((sum, c) => sum + c.stars, 0)} vs +{defenseSynergy.reduce((sum, c) => sum + c.stars, 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-yellow-400/60">
-                    <span>Skill Bonus</span>
-                    <span>+{activatedSkills.attackerSkills.length} vs +{activatedSkills.defenderSkills.length}</span>
+
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-red-400/80">
+                      <span>Defender Breakdown</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-white/80 bg-white/5 px-3 py-1.5 rounded border border-white/5">
+                      <span>Base + Synergy + Skills</span>
+                      <span className="font-mono">
+                        {defender ? defender.icons.filter(i => i === 'defense').length : 0} + {defenseSynergy.reduce((sum, c) => sum + c.stars, 0)} + {activatedSkills.defenderSkills.length} = {defensePower}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
