@@ -50,13 +50,22 @@ const StarCardDraft: React.FC<Props> = ({
   // 当卡组变化（例如AI或玩家已选）时，同步显示数组，避免显示未移除的卡
   useEffect(() => {
     if (!isShuffling) {
-      setShuffledCards(prev => prev.filter(c => cards.some(k => k.id === c.id)));
+      setShuffledCards(cards);
+      // 当卡片数量变化时，清除AI选中标识，避免索引错位
+      if (cards.length < 3) {
+        setLastAiSelectedIndex(null);
+      }
     }
   }, [cards, isShuffling]);
 
   useEffect(() => {
     if (aiSelectedIndex !== null) {
       setLastAiSelectedIndex(aiSelectedIndex);
+      // 3秒后自动清除AI标识
+      const clearTimer = setTimeout(() => {
+        setLastAiSelectedIndex(null);
+      }, 3000);
+      return () => clearTimeout(clearTimer);
     }
     if (playerSelectedIndex !== null && lastAiSelectedIndex !== null && !showDiscard) {
       const t = setTimeout(() => {
@@ -67,7 +76,7 @@ const StarCardDraft: React.FC<Props> = ({
       }, 400);
       return () => clearTimeout(t);
     }
-  }, [playerSelectedIndex, aiSelectedIndex, showDiscard]);
+  }, [playerSelectedIndex, aiSelectedIndex, showDiscard, lastAiSelectedIndex]);
 
   if (cards.length === 0) return null;
 
