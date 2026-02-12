@@ -131,14 +131,23 @@ export const PlayerCardComponent: React.FC<Props> = ({
     const isShotIcon = iconPos.type === 'attack';
     const isUsed = isShotIcon && (usedShotIcons?.includes(index) || false);
     
-    // SVG half-circle mask approach
+    // SVG half-circle mask approach with embedded icon
     const svgHalfCircle = (edge: 'top' | 'bottom' | 'left' | 'right', r: number) => {
       const d = r * 2;
-      if (edge === 'top') return `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${d},0 A${r},${r} 0 0,1 0,${r} Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
-      if (edge === 'bottom') return `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,${r} A${r},${r} 0 0,1 ${d},${r} L${d},0 L0,0 Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
-      if (edge === 'left') return `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${r},${r} L0,${d} Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
-      // right
-      return `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M${r},0 L${r},${d} L0,${r} Z" fill="${isUsed ? '#000' : '#fff'}"/></svg>`;
+      const fillColor = isUsed ? '#000' : '#fff';
+      let svgContent = '';
+      
+      if (edge === 'top') {
+        svgContent = `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${d},0 A${r},${r} 0 0,1 0,${r} Z" fill="${fillColor}"/></svg>`;
+      } else if (edge === 'bottom') {
+        svgContent = `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,${r} A${r},${r} 0 0,1 ${d},${r} L${d},0 L0,0 Z" fill="${fillColor}"/></svg>`;
+      } else if (edge === 'left') {
+        svgContent = `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${r},${r} L0,${d} Z" fill="${fillColor}"/></svg>`;
+      } else {
+        svgContent = `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M${r},0 L${r},${d} L0,${r} Z" fill="${fillColor}"/></svg>`;
+      }
+      
+      return svgContent;
     };
 
     const containerStyle: React.CSSProperties = {
@@ -161,12 +170,15 @@ export const PlayerCardComponent: React.FC<Props> = ({
       <div
         key={`half-${iconPos.position}-${index}`}
         style={containerStyle}
-        dangerouslySetInnerHTML={{ __html: svgHalfCircle(info.edge, radius) }}
       >
+        <div
+          dangerouslySetInnerHTML={{ __html: svgHalfCircle(info.edge, radius) }}
+          style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+        />
         <img
           src={iconImage}
           alt={iconPos.type}
-          style={{ width: '16px', height: '16px', objectFit: 'contain', position: 'absolute' }}
+          style={{ width: '16px', height: '16px', objectFit: 'contain', position: 'relative', zIndex: 1 }}
         />
       </div>
     );
