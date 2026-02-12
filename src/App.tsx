@@ -6,10 +6,11 @@ import { GameRecordList, ReplayViewer } from './components/GameRecordList';
 import { CardGuide } from './components/CardGuide';
 import { BackgroundMusic } from './components/BackgroundMusic';
 import { OrientationWarning } from './components/OrientationWarning';
+import { DemoRouter } from './demos/DemoRouter';
 import type { GameRecord } from './game/gameRecorder';
 import type { PlayerCard } from './data/cards';
 
-type GameView = 'menu' | 'preGame' | 'game' | 'records' | 'replay' | 'cardGuide';
+type GameView = 'menu' | 'preGame' | 'game' | 'records' | 'replay' | 'cardGuide' | 'demos';
 type RenderMode = '2d' | '3d';
 
 function App() {
@@ -59,6 +60,10 @@ function App() {
     setCurrentView('cardGuide');
   };
 
+  const handleViewDemos = () => {
+    setCurrentView('demos');
+  };
+
   const handleSelectRecord = (record: GameRecord) => {
     setSelectedRecord(record);
     setCurrentView('replay');
@@ -75,6 +80,7 @@ function App() {
           onStartAI={handleStartAI}
           onViewRecords={handleViewRecords}
           onCardGuide={handleCardGuide}
+          onViewDemos={handleViewDemos}
         />
       )}
       {currentView === 'preGame' && (
@@ -97,6 +103,9 @@ function App() {
       )}
       {currentView === 'cardGuide' && (
         <CardGuide onBack={handleBackToMenu} />
+      )}
+      {currentView === 'demos' && (
+        <DemoRouter />
       )}
     </div>
   );

@@ -6,9 +6,10 @@ interface Props {
   onStartAI: () => void;
   onViewRecords: () => void;
   onCardGuide: () => void;
+  onViewDemos: () => void;
 }
 
-export const MainMenu: React.FC<Props> = ({ onStartGame, onStartGame3D, onStartAI, onViewRecords, onCardGuide }) => {
+export const MainMenu: React.FC<Props> = ({ onStartGame, onStartGame3D, onStartAI, onViewRecords, onCardGuide, onViewDemos }) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-400 to-green-600 flex flex-col items-center justify-center p-4">
       <div className="text-center mb-12">
@@ -70,6 +71,13 @@ export const MainMenu: React.FC<Props> = ({ onStartGame, onStartGame3D, onStartA
         >
           <span className="text-2xl mb-1">📚</span>
           <span className="text-sm">How to Play</span>
+        </button>
+        <button 
+          onClick={onViewDemos}
+          className="flex flex-col items-center text-white/80 hover:text-white transition-colors"
+        >
+          <span className="text-2xl mb-1">🎲</span>
+          <span className="text-sm">3D Demos</span>
         </button>
       </div>
 

@@ -1,150 +1,63 @@
-import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text, Html } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useMemo, useCallback } from 'react';
 import type { FieldZone } from '../game/gameLogic';
 import type { PlayerCard } from '../data/cards';
 import { canPlaceCardAtSlot } from '../data/cards';
 
 interface FieldCellProps {
-  position: [number, number, number];
+  x: number;
+  y: number;
   width: number;
   height: number;
   color: string;
   onClick?: () => void;
   isHighlighted?: boolean;
   isValidPlacement?: boolean;
+  hasCard?: boolean;
 }
 
-const FieldCell: React.FC<FieldCellProps> = ({
-  position,
+const FieldCell: React.FC<FieldCellProps> = React.memo(({
+  x,
+  y,
   width,
   height,
   color,
   onClick,
   isHighlighted = false,
   isValidPlacement = false,
+  hasCard = false,
 }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
-  const materialColor = useMemo(() => {
-    if (isValidPlacement) return new THREE.Color(0x22c55e);
-    if (isHighlighted) return new THREE.Color(0xef4444);
-    return new THREE.Color(color);
-  }, [color, isHighlighted, isValidPlacement]);
+  const fillColor = useMemo(() => {
+    if (isValidPlacement) return 'rgba(34, 197, 94, 0.3)';
+    if (isHighlighted) return 'rgba(239, 68, 68, 0.3)';
+    if (hasCard) return 'rgba(59, 130, 246, 0.2)';
+    return 'rgba(234, 179, 8, 0.2)';
+  }, [isHighlighted, isValidPlacement, hasCard]);
+
+  const strokeColor = useMemo(() => {
+    if (isValidPlacement) return '#22c55e';
+    if (isHighlighted) return '#ef4444';
+    if (hasCard) return '#3b82f6';
+    return '#eab308';
+  }, [isHighlighted, isValidPlacement, hasCard]);
 
   return (
-    <mesh
-      ref={meshRef}
-      position={position}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick?.();
-      }}
-    >
-      <planeGeometry args={[width, height]} />
-      <meshStandardMaterial
-        color={materialColor}
-        transparent
-        opacity={isValidPlacement ? 0.7 : 0.4}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
+    <rect
+      x={x - width / 2}
+      y={y - height / 2}
+      width={width}
+      height={height}
+      fill={fillColor}
+      stroke={strokeColor}
+      strokeWidth="2"
+      rx="8"
+      ry="8"
+      onClick={onClick}
+      style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
+    />
   );
-};
+});
 
-interface CardMeshProps {
-  position: [number, number, number];
-  card: PlayerCard;
-  isRotated?: boolean;
-  onMouseEnter?: (() => void) | undefined;
-  onMouseLeave?: (() => void) | undefined;
-}
-
-const CardMesh: React.FC<CardMeshProps> = ({ position, card, isRotated = false, onMouseEnter, onMouseLeave }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = React.useState(false);
-
-  useFrame(() => {
-    if (groupRef.current && hovered) {
-      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, position[1] + 0.5, 0.1);
-    }
-  });
-
-  const getCardColor = (type: string) => {
-    switch (type) {
-      case 'forward': return '#dc2626';
-      case 'midfielder': return '#10b981';
-      case 'defender': return '#2563eb';
-      default: return '#6b7280';
-    }
-  };
-
-  return (
-    <group
-      ref={groupRef}
-      position={position}
-      rotation={isRotated ? [0, 0, Math.PI] : [0, 0, 0]}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(true);
-        onMouseEnter?.();
-        document.body.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        setHovered(false);
-        onMouseLeave?.();
-        document.body.style.cursor = 'auto';
-      }}
-    >
-      {/* Card Background */}
-      <mesh position={[0, 0, 0.01]}>
-        <planeGeometry args={[1.8, 1.2]} />
-        <meshStandardMaterial color={getCardColor(card.type)} side={THREE.DoubleSide} />
-      </mesh>
-      
-      {/* Card Border */}
-      <mesh position={[0, 0, 0.02]}>
-        <planeGeometry args={[1.85, 1.25]} />
-        <meshStandardMaterial color="#1f2937" side={THREE.DoubleSide} transparent opacity={0.3} />
-      </mesh>
-
-      {/* Player Name */}
-      <Text
-        position={[0, 0, 0.05]}
-        fontSize={0.15}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        maxWidth={1.5}
-      >
-        {card.name}
-      </Text>
-
-      {/* Position Label */}
-      <Text
-        position={[0, 0.35, 0.05]}
-        fontSize={0.2}
-        color="#fbbf24"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {card.positionLabel}
-      </Text>
-
-      {/* Attack/Stats */}
-      <Text
-        position={[-0.6, 0.35, 0.05]}
-        fontSize={0.12}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {card.isStar ? '★' : card.attack}
-      </Text>
-    </group>
-  );
-};
+FieldCell.displayName = 'FieldCell';
 
 interface GameField3DProps {
   playerField: FieldZone[];
@@ -158,15 +71,15 @@ interface GameField3DProps {
   turnPhase: string;
   isFirstTurn: boolean;
   currentAction?: string | null;
-  viewSettings?: { pitch: number; rotation: number; zoom: number; height: number };
   isHomeTeam?: boolean;
 }
 
-const GameFieldContent: React.FC<GameField3DProps> = ({
+const GameFieldContent: React.FC<GameField3DProps> = React.memo(({
   playerField,
   aiField,
   selectedCard,
   onSlotClick,
+  onAttackClick,
   onCardMouseEnter,
   onCardMouseLeave,
   currentTurn,
@@ -174,142 +87,152 @@ const GameFieldContent: React.FC<GameField3DProps> = ({
   isFirstTurn,
   currentAction,
 }) => {
-  const CELL_WIDTH = 1.2;
-  const CELL_HEIGHT = 1.6;
+  // Adjusted to match 2D pitch dimensions
+  const CELL_WIDTH = 100;
+  const CELL_HEIGHT = 120;
   const COLS = 8;
   const ROWS = 4;
 
   const canPlaceCards = (turnPhase === 'playerAction' || isFirstTurn) && currentTurn === 'player' && !currentAction;
 
-  const renderField = (isAi: boolean) => {
+  const renderField = useCallback((isAi: boolean) => {
     const field = isAi ? aiField : playerField;
-    const yOffset = isAi ? (CELL_HEIGHT * ROWS) / 2 + 1 : -(CELL_HEIGHT * ROWS) / 2 - 1;
+    const yOffset = isAi ? (CELL_HEIGHT * ROWS) / 2 : -(CELL_HEIGHT * ROWS) / 2;
 
-    return (
-      <group position={[0, yOffset, 0]}>
-        {field.map((zone, zIdx) => {
-          const zoneY = (zIdx - 1.5) * CELL_HEIGHT;
-          
-          return zone.slots.map((slot, sIdx) => {
-            const col = sIdx * 2;
-            const cells = [];
-            
-            for (let c = 0; c < 2; c++) {
-              const cellX = (col + c - 3.5) * CELL_WIDTH;
-              const hasCard = slot.playerCard && c === 0;
-              const isValidPlacement = selectedCard && 
-                canPlaceCards && 
-                !slot.playerCard && 
-                c === 0 &&
-                canPlaceCardAtSlot(selectedCard, playerField, zone.zone, sIdx + 1, isFirstTurn);
+    const cells: JSX.Element[] = [];
+    
+    field.forEach((zone, zIdx) => {
+      const zoneY = yOffset + (zIdx - 1.5) * CELL_HEIGHT;
+      
+      zone.slots.forEach((slot, sIdx) => {
+        const col = sIdx * 2;
+        
+        for (let c = 0; c < 2; c++) {
+          const cellX = (col + c - 3.5) * CELL_WIDTH;
+          const hasCard = slot.playerCard && c === 0;
+          const isValidPlacement = selectedCard && 
+            canPlaceCards && 
+            !slot.playerCard && 
+            c === 0 &&
+            canPlaceCardAtSlot(selectedCard, playerField, zone.zone, sIdx + 1, isFirstTurn);
 
-              cells.push(
-                <FieldCell
-                  key={`${zIdx}-${sIdx}-${c}`}
-                  position={[cellX, zoneY, 0]}
-                  width={CELL_WIDTH}
-                  height={CELL_HEIGHT}
-                  color={(zIdx + sIdx + c) % 2 === 0 ? '#2e7d32' : '#1b5e20'}
-                  onClick={() => !isAi && onSlotClick(zone.zone, col)}
-                  isValidPlacement={!isAi && !!isValidPlacement}
-                />
-              );
-
-              if (hasCard && slot.playerCard) {
-                cells.push(
-                  <CardMesh
-                    key={`card-${zIdx}-${sIdx}`}
-                    position={[cellX + CELL_WIDTH / 2, zoneY, 0.1]}
-                    card={slot.playerCard}
-                    isRotated={isAi}
-                    onMouseEnter={() => onCardMouseEnter?.(slot.playerCard!)}
-                    onMouseLeave={onCardMouseLeave}
+          cells.push(
+            <g key={`${zIdx}-${sIdx}-${c}`}>
+              <FieldCell
+                x={cellX}
+                y={zoneY}
+                width={CELL_WIDTH}
+                height={CELL_HEIGHT}
+                color={hasCard ? "#f59e0b" : "#eab308"}
+                onClick={() => !isAi && onSlotClick(zone.zone, col)}
+                isValidPlacement={!isAi && !!isValidPlacement}
+                isHighlighted={!!hasCard}
+                hasCard={!!hasCard}
+              />
+              
+              {/* 球员卡片 */}
+              {hasCard && slot.playerCard && (
+                <g>
+                  {/* 卡片背景 */}
+                  <rect
+                    x={cellX - CELL_WIDTH * 0.4}
+                    y={zoneY - CELL_HEIGHT * 0.4}
+                    width={CELL_WIDTH * 0.8}
+                    height={CELL_HEIGHT * 0.8}
+                    fill="#ffffff"
+                    stroke="#3b82f6"
+                    strokeWidth="2"
+                    rx="4"
+                    ry="4"
                   />
-                );
-              }
-            }
-            
-            return cells;
-          });
-        })}
-      </group>
-    );
-  };
+                  
+                  {/* 卡片内容 */}
+                  <text
+                    x={cellX}
+                    y={zoneY - 10}
+                    textAnchor="middle"
+                    fill="#1e3a8a"
+                    fontSize="14"
+                    fontWeight="bold"
+                  >
+                    {slot.playerCard.name}
+                  </text>
+                  
+                  {/* 卡片装饰 */}
+                  <circle
+                    cx={cellX}
+                    cy={zoneY + 20}
+                    r={15}
+                    fill="#3b82f6"
+                  />
+                  <text
+                    x={cellX}
+                    y={zoneY + 25}
+                    textAnchor="middle"
+                    fill="#ffffff"
+                    fontSize="12"
+                    fontWeight="bold"
+                  >
+                    {Math.round((slot.playerCard.attack + slot.playerCard.defense) / 2)}
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        }
+      });
+    });
+    
+    return cells;
+  }, [playerField, aiField, selectedCard, canPlaceCards, isFirstTurn, onSlotClick]);
 
   return (
-    <group>
-      {/* Background */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -5, 0]}>
-        <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#1a1a1a" />
-      </mesh>
-
-      {/* Pitch Background */}
-      <mesh position={[0, 0, -0.1]}>
-        <planeGeometry args={[COLS * CELL_WIDTH + 2, ROWS * CELL_HEIGHT * 2 + 4]} />
-        <meshStandardMaterial color="#C62B1D" />
-      </mesh>
-
-      {/* Green Field Area */}
-      <mesh position={[0, 0, 0.01]}>
-        <planeGeometry args={[COLS * CELL_WIDTH, ROWS * CELL_HEIGHT * 2 + 2]} />
-        <meshStandardMaterial color="#2d5a27" />
-      </mesh>
-
-      {/* Player Field */}
+    <>
+      {/* 背景网格 */}
+      <defs>
+        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+          <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+        </pattern>
+      </defs>
+      <rect x="-960" y="-540" width="1920" height="1080" fill="url(#grid)" />
+      
+      {/* Player Field - Transparent grid for positioning */}
       {renderField(false)}
 
-      {/* AI Field */}
+      {/* AI Field - Transparent grid for positioning */}
       {renderField(true)}
-
-      {/* Center Line */}
-      <mesh position={[0, 0, 0.05]}>
-        <planeGeometry args={[COLS * CELL_WIDTH, 0.1]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
-    </group>
+    </>
   );
-};
+});
 
-const CameraController: React.FC<{ viewSettings: { pitch: number; rotation: number; zoom: number; height: number }; isHomeTeam: boolean }> = ({ viewSettings, isHomeTeam }) => {
-  const { camera } = useThree();
-  
-  useFrame(() => {
-    const pitchRad = (viewSettings.pitch * Math.PI) / 180;
-    const rotationRad = ((isHomeTeam ? 0 : 180) + viewSettings.rotation) * Math.PI / 180;
-    
-    const distance = 15 / viewSettings.zoom;
-    const height = distance * Math.sin(pitchRad);
-    const horizontalDist = distance * Math.cos(pitchRad);
-    
-    const x = horizontalDist * Math.sin(rotationRad);
-    const z = horizontalDist * Math.cos(rotationRad);
-    
-    camera.position.set(x, -z, height + viewSettings.height / 100);
-    camera.lookAt(0, 0, 0);
-    camera.updateProjectionMatrix();
-  });
-  
-  return null;
-};
+GameFieldContent.displayName = 'GameFieldContent';
+
+// CameraController removed - now using CSS transforms for 3D perspective
 
 export const GameScene3D: React.FC<GameField3DProps> = ({ 
-  viewSettings = { pitch: 0, rotation: 0, zoom: 1, height: 0 },
   isHomeTeam = true,
-  ...props
+  ...props 
 }) => {
   return (
-    <Canvas
-      camera={{ position: [0, -15, 8], fov: 50 }}
-      style={{ background: '#1a1a1a', width: '100%', height: '100%' }}
-      gl={{ antialias: true }}
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        transformStyle: 'preserve-3d',
+        transformOrigin: 'center'
+      }}
     >
-      <CameraController viewSettings={viewSettings} isHomeTeam={isHomeTeam} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 5, 10]} intensity={1} castShadow />
-      <pointLight position={[-5, 5, 5]} intensity={0.5} />
-      
-      <GameFieldContent {...props} />
-    </Canvas>
+      {/* SVG 3D渲染 */}
+      <svg
+        viewBox="-960 -540 1920 1080"
+        style={{
+          width: '100%',
+          height: '100%',
+          transformStyle: 'preserve-3d'
+        }}
+      >
+        <GameFieldContent {...props} />
+      </svg>
+    </div>
   );
 };

@@ -77,6 +77,15 @@ const getHalfIconInfo = (position: IconPosition): { edge: 'top' | 'bottom' | 'le
   return positions[position];
 };
 
+const getThemeColor = (type: string) => {
+  switch (type) {
+    case 'forward': return '#dc2626'; // red-600
+    case 'midfielder': return '#059669'; // emerald-600
+    case 'defender': return '#2563eb'; // blue-600
+    default: return '#4b5563'; // gray-600
+  }
+};
+
 export const PlayerCardComponent: React.FC<Props> = ({ 
   card, 
   onClick, 
@@ -93,6 +102,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
 }) => {
   const roleName = getRoleName(card.type);
   const cardBg = getCardBgColor(card.type);
+  const themeColor = getThemeColor(card.type);
 
   const cardSize = {
     tiny: { width: '100px', height: '60px' },
@@ -103,6 +113,12 @@ export const PlayerCardComponent: React.FC<Props> = ({
 
   const halfIconSize = 24;
 
+  const textStrokeStyle: React.CSSProperties = {
+    color: themeColor,
+    WebkitTextStroke: '0.5px white',
+    textShadow: '0 0 1px white'
+  };
+
   const renderHalfIcon = (iconPos: { type: TacticalIcon; position: IconPosition }, index: number) => {
     const info = getHalfIconInfo(iconPos.position);
     const iconColor = getIconColor(iconPos.type);
@@ -112,72 +128,84 @@ export const PlayerCardComponent: React.FC<Props> = ({
     let containerStyle: React.CSSProperties = {};
     let iconStyle: React.CSSProperties = {};
     
+    const baseStyle: React.CSSProperties = {
+      position: 'absolute',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 10,
+      backgroundColor: '#ffffff', // 保持纯白色底色
+    };
+
     if (info.edge === 'top') {
       containerStyle = {
+        ...baseStyle,
         top: '0px',
         left: info.pos,
         width: `${halfIconSize}px`,
         height: `${radius}px`,
         transform: 'translateX(-50%)',
         borderRadius: `0 0 ${radius}px ${radius}px`,
-        backgroundColor: `${iconColor}66`,
-        boxShadow: `inset 0 -2px 4px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)`
+        boxShadow: `inset 0 -1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1)`
       };
       iconStyle = {
         fontSize: '12px',
-        transform: 'translateY(1px)'
+        transform: 'translateY(1px)',
+        color: iconColor
       };
     } else if (info.edge === 'bottom') {
       containerStyle = {
+        ...baseStyle,
         bottom: '0px',
         left: info.pos,
         width: `${halfIconSize}px`,
         height: `${radius}px`,
         transform: 'translateX(-50%)',
         borderRadius: `${radius}px ${radius}px 0 0`,
-        backgroundColor: `${iconColor}66`,
-        boxShadow: `inset 0 2px 4px rgba(0,0,0,0.4), 0 -1px 2px rgba(0,0,0,0.3)`
+        boxShadow: `inset 0 1px 3px rgba(0,0,0,0.2), 0 -1px 2px rgba(0,0,0,0.1)`
       };
       iconStyle = {
         fontSize: '12px',
-        transform: 'translateY(-1px)'
+        transform: 'translateY(-1px)',
+        color: iconColor
       };
     } else if (info.edge === 'left') {
       containerStyle = {
+        ...baseStyle,
         top: info.pos,
         left: '0px',
         width: `${radius}px`,
         height: `${halfIconSize}px`,
         transform: 'translateY(-50%)',
         borderRadius: `0 ${radius}px ${radius}px 0`,
-        backgroundColor: `${iconColor}66`,
-        boxShadow: `inset -2px 0 4px rgba(0,0,0,0.4), 1px 0 2px rgba(0,0,0,0.3)`
+        boxShadow: `inset -1px 0 3px rgba(0,0,0,0.2), 1px 0 2px rgba(0,0,0,0.1)`
       };
       iconStyle = {
         fontSize: '12px',
-        transform: 'translateX(1px)'
+        transform: 'translateX(1px)',
+        color: iconColor
       };
     } else {
       containerStyle = {
+        ...baseStyle,
         top: info.pos,
         right: '0px',
         width: `${radius}px`,
         height: `${halfIconSize}px`,
         transform: 'translateY(-50%)',
         borderRadius: `${radius}px 0 0 ${radius}px`,
-        backgroundColor: `${iconColor}66`,
-        boxShadow: `inset 2px 0 4px rgba(0,0,0,0.4), -1px 0 2px rgba(0,0,0,0.3)`
+        boxShadow: `inset 1px 0 3px rgba(0,0,0,0.2), -1px 0 2px rgba(0,0,0,0.1)`
       };
       iconStyle = {
         fontSize: '12px',
-        transform: 'translateX(-1px)'
+        transform: 'translateX(-1px)',
+        color: iconColor
       };
     }
 
     return (
       <div
-        key={`half-${index}`}
-        className="absolute flex items-center justify-center z-10"
+        key={`half-${iconPos.position}-${index}`}
         style={containerStyle}
       >
         <span style={iconStyle}>{iconSymbol}</span>
@@ -249,53 +277,55 @@ export const PlayerCardComponent: React.FC<Props> = ({
           </div>
 
           {/* 右边一半：信息区域 */}
-          <div className="relative w-1/2 h-full flex flex-col justify-center items-center text-white">
-            {/* 位置标签 - 最大最醒目 */}
-            <div className="text-xl font-black tracking-widest drop-shadow-lg">
-              {card.positionLabel}
-            </div>
-            
-            {/* 绰号/角色 */}
-            <div className="text-[10px] font-bold text-white/80 mt-0.5 tracking-wide">
-              {roleName}
-            </div>
-
-            {/* 分隔线 */}
-            <div className="w-12 h-0.5 bg-white/30 rounded my-1" />
-
-            {/* 球员名字 */}
-            <div className="text-xs font-bold text-center leading-tight">
-              {card.name}
-            </div>
-
-            {/* 完整图标（球员自带技能）- 底部居中 */}
-            {card.completeIcon && (
-              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
-                <div 
-                  className="w-6 h-6 rounded-full flex items-center justify-center border-2 shadow-lg"
-                  style={{
-                    backgroundColor: `${getIconColor(card.completeIcon)}44`,
-                    borderColor: getIconColor(card.completeIcon)
-                  }}
-                >
-                  <span className="text-xs">{getIconSymbol(card.completeIcon)}</span>
-                </div>
+          <div className="relative w-1/2 h-full flex flex-col justify-center items-center text-white px-1">
+            <div className="flex flex-col items-center justify-center space-y-1">
+              {/* 位置标签 - 徽章样式 */}
+              <div className="bg-white/90 px-2 py-0.5 rounded-md shadow-sm mb-1">
+                <span className="text-xs font-black tracking-wider leading-none" style={{ color: themeColor }}>
+                  {card.positionLabel}
+                </span>
               </div>
-            )}
-
-            {/* 技能效果徽章 */}
-            {card.immediateEffect !== 'none' && (
-              <div className="absolute bottom-1 right-1">
-                <SkillEffectBadge 
-                  effect={card.immediateEffect} 
-                  size="small"
-                  showLabel={false}
-                />
+              
+              {/* 绰号/角色 - 变大 */}
+              <div className="text-sm font-black tracking-widest drop-shadow-sm leading-none" style={textStrokeStyle}>
+                {roleName}
               </div>
-            )}
+
+              {/* 球员名字 - 变小 */}
+              <div className="text-[9px] font-bold text-center leading-tight truncate w-full px-1" style={textStrokeStyle}>
+                {card.name}
+              </div>
+
+              {/* 技能图标区域 - 与文字信息紧凑排列 */}
+              <div className="flex items-center justify-center space-x-1 pt-1">
+                {/* 完整图标（球员自带技能） */}
+                {card.completeIcon && (
+                  <div 
+                    className="w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-lg"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderColor: getIconColor(card.completeIcon)
+                    }}
+                  >
+                    <span className="text-sm">{getIconSymbol(card.completeIcon)}</span>
+                  </div>
+                )}
+
+                {/* 技能效果徽章 */}
+                {card.immediateEffect !== 'none' && (
+                  <div className="w-7 h-7 flex items-center justify-center">
+                    <SkillEffectBadge 
+                      effect={card.immediateEffect} 
+                      size="small"
+                      showLabel={false}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* 半圆图标 - 分布在四边（凹进去的效果） */}
+          {/* 半圆图标 - 仅在存在图标时绘制 */}
           {card.iconPositions?.map((iconPos, index) => renderHalfIcon(iconPos, index))}
         </div>
 

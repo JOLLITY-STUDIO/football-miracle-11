@@ -74,7 +74,7 @@ export const SkillEffectBadge: React.FC<Props> = ({
   if (!info) return null;
 
   const sizeClasses = {
-    small: { container: 'w-6 h-6', icon: 'text-xs', label: 'text-[8px]' },
+    small: { container: 'w-7 h-7', icon: 'text-xs', label: 'text-[8px]' },
     medium: { container: 'w-8 h-8', icon: 'text-sm', label: 'text-[10px]' },
     large: { container: 'w-10 h-10', icon: 'text-base', label: 'text-xs' }
   };
@@ -93,7 +93,7 @@ export const SkillEffectBadge: React.FC<Props> = ({
           sizeClasses[size].container
         )}
         style={{
-          backgroundColor: info.bgColor,
+          backgroundColor: '#ffffff', // 统一为纯白底色
           borderColor: info.color
         }}
         title={info.description}

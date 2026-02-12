@@ -205,7 +205,7 @@ export function canPlaceCardAtSlot(
       s.playerCard && Math.abs(s.position - slotPosition) === 1
     );
     const hasBehindInZone2 = zone2?.slots.some(s => 
-      s.playerCard && Math.abs(s.position - slotPosition) <= 1
+      s.playerCard && Math.abs(s.position - slotPosition) === 0
     );
     
     if (!hasAdjacentInZone1 && !hasBehindInZone2) return false;

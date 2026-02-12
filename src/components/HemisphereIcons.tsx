@@ -32,14 +32,7 @@ const getIconColor = (icon: TacticalIcon): string => {
 };
 
 const getIconBgColor = (icon: TacticalIcon): string => {
-  switch (icon) {
-    case 'attack': return 'rgba(239, 68, 68, 0.2)';
-    case 'defense': return 'rgba(59, 130, 246, 0.2)';
-    case 'pass': return 'rgba(34, 197, 94, 0.2)';
-    case 'press': return 'rgba(249, 115, 22, 0.2)';
-    case 'breakthrough': return 'rgba(168, 85, 247, 0.2)';
-    case 'breakthroughAll': return 'rgba(236, 72, 153, 0.2)';
-  }
+  return '#ffffff'; // 统一为纯白底色
 };
 
 export const HemisphereIcons: React.FC<Props> = ({

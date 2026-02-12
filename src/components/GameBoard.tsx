@@ -503,15 +503,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
             transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height - 50}px) scale(${viewSettings.zoom})`,
           }}
         >
-             {/* Virtual Grid Floor - Moves with Camera */}
-             <div 
-                className="absolute inset-[-200%] opacity-10 pointer-events-none bg-stone-900 transform-style-3d"
-                style={{
-                  backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
-                  backgroundSize: '100px 100px',
-                  transform: 'translateZ(-300px) scale(2)',
-                }}
-             />
 
              {/* Board Container (Includes Side Panels) */}
              <div className="relative w-[1920px] h-[1080px] flex flex-row items-stretch justify-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-xl overflow-visible bg-stone-900 border-[12px] border-stone-800 transform-style-3d perspective-2000">
@@ -551,25 +542,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                   onSubstituteSelect={handleSubstituteSelect}
                 />
 
-              {renderMode === '3d' ? (
-                <div className="flex-1 relative bg-black overflow-hidden">
-                  <GameScene3D
-                    playerField={gameState.playerField}
-                    aiField={gameState.aiField}
-                    selectedCard={gameState.selectedCard}
-                    onSlotClick={handleSlotClick}
-                    onCardMouseEnter={setHoveredCard}
-                    onCardMouseLeave={() => setHoveredCard(null)}
-                    currentTurn={gameState.currentTurn}
-                    turnPhase={gameState.turnPhase}
-                    isFirstTurn={gameState.isFirstTurn}
-                    currentAction={gameState.currentAction}
-                    viewSettings={viewSettings}
-                    isHomeTeam={gameState.isHomeTeam}
-                    onAttackClick={handleAttack}
-                  />
-                </div>
-              ) : (
+                {/* Always show 2D CenterField for card display */}
                 <CenterField
                   playerField={gameState.playerField}
                   aiField={gameState.aiField}
@@ -588,7 +561,13 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                   setupStep={setupStep}
                   rotation={viewSettings.rotation}
                 />
-              )}
+                
+
+                
+                {/* Ensure 2D field is clickable when 3D is disabled */}
+                {renderMode !== '3d' && (
+                  <div className="relative z-0" />
+                )}
 
               <motion.div
                 initial={{ x: 200, opacity: 0 }}
@@ -729,7 +708,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
             initial={{ opacity: 0, scale: 0.9, x: -20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9, x: -20 }}
-            className="absolute top-[145px] left-4 w-64 bg-stone-900/95 backdrop-blur-lg border border-white/20 rounded-2xl p-5 z-50 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t-white/30 cursor-move"
+            className="fixed top-[145px] left-4 w-64 bg-stone-900/95 border border-white/20 rounded-2xl p-5 z-[100] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t-white/30 cursor-move"
+            style={{ backgroundColor: 'rgba(15, 23, 42, 0.95)' }}
           >
             <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2 pointer-events-none">
               <div className="flex items-center gap-2">
@@ -1397,6 +1377,33 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Overlay 3D grid for precise positioning - Aligned with CSS 3D */}
+      <div className="absolute inset-0 flex items-center justify-center z-15 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
+        <div 
+          className="relative transform-style-3d transform-gpu flex items-center justify-center"
+          style={{
+            width: `${BASE_WIDTH}px`,
+            height: `${BASE_HEIGHT}px`,
+            transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height - 50}px) scale(${viewSettings.zoom})`,
+          }}
+        >
+          <GameScene3D
+              playerField={gameState.playerField}
+              aiField={gameState.aiField}
+              selectedCard={gameState.selectedCard}
+              onSlotClick={handleSlotClick}
+              onCardMouseEnter={setHoveredCard}
+              onCardMouseLeave={() => setHoveredCard(null)}
+              currentTurn={gameState.currentTurn}
+              turnPhase={gameState.turnPhase}
+              isFirstTurn={gameState.isFirstTurn}
+              currentAction={gameState.currentAction}
+              isHomeTeam={gameState.isHomeTeam}
+              onAttackClick={handleAttack}
+            />
+        </div>
+      </div>
     </div>
   );
 };

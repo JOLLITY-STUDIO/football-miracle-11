@@ -47,7 +47,6 @@ export const RightPanel: React.FC<Props> = ({
         
         {/* 1. Synergy Board - Unified Board */}
         <div className="relative w-[320px] flex flex-col bg-[#C62918] rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 flex-shrink-0">
-          <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/wood-pattern-7.png')]" />
           
           <div className="relative flex-1 flex flex-col justify-between py-6">
             {/* Opponent Label (Upside down for them) */}

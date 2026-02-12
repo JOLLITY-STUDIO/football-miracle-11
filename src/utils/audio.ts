@@ -17,19 +17,19 @@ class AudioManager {
     Howler.volume(settings.volume ?? 0.5);
 
     this.sounds = {
-      click: new Howl({ src: [`${base}audio/click.wav`], volume: 0.5, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      draw: new Howl({ src: [`${base}audio/card_flip.wav`], volume: 0.6, onloaderror: (id, err) => console.debug('Audio load error:', err) }), 
-      flip: new Howl({ src: [`${base}audio/card_flip.wav`], volume: 0.6, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      whistle: new Howl({ src: [`${base}audio/whistle.wav`], volume: 0.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      cheer: new Howl({ src: [`${base}audio/cheer.wav`], volume: 0.5, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      goal: new Howl({ src: [`${base}audio/goal.wav`], volume: 1.0, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      error: new Howl({ src: [`${base}audio/whistle.wav`], volume: 0.4, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      swosh: new Howl({ src: [`${base}audio/click.wav`], volume: 0.3, rate: 1.5, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      slide: new Howl({ src: [`${base}audio/card_flip.wav`], volume: 0.3, rate: 0.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      star_pulse: new Howl({ src: [`${base}audio/click.wav`], volume: 0.2, rate: 2.0, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      toss: new Howl({ src: [`${base}audio/click.wav`], volume: 0.6, rate: 0.5, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      ding: new Howl({ src: [`${base}audio/click.wav`], volume: 0.7, rate: 2.5, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
-      snap: new Howl({ src: [`${base}audio/click.wav`], volume: 0.8, rate: 1.2, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      click: new Howl({ src: [`${base}audio/click_new.wav`], volume: 0.7, rate: 1.1, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      draw: new Howl({ src: [`${base}audio/card_flip_new.wav`], volume: 0.8, rate: 1.0, onloaderror: (id, err) => console.debug('Audio load error:', err) }), 
+      flip: new Howl({ src: [`${base}audio/card_flip_new.wav`], volume: 0.8, rate: 1.2, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      whistle: new Howl({ src: [`${base}audio/whistle_new.wav`], volume: 1.0, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      cheer: new Howl({ src: [`${base}audio/cheer_new.wav`], volume: 0.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      goal: new Howl({ src: [`${base}audio/goal_new.wav`], volume: 1.2, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      error: new Howl({ src: [`${base}audio/whistle_new.wav`], volume: 0.6, rate: 0.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      swosh: new Howl({ src: [`${base}audio/click_new.wav`], volume: 0.5, rate: 1.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      slide: new Howl({ src: [`${base}audio/card_flip_new.wav`], volume: 0.5, rate: 0.9, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      star_pulse: new Howl({ src: [`${base}audio/click_new.wav`], volume: 0.4, rate: 2.5, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      toss: new Howl({ src: [`${base}audio/click_new.wav`], volume: 0.8, rate: 0.6, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      ding: new Howl({ src: [`${base}audio/click_new.wav`], volume: 0.9, rate: 3.0, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      snap: new Howl({ src: [`${base}audio/click_new.wav`], volume: 1.0, rate: 1.5, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
     };
 
     // Listen for volume changes
