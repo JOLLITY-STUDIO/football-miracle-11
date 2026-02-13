@@ -180,7 +180,7 @@ export const GameField: React.FC<Props> = ({
                         ry="8"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!isAi && isValidPlacement) {
+                          if (!isAi) {
                             // Use the adjusted startCol (6 for last column)
                             console.log('SVG Click at zone:', zone.zone, 'col:', colIdx, 'startCol:', startCol);
                             onSlotClick(zone.zone, startCol);
@@ -193,7 +193,7 @@ export const GameField: React.FC<Props> = ({
                         }}
                         onMouseLeave={handleCellMouseLeave}
                         style={{ 
-                          cursor: !isAi && isValidPlacement ? 'pointer' : 'default',
+                          cursor: !isAi ? 'pointer' : 'default',
                           pointerEvents: 'auto'
                         }}
                       />
@@ -227,7 +227,7 @@ export const GameField: React.FC<Props> = ({
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  opacity: 0.2
+                                  opacity: 0.1 // 降低透明度，使其更淡
                                 }}
                               >
                                 <img
@@ -237,7 +237,8 @@ export const GameField: React.FC<Props> = ({
                                     width: '32px',
                                     height: '32px',
                                     objectFit: 'contain',
-                                    filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))'
+                                    filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.3))',
+                                    opacity: 0.7 // 降低图标本身的透明度
                                   }}
                                 />
                               </div>

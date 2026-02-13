@@ -13,7 +13,6 @@ import { LeftPanel } from './LeftPanel';
 import { CenterField } from './CenterField';
 import { RightPanel } from './RightPanel';
 import { BackgroundMusic } from './BackgroundMusic';
-import StarCardDraft from './StarCardDraft';
 import PhaseBanner from './PhaseBanner';
 import { CoinToss } from './CoinToss';
 import { RockPaperScissors } from './RockPaperScissors';
@@ -22,6 +21,7 @@ import SquadSelect from './SquadSelect';
 import { CardDealer } from './CardDealer';
 import { DuelOverlay } from './DuelOverlay';
 import { MatchLog } from './MatchLog';
+import { DraftPhase } from './DraftPhase';
 import { 
   gameReducer, 
   type GameState, 
@@ -84,8 +84,6 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
   const [aiTurnTriggered, setAiTurnTriggered] = useState(false);
   const [setupStep, setSetupStep] = useState(0); // 0: not started, 1: board, 2: control, 3: cards, 4: done
   const [tossResult, setTossResult] = useState<'home' | 'away' | null>(null);
-  const [aiDraftSelectingIndex, setAiDraftSelectingIndex] = useState<number | null>(null);
-  const [playerDraftSelectingIndex, setPlayerDraftSelectingIndex] = useState<number | null>(null);
   const [rpsInProgress, setRpsInProgress] = useState(false);
 
   useEffect(() => {
@@ -279,37 +277,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
     }
   }, [gameState.phase, gameState.draftRound, gameState.draftStep]);
 
-  // AI Draft Logic
-  useEffect(() => {
-    if (gameState.phase === 'draft' && gameState.currentTurn === 'ai' && gameState.draftStep > 0) {
-      // Simulate AI thinking and selecting
-      const selectTimer = setTimeout(() => {
-        const randomIndex = Math.floor(Math.random() * gameState.availableDraftCards.length);
-        setAiDraftSelectingIndex(randomIndex);
-      }, 500);
 
-      const pickTimer = setTimeout(() => {
-        dispatch({ type: 'AI_DRAFT_PICK' });
-        playSound('draw');
-        // 保留AI选中标识一段时间，避免立即清除导致玩家看不到标记
-        const clearTimer = setTimeout(() => setAiDraftSelectingIndex(null), 800);
-        return () => clearTimeout(clearTimer);
-      }, 1800);
-
-      return () => {
-        clearTimeout(selectTimer);
-        clearTimeout(pickTimer);
-      };
-    }
-  }, [gameState.phase, gameState.currentTurn, gameState.draftStep, gameState.availableDraftCards.length, dispatch]);
-
-  // Reset draft selection when round or step changes
-  useEffect(() => {
-    if (gameState.phase === 'draft') {
-      setPlayerDraftSelectingIndex(null);
-      setAiDraftSelectingIndex(null);
-    }
-  }, [gameState.phase, gameState.draftRound, gameState.draftStep]);
 
   // AI Turn Logic
   useEffect(() => {
@@ -362,12 +330,12 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
     gameRecorder.current.recordSnapshot(snapshot);
   };
 
-  const canDoAction = (gameState.turnPhase === 'playerAction' || gameState.isFirstTurn) && gameState.currentTurn === 'player';
-  const canPlaceCards = canDoAction && !gameState.currentAction;
+  const canDoAction = () => (gameState.turnPhase === 'playerAction' || gameState.skipTeamAction) && gameState.currentTurn === 'player';
+  const canPlaceCards = () => canDoAction() && !gameState.currentAction;
 
   const handleCardSelect = (card: PlayerCard) => {
     if (gameState.currentTurn !== 'player') return;
-    if (!canPlaceCards) return;
+    if (!canPlaceCards()) return;
     playSound('draw');
     dispatch({ type: 'SELECT_PLAYER_CARD', card: gameState.selectedCard?.id === card.id ? null : card });
   };
@@ -409,7 +377,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
 
   const handleCoinTossComplete = useCallback(() => {
     if (tossResult) {
-      dispatch({ type: 'COIN_TOSS', isHomeTeam: tossResult === 'home' });
+      dispatch({ type: 'ROCK_PAPER_SCISSORS', isHomeTeam: tossResult === 'home' });
       playSound('whistle');
     }
   }, [tossResult, dispatch, playSound]);
@@ -422,11 +390,11 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       // Player chose their side
       isHomeTeam = choice === 'home';
     } else {
-      // AI chose their side
-      isHomeTeam = choice === 'home';
+      // AI chose their side, player gets the opposite
+      isHomeTeam = choice !== 'home';
     }
     
-    dispatch({ type: 'COIN_TOSS', isHomeTeam });
+    dispatch({ type: 'ROCK_PAPER_SCISSORS', isHomeTeam });
     playSound('whistle');
   }, [dispatch, playSound]);
 
@@ -499,7 +467,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
 
   const passCount = countIcons(gameState.playerField, 'pass');
   const pressCount = countIcons(gameState.playerField, 'press');
-  const canDoTeamAction = !gameState.isFirstTurn || gameState.playerField.some(z => z.slots.some(s => s.playerCard));
+  const canDoTeamAction = !gameState.skipTeamAction || gameState.playerField.some(z => z.slots.some(s => s.playerCard));
 
   const handleVolumeChange = (newVolume: number) => {
     const newSettings = { ...audioSettings, volume: newVolume };
@@ -523,7 +491,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       {gameState.phase !== 'coinToss' && (
         <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
         <div 
-          className={clsx("relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center", viewSettings.pitch === 0 ? "pointer-events-auto" : "pointer-events-none")}
+          className={clsx("relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center pointer-events-auto")}
           style={{
             width: `${BASE_WIDTH}px`,
             height: `${BASE_HEIGHT}px`,
@@ -568,7 +536,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                   onHoverLeave={handleHoverLeaveCard}
                   onSubstituteSelect={handleSubstituteSelect}
                   onToggleMatchLog={() => setShowMatchLog(!showMatchLog)}
-                  onToggleLeftControls={() => setShowLeftControls(true)}
+                  onToggleLeftControls={() => setShowLeftControls(!showLeftControls)}
                 />
 
                 {/* Always show 2D CenterField for card display */}
@@ -958,7 +926,7 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
                   key={card.id}
                   data-testid="hand-card"
                   initial={{ opacity: 0, y: 200, rotate: 0, scale: 0 }}
-                  animate={setupStep >= 3 ? { 
+                  animate={setupStep >= 3 || gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf' ? { 
                     opacity: 1, 
                     y: (gameState.selectedCard?.id === card.id ? -120 : -5) + Math.abs(i - (gameState.playerHand.length - 1) / 2) * 2, 
                     scale: gameState.selectedCard?.id === card.id ? 1.1 : 1,
@@ -1072,11 +1040,19 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
 
           {/* Action Buttons Panel */}
           <div className="w-40 flex flex-col gap-3">
-                {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' && passCount === 0 && pressCount === 0 ? (
+                {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' && !gameState.skipTeamAction && passCount === 0 && pressCount === 0 ? (
                   <div className="flex flex-col gap-3 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
                     {/* Auto-skip hint if both are 0 */}
                     <button
-                      onClick={() => dispatch({ type: 'TEAM_ACTION', action: 'pass' })} // This will trigger performTeamAction which sets phase to playerAction
+                      onClick={() => {
+                        // Directly set turnPhase to playerAction instead of executing pass
+                        setGameState(prev => ({
+                          ...prev,
+                          turnPhase: 'playerAction',
+                          message: 'Turn phase set to player action'
+                        }));
+                        playSound('click');
+                      }}
                       className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
                     >
                       No actions available - Skip ➔
@@ -1411,8 +1387,8 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
       {gameState.pendingShot && (
         <DuelOverlay
           duelPhase={gameState.duelPhase}
-          attacker={gameState.pendingShot.attacker}
-          defender={gameState.pendingShot.defender}
+          attacker={gameState.pendingShot.attacker.card}
+          defender={gameState.pendingShot.defender?.card || null}
           attackSynergy={gameState.pendingShot.attackSynergy}
           defenseSynergy={gameState.pendingShot.defenseSynergy}
           attackPower={gameState.pendingShot.attackerPower}
@@ -1492,19 +1468,9 @@ export const GameBoard: React.FC<Props> = ({ onBack, playerTeam, renderMode = '2
         onComplete={handlePenaltyComplete}
       />
 
-        <StarCardDraft
-          cards={gameState.availableDraftCards}
-          round={gameState.draftRound}
-          isPlayerTurn={gameState.currentTurn === 'player' && gameState.draftStep > 0}
-          onSelect={(index) => {
-            setPlayerDraftSelectingIndex(index);
-            dispatch({ type: 'PICK_DRAFT_CARD', cardIndex: index });
-            playSound('draw');
-          }}
-          aiSelectedIndex={aiDraftSelectingIndex}
-          playerSelectedIndex={playerDraftSelectingIndex}
-          isHomeTeam={gameState.isHomeTeam}
-        />
+        {gameState.phase === 'draft' && (
+          <DraftPhase gameState={gameState} dispatch={dispatch} />
+        )}
 
       {/* Global Card Hover Preview */}
       <AnimatePresence>

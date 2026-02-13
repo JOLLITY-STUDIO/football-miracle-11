@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-// Use Vite's import.meta.glob to auto-load music files from public/bgm/
-// This runs at build time. Adding files requires a dev server restart.
-const bgmModules = import.meta.glob('/public/bgm/*.{mp3,wav,ogg,m4a}', { eager: true });
-
-const AUTO_PLAYLIST = Object.keys(bgmModules).map(path => {
-  // path is like "/public/bgm/filename.mp3"
-  const filename = path.split('/').pop();
-  return filename || '';
-}).filter(name => name !== '');
-
-const PLAYLIST = AUTO_PLAYLIST.length > 0 ? AUTO_PLAYLIST : [
+// Default BGM playlist
+const PLAYLIST: string[] = [
   'Give_Me_Hope_-_Modern_Pitch.mp3',
+  'Answer_-_Square_a_Saw.mp3',
+  'Around_The_Corner_-_Infraction.mp3',
+  'Boys,_Girls,_Toys_&_Words_-_Modern_Pitch.mp3',
+  'These_Nights_-_Modern_Pitch.mp3',
 ];
+
+// Function to get a safe track name
+const getSafeTrack = (track: string): string => {
+  // List of known working tracks
+  const safeTracks = PLAYLIST;
+  if (safeTracks.includes(track)) {
+    return track;
+  }
+  return safeTracks[0] || 'Give_Me_Hope_-_Modern_Pitch.mp3';
+};
 
 interface Props {
   variant?: 'default' | 'game';
@@ -30,23 +35,24 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
   const playPromiseRef = useRef<Promise<void> | null>(null);
 
   // Sync volume with global settings
-  useEffect(() => {
-    const syncSettings = () => {
-      const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
-      setIsBgmEnabled(settings.bgm);
-      if (typeof settings.volume === 'number') {
-        // Map 0-1 global volume to 0-0.4 BGM relative volume (so it's not too loud)
-        setVolume(settings.volume * 0.4);
-      }
-    };
-    syncSettings();
-    window.addEventListener('storage', syncSettings);
-    window.addEventListener('audioSettingsChanged', syncSettings);
-    return () => {
-      window.removeEventListener('storage', syncSettings);
-      window.removeEventListener('audioSettingsChanged', syncSettings);
-    };
+  const syncAudioSettings = useCallback(() => {
+    const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
+    setIsBgmEnabled(settings.bgm);
+    if (typeof settings.volume === 'number') {
+      setVolume(settings.volume * 0.4);
+    }
+    return settings;
   }, []);
+
+  useEffect(() => {
+    syncAudioSettings();
+    window.addEventListener('storage', syncAudioSettings);
+    window.addEventListener('audioSettingsChanged', syncAudioSettings);
+    return () => {
+      window.removeEventListener('storage', syncAudioSettings);
+      window.removeEventListener('audioSettingsChanged', syncAudioSettings);
+    };
+  }, [syncAudioSettings]);
 
   // Handle BGM enable/disable
   useEffect(() => {
@@ -82,17 +88,18 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
   }, [isBgmEnabled, currentTrack, isPlaying]);
 
   // Pick a random track that is different from the current one (unless there's only 1)
-  const pickRandomTrack = useCallback((exclude?: string) => {
+  const pickRandomTrack = useCallback((exclude?: string): string => {
     if (PLAYLIST.length === 0) return '';
-    if (PLAYLIST.length === 1) return PLAYLIST[0];
     
     let availableTracks = PLAYLIST;
     if (exclude) {
       availableTracks = PLAYLIST.filter(track => track !== exclude);
     }
     
+    if (availableTracks.length === 0) return PLAYLIST[0] || '';
+    
     const randomIndex = Math.floor(Math.random() * availableTracks.length);
-    return availableTracks[randomIndex];
+    return availableTracks[randomIndex] ?? '';
   }, []);
 
   const playNextTrack = useCallback(() => {
@@ -108,42 +115,44 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
     }
   }, [pickRandomTrack, currentTrack]);
 
-  // Handle first user interaction to resume audio if blocked
+  // Unified user interaction handler for autoplay
   useEffect(() => {
-    const handleFirstInteraction = () => {
+    const handleUserInteraction = () => {
       if (isBgmEnabled && !isPlaying && audioRef.current) {
         audioRef.current.play()
           .then(() => {
             setIsPlaying(true);
-            window.removeEventListener('click', handleFirstInteraction);
-            window.removeEventListener('keydown', handleFirstInteraction);
-            window.removeEventListener('touchstart', handleFirstInteraction);
           })
-          .catch(() => {
-            // Still blocked or other error
+          .catch((e: any) => {
+            console.log("Autoplay blocked, user interaction required:", e.name);
+            // Don't log for NotAllowedError as it's expected behavior
+            if (e.name !== 'NotAllowedError') {
+              console.warn("Playback failed:", e);
+            }
           });
       }
     };
 
     if (isBgmEnabled && !isPlaying) {
-      window.addEventListener('click', handleFirstInteraction);
-      window.addEventListener('keydown', handleFirstInteraction);
-      window.addEventListener('touchstart', handleFirstInteraction);
+      window.addEventListener('click', handleUserInteraction);
+      window.addEventListener('keydown', handleUserInteraction);
+      window.addEventListener('touchstart', handleUserInteraction);
     }
 
     return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener('touchstart', handleUserInteraction);
     };
   }, [isBgmEnabled, isPlaying]);
 
+  // Play when track changes
   useEffect(() => {
-    // Play when track changes
     const startPlayback = async () => {
       if (currentTrack && audioRef.current && isBgmEnabled) {
         const base = import.meta.env.BASE_URL;
-        const trackPath = `${base}bgm/${encodeURIComponent(currentTrack)}`;
+        const safeTrack = getSafeTrack(currentTrack);
+        const trackPath = `${base}bgm/${encodeURIComponent(safeTrack)}`;
         audioRef.current.src = trackPath;
         audioRef.current.volume = volume;
         
@@ -152,12 +161,23 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
           await playPromiseRef.current;
           setIsPlaying(true);
         } catch (err: any) {
-          if (err.name === 'NotAllowedError') {
-            console.log("Autoplay blocked. User interaction required.");
-          } else if (err.name === 'AbortError') {
-            console.debug("Playback aborted (interrupted by source change or pause)");
-          } else {
-            console.warn("Playback failed:", err);
+          console.error("Playback failed:", err);
+          
+          // Provide more detailed error information
+          switch (err.name) {
+            case 'NotAllowedError':
+              console.log("Autoplay blocked. User interaction required.");
+              break;
+            case 'AbortError':
+              console.debug("Playback aborted (interrupted by source change or pause)");
+              break;
+            case 'NotSupportedError':
+              console.warn("Audio format not supported:", err.message);
+              // Try next track on format error
+              setTimeout(playNextTrack, 1000);
+              break;
+            default:
+              console.warn("Unexpected playback error:", err);
           }
           setIsPlaying(false);
         } finally {
@@ -167,7 +187,7 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
     };
 
     startPlayback();
-  }, [currentTrack, isBgmEnabled, volume]);
+  }, [currentTrack, isBgmEnabled, volume, playNextTrack]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -176,39 +196,53 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
   }, [volume]);
 
   const togglePlay = () => {
-    if (audioRef.current) {
-      const newBgmEnabled = !isPlaying;
-      
-      // Update global settings
-      const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
-      const newSettings = { ...settings, bgm: newBgmEnabled };
-      localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
-      window.dispatchEvent(new Event('audioSettingsChanged'));
+    if (!audioRef.current) return;
 
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        const base = import.meta.env.BASE_URL;
-        if (!audioRef.current.src || audioRef.current.src === window.location.href) {
-            // If no source is set yet, set it
-            if (currentTrack) {
-                audioRef.current.src = `${base}bgm/${encodeURIComponent(currentTrack)}`;
-            } else if (PLAYLIST.length > 0) {
-                const track = pickRandomTrack();
-                setCurrentTrack(track);
-                audioRef.current.src = `${base}bgm/${encodeURIComponent(track)}`;
-            }
+    const newBgmEnabled = !isPlaying;
+    
+    // Update global settings
+    const settings = syncAudioSettings();
+    const newSettings = { ...settings, bgm: newBgmEnabled };
+    localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
+    window.dispatchEvent(new Event('audioSettingsChanged'));
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      const base = import.meta.env.BASE_URL;
+      const sourceUrl = audioRef.current.src;
+      
+      // Only set source if not already set or if it's the default
+      if (!sourceUrl || sourceUrl === window.location.href) {
+        if (currentTrack) {
+          const safeTrack = getSafeTrack(currentTrack);
+          audioRef.current.src = `${base}bgm/${encodeURIComponent(safeTrack)}`;
+        } else if (PLAYLIST.length > 0) {
+          const track = pickRandomTrack();
+          const safeTrack = getSafeTrack(track);
+          setCurrentTrack(safeTrack);
+          audioRef.current.src = `${base}bgm/${encodeURIComponent(safeTrack)}`;
         }
-        audioRef.current.play().catch(e => console.error("Play failed", e));
       }
-      setIsPlaying(!isPlaying);
+      
+      audioRef.current.play().catch(e => {
+        console.error("Play failed", e);
+        // Try next track on error
+        if (PLAYLIST.length > 1) {
+          setTimeout(playNextTrack, 1000);
+        }
+        // Don't update playing state on error
+        return;
+      });
     }
+    
+    setIsPlaying(!isPlaying);
   };
 
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
     // Update global settings - map relative BGM volume back to 0-1 global volume
-    const settings = JSON.parse(localStorage.getItem('game_audio_settings') || '{"bgm":true,"sfx":true,"volume":0.5}');
+    const settings = syncAudioSettings();
     const globalVolume = newVolume / 0.4;
     const newSettings = { ...settings, volume: globalVolume };
     localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
