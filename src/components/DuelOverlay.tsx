@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlayerCard, SynergyCard, ShotResult, DuelPhase } from '../game/gameLogic';
+import type { PlayerCard, SynergyCard } from '../data/cards';
+import type { ShotResult, DuelPhase } from '../types/game';
 import { PlayerCardComponent } from './PlayerCard';
 import { SynergyCardComponent } from './SynergyCard';
 import ShotIconSelector from './ShotIconSelector';
@@ -147,11 +148,11 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
   // Power counter animation
   useEffect(() => {
     if (duelPhase === 'reveal_attacker') {
-      const baseAttack = attacker.icons.filter(i => i === 'attack').length;
+      const baseAttack = attacker.icons.filter((i: string) => i === 'attack').length;
       setDisplayAttackPower(baseAttack);
     } else if (duelPhase === 'reveal_defender') {
       if (defender) {
-        const baseDef = defender.icons.filter(i => i === 'defense').length;
+        const baseDef = defender.icons.filter((i: string) => i === 'defense').length;
         setDisplayDefensePower(baseDef);
       }
     } else if (duelPhase === 'reveal_synergy') {
@@ -309,7 +310,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                  transition={{ duration: 4, repeat: Infinity }}
                  className="absolute -inset-8 bg-blue-500/20 rounded-full blur-[60px] group-hover:bg-blue-500/30 transition-all duration-500" 
                />
-               <PlayerCardComponent card={attacker} size="large" usedShotIcons={attackerUsedShotIcons} />
+               <PlayerCardComponent card={attacker} size="large" usedShotIcons={attackerUsedShotIcons || []} />
                
                {/* Enhanced Shot Icon Selection */}
                {duelPhase === 'select_shot_icon' && (
@@ -361,7 +362,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
             >
               <div className="flex justify-between items-center pb-2 border-b border-white/10">
                 <span className="text-white/60">Base Strength</span>
-                <span className="text-white text-sm">{attacker.icons.filter(i => i === 'attack').length}</span>
+                <span className="text-white text-sm">{attacker.icons.filter((i: string) => i === 'attack').length}</span>
               </div>
               <div className={clsx("flex justify-between items-center transition-all duration-500", (duelPhase === 'reveal_synergy' || duelPhase === 'reveal_skills' || duelPhase === 'summary' || duelPhase === 'result') ? "text-blue-400 scale-105" : "opacity-20")}>
                 <span>Synergy Boost</span>
@@ -541,7 +542,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
             >
               <div className="flex justify-between items-center pb-2 border-b border-white/10">
                 <span className="text-white/60">Team Defense</span>
-                <span className="text-white text-sm">{defender ? defender.icons.filter(i => i === 'defense').length : 0}</span>
+                <span className="text-white text-sm">{defender ? defender.icons.filter((i: string) => i === 'defense').length : 0}</span>
               </div>
               <div className={clsx("flex justify-between items-center transition-all duration-500", (duelPhase === 'reveal_synergy' || duelPhase === 'reveal_skills' || duelPhase === 'summary' || duelPhase === 'result') ? "text-red-400 scale-105" : "opacity-20")}>
                 <span>Synergy Boost</span>
@@ -759,7 +760,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     <div className="flex justify-between text-xs text-white/80 bg-white/5 px-3 py-1.5 rounded border border-white/5">
                       <span>Base + Synergy + Skills</span>
                       <span className="font-mono">
-                        {attacker.icons.filter(i => i === 'attack').length} + {attackSynergy.reduce((sum, c) => sum + c.stars, 0)} + {activatedSkills.attackerSkills.length} = {attackPower}
+                        {attacker.icons.filter((i: string) => i === 'attack').length} + {attackSynergy.reduce((sum, c) => sum + c.stars, 0)} + {activatedSkills.attackerSkills.length} = {attackPower}
                       </span>
                     </div>
                   </div>
@@ -771,7 +772,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     <div className="flex justify-between text-xs text-white/80 bg-white/5 px-3 py-1.5 rounded border border-white/5">
                       <span>Base + Synergy + Skills</span>
                       <span className="font-mono">
-                        {defender ? defender.icons.filter(i => i === 'defense').length : 0} + {defenseSynergy.reduce((sum, c) => sum + c.stars, 0)} + {activatedSkills.defenderSkills.length} = {defensePower}
+                        {defender ? defender.icons.filter((i: string) => i === 'defense').length : 0} + {defenseSynergy.reduce((sum, c) => sum + c.stars, 0)} + {activatedSkills.defenderSkills.length} = {defensePower}
                       </span>
                     </div>
                   </div>

@@ -11,6 +11,36 @@ import {
 import type { PlayerCard, SynergyCard } from '../data/cards';
 import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
 
+// 类型定义，用于修复 TypeScript 错误
+interface PerformShotAction {
+  type: 'PERFORM_SHOT';
+  card: PlayerCard;
+  slot: number;
+  zone: number;
+  synergyCards?: SynergyCard[];
+}
+
+interface PenaltyCompleteAction {
+  type: 'PENALTY_COMPLETE';
+  playerPoints: number;
+  aiPoints: number;
+}
+
+interface SelectPlayerCardAction {
+  type: 'SELECT_PLAYER_CARD';
+  card: PlayerCard | null;
+}
+
+interface TeamActionAction {
+  type: 'TEAM_ACTION';
+  action: 'pass' | 'press';
+}
+
+interface StartSubstitutionAction {
+  type: 'START_SUBSTITUTION';
+  card: PlayerCard;
+}
+
 export const useGameState = (
   playerTeam: { starters: PlayerCard[]; substitutes: PlayerCard[]; initialField?: any[] } | null, 
   playSound: (sound: string) => void,
@@ -37,21 +67,63 @@ export const useGameState = (
 
   // Action handlers
   const handleSlotClick = useCallback((zone: number, startCol: number) => {
-    if (gameState.currentTurn !== 'player' || gameState.turnPhase !== 'playerAction' || gameState.currentAction) return;
+    // 检查是否是玩家回合
+    if (gameState.currentTurn !== 'player') {
+      console.warn('Not player turn');
+      return;
+    }
     
+    // 检查是否在替换模式
     if (gameState.substitutionMode) {
-      const z = gameState.playerField.find(f => f.zone === zone);
+      const targetZone = gameState.playerField.find(f => f.zone === zone);
+      if (!targetZone) return;
+      
       const slotIdx = Math.floor(startCol / 2) + 1;
-      const slot = z?.slots.find(s => s.position === slotIdx);
-      if (slot?.playerCard) {
-        dispatch({ type: 'SUBSTITUTE', outgoingCardId: slot.playerCard.id, incomingCardId: gameState.substitutionMode.incomingCard.id });
+      const targetSlot = targetZone.slots.find(s => s.position === slotIdx);
+      
+      if (targetSlot?.playerCard) {
+        // 执行替换
+        dispatch({
+          type: 'SUBSTITUTE', 
+          outgoingCardId: targetSlot.playerCard.id, 
+          incomingCardId: gameState.substitutionMode.incomingCard.id 
+        });
         playSound('whistle');
       }
       return;
     }
 
-    if (!gameState.selectedCard) return;
+    // 检查是否已选择卡牌
+    if (!gameState.selectedCard) {
+      setGameState(prev => ({ ...prev, message: 'Please select a card first' }));
+      playSound('error');
+      return;
+    }
 
+    // 检查是否可以放置卡牌 - 改进的逻辑
+    const canPlace = gameState.turnPhase === 'playerAction' || 
+                    gameState.turnPhase === 'teamAction' || 
+                    (gameState.isFirstTurn && gameState.turnPhase === 'start');
+
+    if (!canPlace) {
+      setGameState(prev => ({ 
+        ...prev, 
+        message: gameState.turnPhase === 'teamAction' 
+          ? 'Must complete Team Action first!' 
+          : 'Cannot place card at this time' 
+      }));
+      playSound('error');
+      return;
+    }
+
+    // 检查是否已经执行过动作
+    if (gameState.currentAction && gameState.currentAction !== 'none') {
+      setGameState(prev => ({ ...prev, message: 'Already performed an action this turn!' }));
+      playSound('error');
+      return;
+    }
+
+    // 执行放置卡牌
     const card = gameState.selectedCard;
     dispatch({ type: 'PLACE_CARD', card, zone, slot: startCol });
     dispatch({ type: 'SELECT_PLAYER_CARD', card: null });
@@ -61,26 +133,33 @@ export const useGameState = (
   const handleAttack = useCallback((zone: number, slot: number) => {
     if (gameState.currentTurn !== 'player') return;
     
-    if (gameState.turnPhase === 'teamAction') {
-      setGameState(prev => ({ ...prev, message: 'Must perform Team Action first! (Pass or Press)' }));
+    // 检查是否可以执行攻击操作
+    const canPerformAction = gameState.turnPhase === 'playerAction' || 
+                          gameState.turnPhase === 'teamAction' || 
+                          (gameState.isFirstTurn && gameState.turnPhase === 'start');
+
+    if (!canPerformAction) {
+      setGameState(prev => ({ ...prev, message: 'Cannot perform attack at this time' }));
       playSound('error');
       return;
     }
 
-    if (gameState.currentAction) {
+    if (gameState.currentAction && gameState.currentAction !== 'none') {
       setGameState(prev => ({ ...prev, message: 'Already performed an action this turn!' }));
       playSound('error');
       return;
     }
 
-    if (gameState.turnPhase !== 'playerAction') return;
-    
     const attackerZone = gameState.playerField.find(z => z.zone === zone);
     const attackerSlot = attackerZone?.slots.find(s => s.position === slot);
     if (!attackerSlot || !attackerSlot.playerCard) return;
     
     const attacker = attackerSlot.playerCard;
-    if (!attacker.icons.includes('attack')) return;
+    if (!attacker.icons.includes('attack')) {
+      setGameState(prev => ({ ...prev, message: 'This card cannot attack' }));
+      playSound('error');
+      return;
+    }
 
     const controlState = getControlState(gameState.controlPosition);
     const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
@@ -97,7 +176,15 @@ export const useGameState = (
     const additionalCards = gameState.selectedSynergyCards.slice(0, maxSynergyCards - 1);
     synergyCards = [...synergyCards, ...additionalCards];
 
-    dispatch({ type: 'PERFORM_SHOT', zone, slot, synergyCards });
+    // 修正类型错误
+    const action: PerformShotAction = {
+      type: 'PERFORM_SHOT',
+      card: attacker,
+      zone,
+      slot,
+      synergyCards
+    };
+    dispatch(action);
     playSound('kick');
   }, [gameState, dispatch, playSound]);
 
@@ -145,7 +232,16 @@ export const useGameState = (
   const handleInstantShot = useCallback((zone: number, slot: number) => {
     if (!gameState.instantShotMode) return;
     const synergyCards = [...gameState.selectedSynergyCards];
-    dispatch({ type: 'PERFORM_SHOT', zone, slot, synergyCards });
+    
+    // 修正类型错误
+    const action: PerformShotAction = {
+      type: 'PERFORM_SHOT',
+      card: gameState.instantShotMode.card,
+      zone,
+      slot,
+      synergyCards
+    };
+    dispatch(action);
     playSound('goal');
   }, [gameState.instantShotMode, gameState.selectedSynergyCards, dispatch, playSound]);
 

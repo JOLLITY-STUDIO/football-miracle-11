@@ -11,8 +11,8 @@ interface Props {
   onSelect: (index: number) => void;
   aiSelectedIndex?: number | null;
   playerSelectedIndex?: number | null;
-  isHomeTeam: boolean;
   onRoundStart?: () => void;
+  draftStep?: number;
 }
 
 const StarCardDraft: React.FC<Props> = ({ 
@@ -22,8 +22,8 @@ const StarCardDraft: React.FC<Props> = ({
   onSelect, 
   aiSelectedIndex = null,
   playerSelectedIndex = null,
-  isHomeTeam,
-  onRoundStart
+  onRoundStart,
+  draftStep = 1
 }) => {
   const [isShuffling, setIsShuffling] = useState(true);
   const [shuffledCards, setShuffledCards] = useState<PlayerCard[]>([]);
@@ -39,7 +39,7 @@ const StarCardDraft: React.FC<Props> = ({
 
   useEffect(() => {
     if (cards.length > 0 && isShuffling) {
-      playSound('shuffle');
+      playSound('swosh');
       const shuffled = [...cards]; // 取消洗牌随机旋转，保持稳定顺序
       setShuffledCards(shuffled);
       const timer = setTimeout(() => setIsShuffling(false), 300);
@@ -70,13 +70,26 @@ const StarCardDraft: React.FC<Props> = ({
     if (playerSelectedIndex !== null && lastAiSelectedIndex !== null && !showDiscard) {
       const t = setTimeout(() => {
         setShowDiscard(true);
-        playSound('discard');
+        playSound('swosh');
         // 清理AI标识
         setTimeout(() => setLastAiSelectedIndex(null), 400);
       }, 400);
       return () => clearTimeout(t);
     }
   }, [playerSelectedIndex, aiSelectedIndex, showDiscard, lastAiSelectedIndex]);
+
+  // 当进入弃卡阶段时，立即显示弃卡状态
+  useEffect(() => {
+    if (draftStep === 3 && !showDiscard) {
+      const t = setTimeout(() => {
+        setShowDiscard(true);
+        playSound('swosh');
+        // 清理AI标识
+        setTimeout(() => setLastAiSelectedIndex(null), 400);
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [draftStep, showDiscard]);
 
   if (cards.length === 0) return null;
 
@@ -88,7 +101,7 @@ const StarCardDraft: React.FC<Props> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 font-['Russo_One']"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] font-['Russo_One']"
       >
         <motion.div 
           initial={{ scale: 0.9, y: 30 }}
@@ -96,15 +109,6 @@ const StarCardDraft: React.FC<Props> = ({
           className="bg-[#2a2a2a] rounded-2xl p-8 shadow-2xl border border-gray-700 max-w-5xl w-full"
         >
           <div className="text-center mb-10">
-            <div className="flex justify-center gap-4 mb-2">
-              <span className={`px-4 py-1 rounded-full text-xs font-black tracking-widest uppercase border ${
-                isHomeTeam 
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]' 
-                  : 'bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
-              }`}>
-                {isHomeTeam ? '🏠 HOME TEAM' : '✈️ AWAY TEAM'}
-              </span>
-            </div>
             <div className="text-4xl font-bold text-yellow-400 mb-4 tracking-wider">
               ⭐ STAR CARD DRAFT - ROUND {round} ⭐
             </div>
@@ -116,6 +120,10 @@ const StarCardDraft: React.FC<Props> = ({
               >
                 SHUFFLING CARDS...
               </motion.div>
+            ) : draftStep === 3 ? (
+              <div className="text-2xl font-bold text-gray-400">
+                DISCARDING REMAINING CARD...
+              </div>
             ) : (
               <div className={`text-2xl font-bold ${isPlayerTurn ? 'text-green-400' : 'text-red-400'}`}>
                 {isPlayerTurn ? 'YOUR TURN TO PICK!' : 'AI IS CHOOSING...'}

@@ -7,7 +7,7 @@ import { SkillEffectBadge } from './SkillEffectBadge';
 interface Props {
   card: PlayerCardType;
   onClick?: () => void;
-  onMouseEnter?: () => void;
+  onMouseEnter?: (event?: React.MouseEvent) => void;
   onMouseLeave?: () => void;
   selected?: boolean;
   size?: 'tiny' | 'small' | 'medium' | 'large';
@@ -30,12 +30,8 @@ const getRoleName = (type: string) => {
 };
 
 const getCardBgColor = (type: string) => {
-  switch (type) {
-    case 'forward': return 'bg-gradient-to-br from-red-600 to-red-800';
-    case 'midfielder': return 'bg-gradient-to-br from-emerald-600 to-emerald-800';
-    case 'defender': return 'bg-gradient-to-br from-blue-600 to-blue-800';
-    default: return 'bg-gradient-to-br from-gray-600 to-gray-800';
-  }
+  // 统一使用深色渐变背景，确保所有卡片背景一致
+  return 'bg-gradient-to-br from-gray-800 to-gray-900';
 };
 
 const getIconImage = (icon: TacticalIcon): string => {
@@ -113,51 +109,38 @@ export const PlayerCardComponent: React.FC<Props> = ({
     large: { width: '220px', height: '132px' }
   };
 
-  const halfIconSize = 24;
-
   const textStrokeStyle: React.CSSProperties = {
     color: themeColor,
     WebkitTextStroke: '0.5px white',
-    textShadow: '0 0 1px white'
+    textShadow: '0 0 1px white',
+    fontFamily: '"Russo One", sans-serif',
+    fontWeight: '900',
+    letterSpacing: '0.05em'
   };
 
   const renderHalfIcon = (iconPos: { type: TacticalIcon; position: IconPosition }, index: number) => {
     const info = getHalfIconInfo(iconPos.position);
+    if (!info) return null;
+    
     const iconColor = getIconColor(iconPos.type);
     const iconImage = getIconImage(iconPos.type);
-    const radius = halfIconSize / 2;
+    // 半圆直径为卡片高度的1/6
+    const halfIconDiameter = cardSize[size].height.replace('px', '') as unknown as number / 6;
+    const radius = halfIconDiameter / 2;
     
     // Check if this is a shot icon and if it's been used
     const isShotIcon = iconPos.type === 'attack';
     const isUsed = isShotIcon && (usedShotIcons?.includes(index) || false);
     
-    // SVG half-circle mask approach with embedded icon
-    const svgHalfCircle = (edge: 'top' | 'bottom' | 'left' | 'right', r: number) => {
-      const d = r * 2;
-      const fillColor = isUsed ? '#000' : '#fff';
-      let svgContent = '';
-      
-      if (edge === 'top') {
-        svgContent = `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${d},0 A${r},${r} 0 0,1 0,${r} Z" fill="${fillColor}"/></svg>`;
-      } else if (edge === 'bottom') {
-        svgContent = `<svg viewBox="0 0 ${d} ${r}" xmlns="http://www.w3.org/2000/svg"><path d="M0,${r} A${r},${r} 0 0,1 ${d},${r} L${d},0 L0,0 Z" fill="${fillColor}"/></svg>`;
-      } else if (edge === 'left') {
-        svgContent = `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 L${r},${r} L0,${d} Z" fill="${fillColor}"/></svg>`;
-      } else {
-        svgContent = `<svg viewBox="0 0 ${r} ${d}" xmlns="http://www.w3.org/2000/svg"><path d="M${r},0 L${r},${d} L0,${r} Z" fill="${fillColor}"/></svg>`;
-      }
-      
-      return svgContent;
-    };
-
     const containerStyle: React.CSSProperties = {
       position: 'absolute',
-      width: info.edge === 'top' || info.edge === 'bottom' ? `${halfIconSize}px` : `${radius}px`,
-      height: info.edge === 'top' || info.edge === 'bottom' ? `${radius}px` : `${halfIconSize}px`,
+      width: info.edge === 'top' || info.edge === 'bottom' ? `${halfIconDiameter}px` : `${radius}px`,
+      height: info.edge === 'top' || info.edge === 'bottom' ? `${radius}px` : `${halfIconDiameter}px`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 10,
+      overflow: 'hidden',
       filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))',
       transform: info.edge === 'top' || info.edge === 'bottom' ? 'translateX(-50%)' : 'translateY(-50%)',
       ...(info.edge === 'top' ? { top: 0, left: info.pos } :
@@ -166,19 +149,50 @@ export const PlayerCardComponent: React.FC<Props> = ({
           { top: info.pos, right: 0 })
     };
 
+    const clipPathStyle = {
+      top: `polygon(0 0, 100% 0, 100% ${radius}px, 50% ${radius}px, 0 ${radius}px)`,
+      bottom: `polygon(0 ${radius}px, 50% ${radius}px, 100% ${radius}px, 100% 100%, 0 100%)`,
+      left: `polygon(0 0, ${radius}px 50%, 0 100%)`,
+      right: `polygon(${radius}px 0, ${radius}px 100%, 100% 50%)`
+    }[info.edge];
+
     return (
       <div
         key={`half-${iconPos.position}-${index}`}
         style={containerStyle}
       >
+        {/* 背景图片的凹进部分 */}
         <div
-          dangerouslySetInnerHTML={{ __html: svgHalfCircle(info.edge, radius) }}
-          style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+          className="absolute inset-0"
+          style={{
+            backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            clipPath: clipPathStyle,
+            zIndex: 1
+          }}
         />
+        {/* 半透明遮罩 */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            clipPath: clipPathStyle,
+            zIndex: 2
+          }}
+        />
+        {/* 图标 */}
         <img
           src={iconImage}
           alt={iconPos.type}
-          style={{ width: '16px', height: '16px', objectFit: 'contain', position: 'relative', zIndex: 1 }}
+          style={{ 
+            width: `${radius * 1.2}px`, 
+            height: `${radius * 1.2}px`, 
+            objectFit: 'contain', 
+            position: 'relative', 
+            zIndex: 3,
+            filter: isUsed ? 'grayscale(100%)' : 'none'
+          }}
         />
       </div>
     );
@@ -200,12 +214,19 @@ export const PlayerCardComponent: React.FC<Props> = ({
         }}
         whileHover={!disabled && !faceDown ? { y: -3, scale: 1.02 } : {}}
         className={clsx(
-          "relative preserve-3d cursor-pointer transition-shadow rounded-lg",
+          "relative preserve-3d cursor-pointer transition-shadow rounded-lg overflow-hidden",
           selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-10 shadow-lg",
           disabled && "cursor-not-allowed"
         )}
-        style={cardSize[size]}
-        onClick={disabled ? undefined : onClick}
+        style={{
+          ...cardSize[size],
+          boxSizing: 'border-box',
+          minWidth: cardSize[size].width,
+          minHeight: cardSize[size].height,
+          maxWidth: cardSize[size].width,
+          maxHeight: cardSize[size].height
+        }}
+        onClick={onClick}
         draggable={draggable}
         onDragStart={() => onDragStart?.(card)}
         onDragEnd={() => onDragEnd?.()}
@@ -224,6 +245,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
                 src={card.imageUrl} 
                 alt={card.name}
                 className="w-full h-full object-cover"
+                style={{ objectPosition: 'center' }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

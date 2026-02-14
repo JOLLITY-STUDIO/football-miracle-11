@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PlayerCard } from '../data/cards';
-import type { PlayerActionType } from '../game/gameLogic';
-import { GameField, COLS, ROWS, CELL_WIDTH } from './GameField';
+import type { PlayerActionType } from '../types/game';
+import GameField, { COLS, ROWS, CELL_WIDTH } from './GameField';
 
 interface Props {
   playerField: any;
@@ -160,8 +160,6 @@ export const CenterField: React.FC<Props> = ({
             lastPlacedCard={lastPlacedCard}
             onCardMouseEnter={onCardMouseEnter}
             onCardMouseLeave={onCardMouseLeave}
-            onInstantShotClick={onInstantShotClick}
-            instantShotMode={instantShotMode}
             setupStep={setupStep}
             rotation={rotation}
           />

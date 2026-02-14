@@ -17,27 +17,11 @@ function App() {
   const [currentView, setCurrentView] = useState<GameView>('menu');
   const [selectedRecord, setSelectedRecord] = useState<GameRecord | null>(null);
   const [playerTeam, setPlayerTeam] = useState<{ starters: PlayerCard[]; substitutes: PlayerCard[]; initialField?: any[] } | null>(null);
-  const [renderMode, setRenderMode] = useState<RenderMode>('2d');
-
-  const handleQuickStart = () => {
-    setPlayerTeam(null);
-    setRenderMode('2d');
-    setCurrentView('game');
-  };
+  const [renderMode, setRenderMode] = useState<RenderMode>('3d');
 
   const handleQuickStart3D = () => {
     setPlayerTeam(null);
     setRenderMode('3d');
-    setCurrentView('game');
-  };
-
-  const handleStartAI = () => {
-    setCurrentView('preGame');
-  };
-
-  const handleTeamComplete = (starters: PlayerCard[], substitutes: PlayerCard[], initialField: any[]) => {
-    setPlayerTeam({ starters, substitutes, initialField });
-    setRenderMode('2d');
     setCurrentView('game');
   };
 
@@ -75,16 +59,11 @@ function App() {
       <OrientationWarning />
       {currentView === 'menu' && (
         <MainMenu
-          onStartGame={handleQuickStart}
           onStartGame3D={handleQuickStart3D}
-          onStartAI={handleStartAI}
           onViewRecords={handleViewRecords}
           onCardGuide={handleCardGuide}
           onViewDemos={handleViewDemos}
         />
-      )}
-      {currentView === 'preGame' && (
-        <PreGame onComplete={handleTeamComplete} onComplete3D={handleTeamComplete3D} onBack={handleBackToMenu} />
       )}
       {currentView === 'game' && (
         <GameBoard onBack={handleBackToMenu} playerTeam={playerTeam} renderMode={renderMode} />
