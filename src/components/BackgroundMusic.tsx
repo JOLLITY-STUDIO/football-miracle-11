@@ -19,6 +19,9 @@ const getSafeTrack = (track: string): string => {
   return safeTracks[0] || 'Give_Me_Hope_-_Modern_Pitch.mp3';
 };
 
+// Track failed attempts to prevent infinite loops
+const failedTracks = new Set<string>();
+
 interface Props {
   variant?: 'default' | 'game';
 }
@@ -91,12 +94,16 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
   const pickRandomTrack = useCallback((exclude?: string): string => {
     if (PLAYLIST.length === 0) return '';
     
-    let availableTracks = PLAYLIST;
+    let availableTracks = PLAYLIST.filter(track => !failedTracks.has(track));
     if (exclude) {
-      availableTracks = PLAYLIST.filter(track => track !== exclude);
+      availableTracks = availableTracks.filter(track => track !== exclude);
     }
     
-    if (availableTracks.length === 0) return PLAYLIST[0] || '';
+    if (availableTracks.length === 0) {
+      // All tracks failed, reset and try first track
+      failedTracks.clear();
+      return PLAYLIST[0] || '';
+    }
     
     const randomIndex = Math.floor(Math.random() * availableTracks.length);
     return availableTracks[randomIndex] ?? '';
@@ -160,6 +167,10 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
           playPromiseRef.current = audioRef.current.play();
           await playPromiseRef.current;
           setIsPlaying(true);
+          // Clear failed track on successful playback
+          if (currentTrack) {
+            failedTracks.delete(currentTrack);
+          }
         } catch (err: any) {
           console.error("Playback failed:", err);
           
@@ -173,8 +184,17 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
               break;
             case 'NotSupportedError':
               console.warn("Audio format not supported:", err.message);
+              // Mark current track as failed
+              if (currentTrack) {
+                failedTracks.add(currentTrack);
+              }
               // Try next track on format error
-              setTimeout(playNextTrack, 1000);
+              setTimeout(() => {
+                const nextTrack = pickRandomTrack(currentTrack);
+                if (nextTrack && !failedTracks.has(nextTrack)) {
+                  setCurrentTrack(nextTrack);
+                }
+              }, 1000);
               break;
             default:
               console.warn("Unexpected playback error:", err);

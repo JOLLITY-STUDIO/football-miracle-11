@@ -120,9 +120,21 @@ export class RuleValidator {
     isPlayer: boolean,
     maxCards: number
   ): ValidationResult {
+    // Check if synergyCard is valid
+    if (!synergyCard) {
+      return { valid: false, reason: 'Invalid synergy card' };
+    }
+    
     const hand = isPlayer ? gameState.playerSynergyHand : gameState.aiSynergyHand;
     
-    if (!hand.includes(synergyCard)) {
+    // Check if hand exists and is not empty
+    if (!hand || hand.length === 0) {
+      return { valid: false, reason: 'No synergy cards in hand' };
+    }
+    
+    // Check if card is in hand using proper comparison (by ID)
+    const cardInHand = hand.some(card => card && card.id === synergyCard.id);
+    if (!cardInHand) {
       return { valid: false, reason: 'Card not in hand' };
     }
     

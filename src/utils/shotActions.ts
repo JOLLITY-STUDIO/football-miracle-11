@@ -1,8 +1,9 @@
 import type { GameState } from '../game/gameLogic';
-import type { PlayerCard } from '../types/game';
+import type { PlayerCard } from '../data/cards';
+import type { SynergyCard } from '../data/cards';
 import { calculateAttackPower } from './gameUtils';
 
-export const performShot = (state: GameState, card: PlayerCard, slot: number, zone: number): GameState => {
+export const performShot = (state: GameState, card: PlayerCard, slot: number, zone: number, synergyCards?: SynergyCard[]): GameState => {
   // Check if the card has available shot icons
   const isPlayer = state.currentTurn === 'player';
   const usedShotIcons = isPlayer ? state.playerUsedShotIcons[card.id] || [] : state.aiUsedShotIcons[card.id] || [];
@@ -25,14 +26,14 @@ export const performShot = (state: GameState, card: PlayerCard, slot: number, zo
   
   // For now, use the first available shot icon
   // In the future, this should be selected by the player/AI
-  const selectedShotIconIndex = availableShotIcons[0].index;
+  const selectedShotIconIndex = availableShotIcons[0]?.index ?? 0;
   
   // Calculate base attack power
   const baseAttackPower = calculateAttackPower(card);
   
   // Find defender (if any)
   const defenderZone = state.aiField[zone];
-  const defender = defenderZone.cards[slot] || null;
+  const defender = defenderZone ? defenderZone.cards[slot] : null;
   
   // Create shot attempt
   const shotAttempt = {
@@ -40,7 +41,7 @@ export const performShot = (state: GameState, card: PlayerCard, slot: number, zo
       card,
       zone,
       slot,
-      usedShotIcons: [...usedShotIcons, selectedShotIconIndex] // Track the used icon
+      usedShotIcons: [...usedShotIcons, selectedShotIconIndex]
     },
     defender: defender ? {
       card: defender,
@@ -49,7 +50,14 @@ export const performShot = (state: GameState, card: PlayerCard, slot: number, zo
     } : null,
     phase: 'select_shot_icon' as const,
     attackerPower: baseAttackPower,
-    defenderPower: defender ? 0 : 0, // Will be calculated later
+    defenderPower: defender ? 0 : 0,
+    attackSynergy: [],
+    defenseSynergy: [],
+    activatedSkills: {
+      attackerSkills: [],
+      defenderSkills: []
+    },
+    attackerUsedShotIcons: [...usedShotIcons, selectedShotIconIndex],
     result: null
   };
   

@@ -1,113 +1,132 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
-import type { FieldZone, PlayerActionType } from '../types/game';
-import { PlayerCardComponent } from './PlayerCard';
-import { TacticalConnections } from './TacticalConnections';
+import React, { useCallback, useRef } from 'react';
+import { clsx } from 'clsx';
+import type { FieldZone } from '../types/game';
 import type { PlayerCard } from '../data/cards';
-import { canPlaceCardAtSlot, getIconDisplay } from '../data/cards';
-
-interface PlacedCard {
-  card: PlayerCard;
-  zone: number;
-  startCol: number;
-  usedShotIcons?: number[];
-}
-
-interface Props {
-  playerField: FieldZone[];
-  aiField: FieldZone[];
-  selectedCard: PlayerCard | null;
-  onSlotClick: (zone: number, startCol: number) => void;
-  onAttackClick: (zone: number, startCol: number) => void;
-  currentTurn: 'player' | 'ai';
-  turnPhase: string;
-  isFirstTurn: boolean;
-  lastPlacedCard: PlayerCard | null;
-  onDragStart?: (card: PlayerCard) => void;
-  onDragEnd?: () => void;
-  onCardMouseEnter?: (card: PlayerCard, event?: React.MouseEvent) => void;
-  onCardMouseLeave?: () => void;
-  onInstantShotClick?: ((zone: number, slot: number) => void) | undefined;
-  instantShotMode?: any;
-  currentAction?: PlayerActionType;
-  setupStep?: number;
-  rotation?: number;
-}
+import { PlayerCardComponent } from './PlayerCard';
+import { motion } from 'framer-motion';
 
 export const COLS = 8;
 export const ROWS = 4;
 export const CELL_WIDTH = 99;
 export const CELL_HEIGHT = 130;
 
-const getPlacedCards = (field: FieldZone[]): PlacedCard[] => {
-  const placed: PlacedCard[] = [];
-  field.forEach(zone => {
-    zone.slots.forEach(slot => {
-      if (slot.playerCard) {
-        placed.push({
-          card: slot.playerCard,
-          zone: zone.zone,
-          startCol: (slot.position - 1) * 2,
-          usedShotIcons: slot.usedShotIcons
-        });
-      }
-    });
-  });
-  return placed;
+const getIconDisplay = (type: 'attack' | 'defense' | 'pass' | 'speed') => {
+  switch (type) {
+    case 'attack':
+      return {
+        image: '/images/icons/attack.svg',
+        color: 'text-red-500'
+      };
+    case 'defense':
+      return {
+        image: '/images/icons/shield.svg',
+        color: 'text-blue-500'
+      };
+    case 'pass':
+      return {
+        image: '/images/icons/target.svg',
+        color: 'text-green-500'
+      };
+    case 'speed':
+      return {
+        image: '/images/icons/speed.svg',
+        color: 'text-yellow-500'
+      };
+    default:
+      return {
+        image: '/images/icons/speed.svg',
+        color: 'text-gray-500'
+      };
+  }
 };
 
-export const GameField: React.FC<Props> = ({
+interface GameFieldProps {
+  playerField: FieldZone[];
+  aiField: FieldZone[];
+  selectedCard: PlayerCard | null;
+  onSlotClick: (zone: number, position: number) => void;
+  onAttackClick: (zone: number, position: number) => void;
+  onCardMouseEnter?: (card: PlayerCard) => void;
+  onCardMouseLeave?: () => void;
+  canPlaceCards?: boolean;
+  isFirstTurn: boolean;
+  setupStep: number;
+  isRotated?: boolean;
+  hoveredZone?: number | null;
+  hoveredSlot?: number | null;
+  handleCellMouseEnter?: (zone: number, slot: number) => void;
+  handleCellMouseLeave?: () => void;
+  currentTurn?: 'player' | 'ai';
+  turnPhase?: string;
+  lastPlacedCard?: PlayerCard | null;
+  onInstantShotClick?: (zone: number, slot: number) => void;
+  instantShotMode?: any;
+  rotation?: number;
+}
+
+const GameField: React.FC<GameFieldProps> = ({
   playerField,
   aiField,
   selectedCard,
   onSlotClick,
   onAttackClick,
-  currentTurn,
-  turnPhase,
-  isFirstTurn,
-  lastPlacedCard,
-  onDragStart,
-  onDragEnd,
   onCardMouseEnter,
   onCardMouseLeave,
+  canPlaceCards = true,
+  isFirstTurn,
+  setupStep,
+  isRotated = false,
+  hoveredZone = null,
+  hoveredSlot = null,
+  handleCellMouseEnter = () => {},
+  handleCellMouseLeave = () => {},
+  currentTurn,
+  turnPhase,
+  lastPlacedCard,
   onInstantShotClick,
   instantShotMode,
-  currentAction,
-  setupStep = 4,
-  rotation = 0,
+  rotation = 0
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
-  const [isRotated, setIsRotated] = useState(false);
-  const [hoveredZone, setHoveredZone] = useState<number | null>(null);
-  const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
 
-  const playerPlaced = getPlacedCards(playerField);
-  const aiPlaced = getPlacedCards(aiField);
-
-  const canPlaceCards = (turnPhase === 'playerAction' || isFirstTurn) && currentTurn === 'player' && !currentAction;
-
-  useEffect(() => {
-    if (!selectedCard) {
-      setHoveredZone(null);
-      setHoveredSlot(null);
+  // Helper function to check if card can be placed at specific slot
+  const canPlaceCardAtSlot = useCallback((
+    card: PlayerCard,
+    field: FieldZone[],
+    targetZone: number,
+    targetPosition: number,
+    isFirstTurn: boolean
+  ) => {
+    // Check if zone is allowed for this card
+    if (!card.zones.includes(targetZone)) {
+      return false;
     }
-  }, [selectedCard]);
 
-  const handleCellMouseEnter = (zone: number, colIdx: number) => {
-    if (!selectedCard || currentTurn !== 'player') return;
-    const startCol = colIdx === 7 ? 6 : colIdx;
-    const isValid = canPlaceCardAtSlot(selectedCard, playerField, zone, startCol, isFirstTurn);
-    if (isValid) {
-      setHoveredZone(zone);
-      setHoveredSlot(startCol);
+    // Find the zone in the field
+    const zone = field.find(z => z.zone === targetZone);
+    if (!zone) return false;
+
+    // Check if slot exists and is empty
+    const slot = zone.slots.find(s => s.position === targetPosition);
+    if (!slot || slot.playerCard) {
+      return false;
     }
-  };
 
-  const handleCellMouseLeave = () => {
-    setHoveredZone(null);
-    setHoveredSlot(null);
-  };
+    // Special check for first turn: only allow placement in first 6 columns
+    if (isFirstTurn && targetPosition >= 6) {
+      return false;
+    }
+
+    // For cards that span 2 columns, check if the next slot is also empty
+    if (true) { // Assume all cards span 2 columns for now
+      const nextSlot = zone.slots.find(s => s.position === targetPosition + 1);
+      if (!nextSlot || nextSlot.playerCard) {
+        return false;
+      }
+    }
+
+    return true;
+  }, []);
 
   // Helper to render grid cells
   const renderGrid = (isAi: boolean) => {
@@ -158,8 +177,8 @@ export const GameField: React.FC<Props> = ({
                   const card = slot?.playerCard;
 
                   // Calculate cell position (centered coordinate system)
-                  const x = (colIdx - COLS / 2 + 0.5) * CELL_WIDTH;
-                  const y = (row - ROWS / 2 + 0.5) * CELL_HEIGHT;
+                  const x = -COLS * CELL_WIDTH / 2 + colIdx * CELL_WIDTH + CELL_WIDTH / 2;
+                  const y = -ROWS * CELL_HEIGHT / 2 + row * CELL_HEIGHT + CELL_HEIGHT / 2;
 
                   return (
                     <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
@@ -174,8 +193,8 @@ export const GameField: React.FC<Props> = ({
                           : (!isAi && selectedCard && !isValidPlacement && isZoneHighlight 
                               ? 'rgba(239, 68, 68, 0.5)' 
                               : ((row + colIdx) % 2 === 0 ? 'rgba(46, 125, 50, 0.4)' : 'rgba(27, 94, 32, 0.4)'))}
-                        stroke={!isAi && isValidPlacement ? '#22c55e' : 'rgba(255,255,255,0.2)'}
-                        strokeWidth={!isAi && isValidPlacement ? '2' : '1'}
+                        stroke='rgba(255,255,255,0.15)'
+                        strokeWidth='1'
                         rx="8"
                         ry="8"
                         onClick={(e) => {
@@ -330,7 +349,7 @@ export const GameField: React.FC<Props> = ({
                               size="large"
                               faceDown={false}
                               disabled={isAi}
-                              usedShotIcons={slot.usedShotIcons}
+                              usedShotIcons={slot.usedShotIcons || []}
                               onMouseEnter={() => onCardMouseEnter?.(card)}
                               onMouseLeave={() => onCardMouseLeave?.()}
                             />
@@ -344,9 +363,9 @@ export const GameField: React.FC<Props> = ({
                             />
 
                             {/* Shot Markers (Black Tokens) - Floating above card */}
-                            {slot.shotMarkers > 0 && (
+                            {(slot.shotMarkers || 0) > 0 && (
                               <div className="absolute top-1 right-1 flex flex-col gap-1 z-20 pointer-events-none">
-                                {Array.from({ length: slot.shotMarkers }).map((_, i) => (
+                                {Array.from({ length: slot.shotMarkers || 0 }).map((_, i: number) => (
                                   <div 
                                     key={i}
                                     data-testid="shot-marker"
@@ -389,7 +408,7 @@ export const GameField: React.FC<Props> = ({
                                 <text x="20" y="22" textAnchor="middle" fill="white" fontSize="14" fontFamily="sans-serif">⚽</text>
                                 {/* Attack Power */}
                                 <text x="60" y="22" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="sans-serif">
-                                  {Math.max(0, card.icons.filter(i => i === 'attack').length - slot.shotMarkers)}
+                                  {Math.max(0, card.icons.filter((i: string) => i === 'attack').length - (slot.shotMarkers || 0))}
                                 </text>
                               </svg>
                             )}
@@ -404,9 +423,9 @@ export const GameField: React.FC<Props> = ({
                   const shouldShowPreview = !card && !isAi && selectedCard && hoveredZone === zone.zone && hoveredSlot === startCol && startCol === colIdx;
                   if (shouldShowPreview) {
                     return (
-                      <div 
-                        key={`${isAi ? 'ai' : 'p'}-preview-${zone.zone}-${startCol}`}
-                        className="absolute left-0 top-0 w-[200%] h-full pointer-events-none transform-style-3d backface-hidden flex items-center justify-center"
+                      <div
+                        key={`preview-${zone.zone}-${colIdx}`}
+                        className={clsx("absolute left-0 top-0 w-[200%] h-full pointer-events-none transform-style-3d backface-hidden flex items-center justify-center opacity-80")}
                         style={{
                           left: `${cellX}px`,
                           top: `${cellY}px`,
@@ -414,34 +433,26 @@ export const GameField: React.FC<Props> = ({
                           height: `${CELL_HEIGHT}px`,
                           transform: 'rotateX(-20deg) translateZ(1px)',
                           transformOrigin: 'center center',
-                          filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
-                          zIndex: 25,
-                          opacity: 0.6
+                          zIndex: 15
                         }}
                       >
-                        <PlayerCardComponent 
-                          card={selectedCard} 
+                        <PlayerCardComponent
+                          card={selectedCard}
                           size="large"
                           faceDown={false}
                           disabled={true}
+                          usedShotIcons={[]}
                         />
                       </div>
                     );
                   }
+
                   return null;
                 })}
               </React.Fragment>
             );
           })}
         </div>
-
-        {/* 战术图标连接线 */}
-        <TacticalConnections 
-          playerField={playerField} 
-          aiField={aiField} 
-          gridRef={gridRef}
-          isAi={isAi}
-        />
       </div>
     );
   };
@@ -450,54 +461,18 @@ export const GameField: React.FC<Props> = ({
     <div className="flex flex-col w-full h-full border-[6px] border-white/30 rounded-sm bg-stone-900/50 relative overflow-hidden">
       {/* Center Line */}
       <div className="absolute top-1/2 left-0 right-0 h-[4px] bg-white/40 -translate-y-1/2 z-20" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-[4px] border-white/40 rounded-full z-20" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/40 rounded-full z-20" />
 
       {/* Top Field (Opponent if normal, Player if rotated) */}
-      <div className={clsx("flex-1 min-h-0 relative", isRotated ? "" : "rotate-180")}>
-        <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col items-center justify-center gap-0 z-30 pointer-events-none">
-          {[
-            { pos: 'DF', color: 'text-blue-400' },
-            { pos: 'MF', color: 'text-emerald-400' },
-            { pos: 'MF', color: 'text-emerald-400' },
-            { pos: 'FW', color: 'text-red-400' }
-          ].map((item, idx) => (
-            <div
-              key={`top-pos-${idx}`}
-              className="w-full h-[130px] flex items-center justify-center"
-              style={{ height: `${CELL_HEIGHT}px` }}
-            >
-              <span className={`${item.color} text-sm font-black tracking-wider uppercase`}>
-                {item.pos}
-              </span>
-            </div>
-          ))}
-        </div>
+      <div className={clsx("flex-1 min-h-0 relative flex items-center justify-center", isRotated ? "" : "rotate-180")}>
         {renderGrid(!isRotated)}
       </div>
 
       {/* Bottom Field (Player if normal, Opponent if rotated) */}
-      <div className={clsx("flex-1 min-h-0 relative", isRotated ? "rotate-180" : "")}>
-        <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col items-center justify-center gap-0 z-30 pointer-events-none">
-          {[
-            { pos: 'FW', color: 'text-red-400' },
-            { pos: 'MF', color: 'text-emerald-400' },
-            { pos: 'MF', color: 'text-emerald-400' },
-            { pos: 'DF', color: 'text-blue-400' }
-          ].map((item, idx) => (
-            <div
-              key={`bottom-pos-${idx}`}
-              className="w-full h-[130px] flex items-center justify-center"
-              style={{ height: `${CELL_HEIGHT}px` }}
-            >
-              <span className={`${item.color} text-sm font-black tracking-wider uppercase`}>
-                {item.pos}
-              </span>
-            </div>
-          ))}
-        </div>
+      <div className={clsx("flex-1 min-h-0 relative flex items-center justify-center", isRotated ? "rotate-180" : "")}>
         {renderGrid(isRotated)}
       </div>
     </div>
   );
 };
+
+export default GameField;

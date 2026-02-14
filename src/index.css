@@ -61,4 +61,29 @@ body {
     transform: translateZ(0);
     will-change: transform;
   }
+
+  /* Marquee Animation for scrolling text */
+  .animate-marquee {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee 15s linear infinite;
+    padding-right: 100%;
+    position: relative;
+  }
+  
+  .animate-marquee::after {
+    content: attr(data-content);
+    position: absolute;
+    left: 100%;
+    white-space: nowrap;
+  }
+  
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
 }

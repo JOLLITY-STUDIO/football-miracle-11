@@ -3,8 +3,8 @@ import type { FieldZone, ShotAttempt, DuelPhase } from '../types/game';
 import type { PlayerActionType, GamePhase, TurnPhase } from '../types/game';
 import { calculateAttackPower, calculateDefensePower, getControlState, getMaxSynergyCardsForAttack, countIcons } from '../utils/gameUtils';
 import { resolveShot } from '../utils/shotResolution';
-import { performCoinToss } from '../utils/coinToss';
-import { startDraftRound, pickDraftCard } from '../utils/draft';
+import { performRockPaperScissors } from '../utils/rockPaperScissors';
+import { startDraftRound, pickDraftCard, aiPickDraftCard, discardDraftCard } from '../utils/draft';
 import { performTeamAction } from '../utils/teamActions';
 import { placeCard } from '../utils/cardPlacement';
 import { performShot } from '../utils/shotActions';
@@ -13,7 +13,8 @@ import { performSubstitution } from '../utils/substitution';
 import { performImmediateEffect } from '../utils/immediateEffects';
 import { performPenalty } from '../utils/penalty';
 import { performEndTurn } from '../utils/endTurn';
-import { aiTurn } from '../utils/ai';
+import { aiTurn, processAiActionStep } from '../utils/ai';
+import { starPlayerCards, basePlayerCards } from '../data/cards';
 
 export interface GameState {
   phase: GamePhase;
@@ -41,11 +42,14 @@ export interface GameState {
   message: string;
   turnCount: number;
   isFirstTurn: boolean;
+  skipTeamAction: boolean;
+  isFirstMatchTurn: boolean;
   isStoppageTime: boolean;
   pendingShot: ShotAttempt | null;
   draftRound: number;
   draftStep: number;
   availableDraftCards: PlayerCard[];
+  discardedDraftCards: PlayerCard[];
   starCardDeck: PlayerCard[];
   pendingPenalty: boolean;
   pendingImmediateEffect: { card: PlayerCard; zone: number; slot: number } | null;
@@ -58,12 +62,14 @@ export interface GameState {
   duelPhase: DuelPhase;
   aiActionStep: 'teamAction' | 'placeCard' | 'shot' | 'endTurn' | 'none';
   matchLogs: MatchLogEntry[];
-  // Player state tracking for used shot icons
   playerUsedShotIcons: { [cardId: string]: number[] };
   aiUsedShotIcons: { [cardId: string]: number[] };
   defenderSynergySelection: boolean;
   defenderAvailableSynergyCards: SynergyCard[];
   defenderSelectedSynergyCards: SynergyCard[];
+  selectedShotIcon: number | null;
+  draftTurn: 'player' | 'ai';
+  aiDraftHand: PlayerCard[];
 }
 
 export interface MatchLogEntry {
@@ -88,7 +94,7 @@ export const createInitialState = (
   initialPlayerField: FieldZone[] | null = null
 ): GameState => {
   const initialState: GameState = {
-    phase: 'draft',
+    phase: 'coinToss',
     turnPhase: 'teamAction',
     currentTurn: 'player',
     controlPosition: 50,
@@ -100,16 +106,16 @@ export const createInitialState = (
     playerBench: [],
     playerSynergyHand: [],
     playerField: initialPlayerField || [
-      { zone: 0, cards: [], synergyCards: [], slots: [] },
-      { zone: 1, cards: [], synergyCards: [], slots: [] },
-      { zone: 2, cards: [], synergyCards: [], slots: [] },
-      { zone: 3, cards: [], synergyCards: [], slots: [] }
+      { zone: 0, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 1, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 2, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 3, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) }
     ],
     aiField: [
-      { zone: 0, cards: [], synergyCards: [], slots: [] },
-      { zone: 1, cards: [], synergyCards: [], slots: [] },
-      { zone: 2, cards: [], synergyCards: [], slots: [] },
-      { zone: 3, cards: [], synergyCards: [], slots: [] }
+      { zone: 0, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 1, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 2, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 3, cards: [], synergyCards: [], slots: Array.from({ length: 7 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) }
     ],
     aiHand: [],
     aiBench: [],
@@ -123,11 +129,14 @@ export const createInitialState = (
     message: 'Draft your squad',
     turnCount: 0,
     isFirstTurn: true,
+    skipTeamAction: true,
+    isFirstMatchTurn: true,
     isStoppageTime: false,
     pendingShot: null,
     draftRound: 1,
     draftStep: 0,
     availableDraftCards: [],
+    discardedDraftCards: [],
     starCardDeck: [],
     pendingPenalty: false,
     pendingImmediateEffect: null,
@@ -144,22 +153,27 @@ export const createInitialState = (
     aiUsedShotIcons: {},
     defenderSynergySelection: false,
     defenderAvailableSynergyCards: [],
-    defenderSelectedSynergyCards: []
+    defenderSelectedSynergyCards: [],
+    selectedShotIcon: null,
+    // 选秀相关状态
+    draftTurn: 'player',
+    aiDraftHand: []
   };
 
   return initialState;
 };
 
 export type GameAction = 
-  | { type: 'COIN_TOSS'; isHomeTeam: boolean }
+  | { type: 'ROCK_PAPER_SCISSORS'; isHomeTeam: boolean }
   | { type: 'START_DRAFT_ROUND' }
   | { type: 'PICK_DRAFT_CARD'; cardIndex: number }
   | { type: 'AI_DRAFT_PICK' }
+  | { type: 'DISCARD_DRAFT_CARD' }
   | { type: 'FINISH_SQUAD_SELECT'; starters: PlayerCard[]; subs: PlayerCard[] }
   | { type: 'TEAM_ACTION'; action: 'pass' | 'press' }
   | { type: 'PLACE_CARD'; card: PlayerCard; zone: number; slot: number }
   | { type: 'USE_SYNERGY'; synergyCard: SynergyCard; targetCard: PlayerCard }
-  | { type: 'PERFORM_SHOT'; card: PlayerCard; slot: number; zone: number }
+  | { type: 'PERFORM_SHOT'; card: PlayerCard; slot: number; zone: number; synergyCards?: SynergyCard[] }
   | { type: 'PERFORM_SUBSTITUTION'; incomingCard: PlayerCard; outgoingCard: PlayerCard; zone: number; slot: number }
   | { type: 'PERFORM_IMMEDIATE_EFFECT'; card: PlayerCard; zone: number; slot: number }
   | { type: 'CANCEL_INSTANT_SHOT' }
@@ -171,6 +185,8 @@ export type GameAction =
   | { type: 'ADVANCE_DUEL' }
   | { type: 'FINISH_SETUP' }
   | { type: 'SELECT_PLAYER_CARD'; card: PlayerCard | null }
+  | { type: 'SELECT_SYNERGY_CARD'; card: SynergyCard }
+  | { type: 'SELECT_SYNERGY_CARD'; card: SynergyCard }
   | { type: 'SYNERGY_CHOICE_SELECT'; index: number }
   | { type: 'CANCEL_SUBSTITUTION' }
   | { type: 'START_SECOND_HALF' }
@@ -181,7 +197,17 @@ export type GameAction =
   | { type: 'START_DEFENDER_SYNERGY_SELECTION' }
   | { type: 'SELECT_DEFENDER_SYNERGY_CARD'; cardIndex: number }
   | { type: 'CONFIRM_DEFENDER_SYNERGY' }
-  | { type: 'AI_DEFENDER_SYNERGY_PICK' };
+  | { type: 'AI_DEFENDER_SYNERGY_PICK' }
+  | { type: 'START_SUBSTITUTION'; card: PlayerCard }
+  | { type: 'PENALTY_COMPLETE'; playerPoints: number; aiPoints: number };
+
+export const isHalfTime = (state: GameState): boolean => {
+  return state.phase === 'firstHalf' && state.turnCount >= 10;
+};
+
+export const isFullTime = (state: GameState): boolean => {
+  return state.phase === 'secondHalf' && state.turnCount >= 10;
+};
 
 const addLog = (state: GameState, entry: Omit<MatchLogEntry, 'id' | 'timestamp'>): MatchLogEntry[] => {
   const newEntry: MatchLogEntry = {
@@ -207,15 +233,15 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       
       // Log duel steps with detailed information
       if (state.pendingShot) {
-        const { attacker, defender, attackPower, defensePower, result } = state.pendingShot;
+        const { attacker, defender, attackerPower, defenderPower, result } = state.pendingShot;
         switch (nextPhase) {
           case 'reveal_attacker':
             newState.matchLogs = addLog(newState, {
               type: 'duel',
               phase: 'Duel',
               step: 'Reveal Attacker',
-              attacker: attacker.name,
-              message: `Attacker revealed: ${attacker.name}`
+              attacker: attacker.card.name,
+              message: `Attacker revealed: ${attacker.card.name}`
             });
             break;
           case 'reveal_defender':
@@ -223,8 +249,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               type: 'duel',
               phase: 'Duel',
               step: 'Reveal Defender',
-              defender: defender?.name || 'Empty',
-              message: `Defender revealed: ${defender?.name || 'Empty'}`
+              defender: defender?.card.name || 'Empty',
+              message: `Defender revealed: ${defender?.card.name || 'Empty'}`
             });
             break;
           case 'defender_synergy_selection':
@@ -249,7 +275,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               type: 'skill',
               phase: 'Duel',
               step: 'Reveal Skills',
-              skills: [...(attacker.activatedSkills || []), ...(defender?.activatedSkills || [])],
+              skills: [...(state.pendingShot.activatedSkills.attackerSkills || []), ...(state.pendingShot.activatedSkills.defenderSkills || [])],
               message: 'Player skills activated and effects applied'
             });
             break;
@@ -258,9 +284,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               type: 'duel',
               phase: 'Duel',
               step: 'Final Summary',
-              attackPower,
-              defensePower,
-              message: `Final power comparison: ${attackPower} (Attack) vs ${defensePower} (Defense)`
+              attackPower: attackerPower,
+              defensePower: defenderPower,
+              message: `Final power comparison: ${attackerPower} (Attack) vs ${defenderPower} (Defense)`
             });
             break;
           case 'result':
@@ -268,8 +294,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               type: 'result',
               phase: 'Duel',
               step: 'Final Result',
-              result: result === 'goal' ? 'goal' : result === 'save' ? 'save' : 'miss',
-              message: `Duel outcome: ${result === 'goal' ? 'GOAL!' : result === 'save' ? 'Shot saved!' : 'Shot missed!'}`
+              result: result === 'goal' ? 'goal' : result === 'saved' ? 'save' : 'miss',
+              message: `Duel outcome: ${result === 'goal' ? 'GOAL!' : result === 'saved' ? 'Shot saved!' : 'Shot missed!'}`
             });
             break;
         }
@@ -288,12 +314,16 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'CANCEL_IMMEDIATE_EFFECT':
       return { ...state, pendingImmediateEffect: null, message: 'Immediate effect cancelled' };
 
-    case 'COIN_TOSS': {
-      let newState = performCoinToss(state, action.isHomeTeam);
+    case 'ROCK_PAPER_SCISSORS': {
+      let newState = performRockPaperScissors(state, action.isHomeTeam);
       newState.matchLogs = addLog(newState, {
         type: 'system',
-        message: `Coin toss: Player is ${action.isHomeTeam ? 'Home' : 'Away'}`
+        message: `Rock Paper Scissors: Player is ${action.isHomeTeam ? 'Home' : 'Away'}`
       });
+      // 进入 draft 阶段后立即开始选秀轮次
+      if (newState.phase === 'draft') {
+        newState = startDraftRound(newState);
+      }
       return newState;
     }
     
@@ -308,7 +338,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     
     case 'PICK_DRAFT_CARD': {
       const card = state.availableDraftCards[action.cardIndex];
-      let newState = pickDraftCard(state, action.cardIndex, true);
+      let newState = pickDraftCard(state, action.cardIndex);
       if (card) {
         newState.matchLogs = addLog(newState, {
           type: 'action',
@@ -319,14 +349,39 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'FINISH_SQUAD_SELECT': {
-      let newState = { 
+      // 根据主客场为AI选择基础球员
+      const aiBaseCards = basePlayerCards.filter(card => {
+        // 玩家是主队时，AI是客队，反之亦然
+        if (!state.isHomeTeam) {
+          return card.id.startsWith('H');
+        } else {
+          return card.id.startsWith('A');
+        }
+      });
+      
+      // 合并AI在选秀中选择的明星卡和基础球员
+      const allAiCards = [...state.aiDraftHand, ...aiBaseCards];
+      
+      // 为AI选择首发和替补
+      const shuffledAiCards = [...allAiCards].sort(() => Math.random() - 0.5);
+      const aiStarters = shuffledAiCards.slice(0, 10);
+      const aiSubs = shuffledAiCards.slice(10);
+      
+      let newState: GameState = { 
         ...state, 
-        phase: 'match', 
-        turnCount: 1, 
+        phase: 'firstHalf' as GamePhase, 
+        turnPhase: 'playerAction' as TurnPhase, 
+        turnCount: state.isHomeTeam ? 1 : 2, // 主队从第1回合开始，客队从第2回合开始
         isFirstTurn: true,
+        skipTeamAction: true,
+        isFirstMatchTurn: true,
+        currentAction: 'none' as PlayerActionType,
         playerHand: action.starters,
-        playerBench: action.subs
-      };
+        playerBench: action.subs,
+        aiHand: aiStarters,
+        aiBench: aiSubs
+      };      
+      newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
       newState.message = newState.isHomeTeam ? 'Your turn! Place a card.' : 'AI is thinking...';
       // If AI starts, set aiActionStep to trigger AI actions
       if (!newState.isHomeTeam) {
@@ -354,9 +409,20 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       }
     
     case 'PLACE_CARD': {
-      if (state.turnPhase !== 'playerAction' || state.currentAction) return state;
+      // 检查是否可以放置卡牌 - 更宽松的条件
+      const canPlace = state.turnPhase === 'playerAction' || 
+                      state.turnPhase === 'teamAction' || 
+                      (state.isFirstTurn && state.turnPhase === 'start');
+
+      if (!canPlace) return state;
+      
+      if (state.currentAction && state.currentAction !== 'none') return state;
+      
       const slotPosition = Math.floor(action.slot / 2) + 1;
       let newState = placeCard(state, action.card, action.zone, action.slot, true);
+      
+      if (!newState) return state; // 如果 placeCard 返回 null，说明放置失败
+
       const actor = state.currentTurn === 'player' ? 'You' : 'AI';
       newState.currentAction = 'organizeAttack';
       newState.matchLogs = addLog(newState, {
@@ -444,7 +510,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'AI_TURN': {
-      let newState = aiTurn(state);
+      let newState = processAiActionStep(state);
       return newState;
     }
     
@@ -454,9 +520,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'FINISH_SETUP':
       return { 
         ...state, 
-        phase: 'match', 
+        phase: 'firstHalf' as GamePhase, 
         turnCount: 1, 
         isFirstTurn: true,
+        turnPhase: 'playerAction' as TurnPhase, // Skip team action phase for first turn
         matchLogs: addLog(state, {
           type: 'system',
           message: 'Setup complete - Match ready to begin'
@@ -466,13 +533,22 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'AI_DRAFT_PICK': {
       const randomIndex = Math.floor(Math.random() * state.availableDraftCards.length);
       const card = state.availableDraftCards[randomIndex];
-      let newState = pickDraftCard(state, randomIndex, false);
+      let newState = aiPickDraftCard(state);
       if (card) {
         newState.matchLogs = addLog(newState, {
           type: 'action',
           message: `AI picked: ${card.name}`
         });
       }
+      return newState;
+    }
+    
+    case 'DISCARD_DRAFT_CARD': {
+      let newState = discardDraftCard(state);
+      newState.matchLogs = addLog(newState, {
+        type: 'action',
+        message: 'Remaining card discarded'
+      });
       return newState;
     }
     
@@ -495,7 +571,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return { ...state, substitutionMode: null, message: 'Substitution cancelled' };
     
     case 'START_SECOND_HALF':
-      return { ...state, phase: 'secondHalf', turnCount: 1, isFirstTurn: true, message: 'Second half started!' };
+      return { ...state, phase: 'secondHalf', isFirstTurn: true, skipTeamAction: true, isFirstMatchTurn: true, message: 'Second half started!' };
     
     case 'TRIGGER_EFFECT': {
       if (!state.pendingImmediateEffect) return state;
@@ -549,7 +625,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       } else {
         if (state.synergyDeck.length > 0) {
           const drawnCard = state.synergyDeck[0];
-          availableCards = [drawnCard];
+          if (drawnCard) {
+            availableCards = [drawnCard];
+          }
         }
       }
       

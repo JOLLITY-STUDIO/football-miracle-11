@@ -1,3 +1,7 @@
+// 由于 PlayerCard 与 SynergyCard 接口已在本文件定义，无需再从外部 types 文件导入
+// 如后续抽离到独立 types 文件，可恢复对应 import
+import { RuleValidator } from '../game/ruleValidator';
+
 export type CardType = 'forward' | 'midfielder' | 'defender';
 export type SynergyType = 'attack' | 'defense' | 'special' | 'tackle' | 'setpiece';
 export type TacticalIcon = 'attack' | 'defense' | 'pass' | 'press' | 'breakthrough' | 'breakthroughAll';
@@ -187,41 +191,8 @@ export function canPlaceCardAtSlot(
   startCol: number,
   isFirstTurn: boolean
 ): boolean {
-  const targetZone = fieldSlots.find(z => z.zone === zone);
-  if (!targetZone) return false;
-  
-  // Check if card can be placed at this column (0-6)
-  if (startCol < 0 || startCol > 6) return false;
-  if (!card.zones.includes(zone)) return false;
-
-  // Check if the two columns (startCol and startCol+1) are not occupied
-  const slot1 = targetZone.slots.find(s => s.position === startCol);
-  const slot2 = targetZone.slots.find(s => s.position === startCol + 1);
-  
-  if (!slot1 || !slot2) return false;
-  if (slot1.playerCard || slot2.playerCard) return false;
-
-  // 规则：Zone 1 (前线) 必须有邻居（同区域或后方区域）
-  // 且第一张卡牌不能放置在 Zone 1
-  const hasAnyCard = fieldSlots.some(z => z.slots.some(s => s.playerCard));
-  
-  if (zone === 1) {
-    if (!hasAnyCard) return false; // 第一张卡牌不能在前线
-    
-    const zone1 = fieldSlots.find(z => z.zone === 1);
-    const zone2 = fieldSlots.find(z => z.zone === 2);
-    
-    const hasAdjacentInZone1 = zone1?.slots.some(s => 
-      s.playerCard && Math.abs(s.position - startCol) <= 1
-    );
-    const hasBehindInZone2 = zone2?.slots.some(s => 
-      s.playerCard && Math.abs(s.position - startCol) <= 1
-    );
-    
-    if (!hasAdjacentInZone1 && !hasBehindInZone2) return false;
-  }
-
-  return true;
+  const result = RuleValidator.canPlaceCard(card, fieldSlots, zone, startCol, isFirstTurn);
+  return result.valid;
 }
 
 export function getZoneName(zone: number): string {

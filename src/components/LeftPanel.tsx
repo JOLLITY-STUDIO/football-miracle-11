@@ -38,7 +38,7 @@ export const LeftPanel: React.FC<Props> = ({
   onToggleLeftControls,
 }) => {
   return (
-    <div className="h-full flex z-20 shadow-[10px_0_30px_rgba(0,0,0,0.5)] overflow-hidden">
+    <div className="h-full flex z-15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] overflow-hidden">
       {/* 1. Control Panel (Leftmost - SVG 3D Buttons) */}
       <div className="w-[60px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
         {/* SVG 3D Control Buttons Console */}
@@ -71,6 +71,7 @@ export const LeftPanel: React.FC<Props> = ({
             <circle cx="0" cy="0" r="15" fill="url(#greenGradient)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
             <text x="0" y="5" textAnchor="middle" fill="white" fontSize="12">🔊</text>
             <circle cx="0" cy="0" r="18" fill="none" stroke="rgba(16, 185, 129, 0.3)" strokeWidth="2" filter="blur(2px)" />
+            <circle cx="0" cy="0" r="15" fill="transparent" stroke="none" onClick={onToggleLeftControls} style={{ cursor: 'pointer' }} />
           </g>
           
           {/* View Button */}
@@ -78,6 +79,7 @@ export const LeftPanel: React.FC<Props> = ({
             <circle cx="0" cy="0" r="15" fill="url(#yellowGradient)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
             <text x="0" y="5" textAnchor="middle" fill="white" fontSize="12">📷</text>
             <circle cx="0" cy="0" r="18" fill="none" stroke="rgba(245, 158, 11, 0.3)" strokeWidth="2" filter="blur(2px)" />
+            <circle cx="0" cy="0" r="15" fill="transparent" stroke="none" onClick={onToggleLeftControls} style={{ cursor: 'pointer' }} />
           </g>
           
           {/* Surrender Button */}
@@ -85,6 +87,7 @@ export const LeftPanel: React.FC<Props> = ({
             <circle cx="0" cy="0" r="15" fill="url(#redGradient)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
             <text x="0" y="5" textAnchor="middle" fill="white" fontSize="12">⬅️</text>
             <circle cx="0" cy="0" r="18" fill="none" stroke="rgba(239, 68, 68, 0.3)" strokeWidth="2" filter="blur(2px)" />
+            <circle cx="0" cy="0" r="15" fill="transparent" stroke="none" onClick={onToggleLeftControls} style={{ cursor: 'pointer' }} />
           </g>
           
           {/* Gradients */}
@@ -151,7 +154,7 @@ export const LeftPanel: React.FC<Props> = ({
                             size="tiny"
                             variant="away"
                             disabled={false}
-                            onMouseEnter={(e) => onHoverEnter(card, e)}
+                            onMouseEnter={() => onHoverEnter(card)}
                             onMouseLeave={onHoverLeave}
                           />
                         </div>
@@ -212,7 +215,7 @@ export const LeftPanel: React.FC<Props> = ({
                             variant="home"
                             disabled={playerSubstitutionsLeft <= 0}
                             selected={substitutionSelectedId === card.id}
-                            onMouseEnter={(e) => onHoverEnter(card, e)}
+                            onMouseEnter={() => onHoverEnter(card)}
                             onMouseLeave={onHoverLeave}
                           />
                         </div>

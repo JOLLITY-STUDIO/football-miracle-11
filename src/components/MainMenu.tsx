@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
-  onStartGame: () => void;
   onStartGame3D: () => void;
-  onStartAI: () => void;
   onViewRecords: () => void;
   onCardGuide: () => void;
   onViewDemos: () => void;
 }
 
-export const MainMenu: React.FC<Props> = ({ onStartGame, onStartGame3D, onStartAI, onViewRecords, onCardGuide, onViewDemos }) => {
+export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCardGuide, onViewDemos }) => {
   const [floatingIcons, setFloatingIcons] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
   const [showUpdates, setShowUpdates] = useState(false);
 
@@ -125,17 +123,6 @@ export const MainMenu: React.FC<Props> = ({ onStartGame, onStartGame3D, onStartA
         transition={{ delay: 0.8, duration: 0.8 }}
       >
         <motion.button
-          onClick={onStartGame}
-          className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 text-white text-lg py-4 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-blue-500/50"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-          🎮 Quick Start (2D)
-          <span className="block text-xs mt-1 opacity-70">Random Squad · Play Now</span>
-        </motion.button>
-
-        <motion.button
           onClick={onStartGame3D}
           className="group relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:via-pink-500 hover:to-indigo-500 text-white text-lg py-4 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-purple-500/50"
           whileHover={{ scale: 1.02 }}
@@ -144,17 +131,6 @@ export const MainMenu: React.FC<Props> = ({ onStartGame, onStartGame3D, onStartA
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
           🎲 Quick Start (3D)
           <span className="block text-xs mt-1 opacity-70">Three.js · True 3D Interaction</span>
-        </motion.button>
-        
-        <motion.button
-          onClick={onStartAI}
-          className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 text-white text-lg py-4 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-blue-500/50"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-          🤖 VS AI
-          <span className="block text-xs mt-1 opacity-70">Custom Squad · Strategy Layout</span>
         </motion.button>
 
         <motion.button

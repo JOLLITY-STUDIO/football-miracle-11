@@ -1,20 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import { createInitialState } from '../game/gameLogic';
 import { canPlaceCardAtSlot, getImmediateEffectDescription, getIconDisplay } from '../data/cards';
 import type { PlayerCard, SynergyCard } from '../data/cards';
-import { GameField } from './GameField';
 import { PlayerCardComponent } from './PlayerCard';
 import { SynergyCardComponent } from './SynergyCard';
-import { SynergyPanel } from './SynergyPanel';
 import { PenaltyModal } from './PenaltyModal';
 import { LeftPanel } from './LeftPanel';
 import { CenterField } from './CenterField';
 import { RightPanel } from './RightPanel';
 import { BackgroundMusic } from './BackgroundMusic';
 import PhaseBanner from './PhaseBanner';
-import { CoinToss } from './CoinToss';
 import { RockPaperScissors } from './RockPaperScissors';
 import { TurnTransition } from './TurnTransition';
 import SquadSelect from './SquadSelect';
@@ -22,21 +18,17 @@ import { CardDealer } from './CardDealer';
 import { DuelOverlay } from './DuelOverlay';
 import { MatchLog } from './MatchLog';
 import { DraftPhase } from './DraftPhase';
-import { 
-  gameReducer, 
-  type GameState, 
+import {
+  gameReducer,
+  type GameState,
   type GameAction
 } from '../game/gameLogic';
-import { 
-  getControlState, 
-  countIcons,
-  getMaxSynergyCardsForAttack
+import {
+  countIcons
 } from '../utils/gameUtils';
-import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
 import { useGameAudio } from '../hooks/useGameAudio';
 import { useCameraView } from '../hooks/useCameraView';
 import { useGameState } from '../hooks/useGameState';
-import { CameraControls } from './CameraControls';
 
 interface Props {
   onBack: () => void;
