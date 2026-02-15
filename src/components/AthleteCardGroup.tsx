@@ -50,8 +50,8 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
     // cos(0) = 1（中间调整最大，最低），cos(±90) = 0（两边调整最小，最高）
     const baseY = -Math.cos(radian) * radius + radius;
     const heightAdjustment = Math.cos(radian) * 80;
-    // 增加额外的y值，使卡片整体向下移动
-    const y = baseY - heightAdjustment + 50;
+    // 调整y值，使卡片整体位置更高
+    const y = baseY - heightAdjustment - 30;
     
     // 计算旋转角度，保持弧形的倾斜效果
     const rotation = currentAngle;
@@ -60,7 +60,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   };
   
   return (
-    <div id="athlete-card-group" className="absolute bottom-[-5%] left-0 right-0 pointer-events-auto z-100" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <div id="athlete-card-group" className="absolute bottom-[5%] left-0 right-0 pointer-events-auto z-100" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
       <AnimatePresence>
         {cards.map((card, i) => {
           const { x, y, rotation } = calculateCardPosition(i);
