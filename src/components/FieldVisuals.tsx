@@ -3,7 +3,7 @@ import { getPitchWidth, getPitchHeight, FIELD_CONFIG } from '../config/fieldDime
 
 interface FieldVisualsProps {
   shootMode?: boolean;
-  onCloseShootMode?: () => void;
+  onCloseShootMode?: (() => void) | undefined;
 }
 
 export const FieldVisuals: React.FC<FieldVisualsProps> = ({
