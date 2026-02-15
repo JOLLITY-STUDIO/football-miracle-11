@@ -1009,60 +1009,17 @@ const handleCardSelect = (card: athleteCard) => {
         <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
 
 
-         {/* Top Center: Opponent Hand (Arc Layout) */}
-         <div className="absolute top-[5%] left-0 right-0 pointer-events-auto z-50" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-            <AnimatePresence>
-                {gameState.aiHand.map((card, i) => {
-                  // Calculate arc position for AI hand (mirror of player hand)
-                  const arcAngle = 30;
-                  const arcHeight = 500;
-                  const startAngle = -15;
-                  
-                  const anglePerCard = gameState.aiHand.length > 1 ? arcAngle / (gameState.aiHand.length - 1) : 0;
-                  const currentAngle = startAngle + (i * anglePerCard);
-                  const radius = arcHeight;
-                  const radian = (currentAngle * Math.PI) / 180;
-                  
-                  // Calculate position (mirror of player hand)
-                  const x = -Math.sin(radian) * radius; // Negative x for mirror effect
-                  const baseY = -Math.cos(radian) * radius + radius;
-                  const heightAdjustment = Math.cos(radian) * 80;
-                  const y = -(baseY - heightAdjustment + 43); // Negative y to place at top
-                  const rotation = 180 - currentAngle; // 180 degrees to invert cards, negative angle for mirror effect
-                  
-                  return (
-                    <motion.div
-                      key={card.id}
-                      initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
-                      animate={setupStep >= 3 ? { 
-                        opacity: 1, 
-                        scale: 1,
-                        x: x,
-                        y: y,
-                        rotate: rotation
-                      } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
-                      exit={{ opacity: 0, scale: 0.5, y: -50 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                      style={{ 
-                        position: 'absolute',
-                        width: '132px',
-                        height: '86px',
-                        zIndex: i
-                      }}
-                    >
-                       <AthleteCardComponent 
-                          card={card} 
-                          size="small" 
-                          faceDown={false}
-                          variant="away"
-                       />
-                    </motion.div>
-                  );
-                })}
-            </AnimatePresence>
-             <div className="absolute top-[-40px] text-center text-[10px] text-white/40 uppercase tracking-widest font-bold w-full">
-                 OPP HAND: {gameState.aiHand.length}
-             </div>
+         {/* Top Center: Opponent Hand */}
+         <AthleteCardGroup
+           cards={gameState.aiHand}
+           selectedCard={null}
+           setupStep={setupStep}
+           phase={gameState.phase}
+           onCardSelect={() => {}}
+           isAI={true}
+         />
+         <div className="absolute top-[-40px] left-0 right-0 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold">
+             OPP HAND: {gameState.aiHand.length}
          </div>
         </div>
       )}
