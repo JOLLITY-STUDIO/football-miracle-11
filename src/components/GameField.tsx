@@ -210,6 +210,7 @@ const GameField: React.FC<GameFieldProps> = ({
                   
                   // Show highlight for all valid placement positions
                   const isHighlightVisible = !isAi && canDoPlacement;
+                  const isZoneValid = !isAi && selectedCard && validZones.includes(zone.zone) && zone.zone >= 4;
                   
                   return (
                     <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
@@ -221,13 +222,15 @@ const GameField: React.FC<GameFieldProps> = ({
                         height={CELL_HEIGHT}
                         fill={isHighlightVisible
                           ? 'rgba(255, 215, 0, 0.6)' // Golden yellow for valid placement
-                          : (!isAi && selectedCard && !canDoPlacement && isZoneHighlight
-                              ? 'rgba(239, 68, 68, 0.5)'
+                          : (isZoneValid
+                              ? 'rgba(147, 197, 114, 0.3)' // Light green for valid zone but not valid placement
                               : 'transparent')}
                         stroke={isHighlightVisible
                           ? 'rgba(255, 215, 0, 0.8)' // Golden stroke for valid placement
-                          : 'transparent'}
-                        strokeWidth={isHighlightVisible ? '2' : '1'}
+                          : (isZoneValid
+                              ? 'rgba(101, 163, 13, 0.6)' // Green stroke for valid zone
+                              : 'transparent')}
+                        strokeWidth={isHighlightVisible ? '2' : (isZoneValid ? '1' : '1')}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!isAi && canDoPlacement) {
