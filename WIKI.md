@@ -1,223 +1,223 @@
 # football-miracle-11 - Project Wiki
 
-欢迎来到 football-miracle-11 项目 Wiki！这里是项目的文档中心，包含路线图、当前状态和开发指南。
+Welcome to the football-miracle-11 Project Wiki! This is the documentation center for the project, including roadmap, current status, and development guide.
 
-## 📋 目录
+## 📋 Table of Contents
 
-- [项目概述](#项目概述)
-- [路线图](#路线图)
-- [当前状态](#当前状态)
-- [Bug跟踪系统](#bug跟踪系统)
-- [开发指南](#开发指南)
-- [相关文档](#相关文档)
+- [Project Overview](#project-overview)
+- [Roadmap](#roadmap)
+- [Current Status](#current-status)
+- [Bug Tracking System](#bug-tracking-system)
+- [Development Guide](#development-guide)
+- [Related Documentation](#related-documentation)
 
-## 🎯 项目概述
+## 🎯 Project Overview
 
-**football-miracle-11** 是一款轻策略足球卡牌对战游戏。玩家通过部署球员卡、运用战术图标和协同卡，在8x4的球场版图上进行攻防博弈，最终比分高者获胜。
+**football-miracle-11** is a lightweight strategy football card battle game. Players deploy player cards, use tactical icons and synergy cards to engage in offensive and defensive battles on an 8x4 field map, with the higher score winning.
 
-### 核心特性
+### Core Features
 
-- ⚽️ **足球对战**: 基于足球规则的卡牌对战游戏
-- 🎴 **战术系统**: 传球、逼抢、进攻、防守等战术图标
-- 🃏 **协同卡**: 增强球员能力的协同卡系统
-- 🤖️ **AI对战**: 智能AI对手
-- 🏆 **多人模式**: 支持PvP和PvE模式
+- ⚽️ **Football Battle**: Card battle game based on football rules
+- 🎴 **Tactical System**: Tactical icons for passing, pressing, attacking, defending, etc.
+- 🃏 **Synergy Cards**: Synergy card system to enhance player abilities
+- 🤖️ **AI Battle**: Intelligent AI opponents
+- 🏆 **Multiplayer Mode**: Support for PvP and PvE modes
 
-### 技术栈
+### Tech Stack
 
-- **前端**: React + TypeScript + Vite
-- **动画**: Framer Motion
-- **测试**: Playwright
-- **版本控制**: Git + GitHub
+- **Frontend**: React + TypeScript + Vite
+- **Animation**: Framer Motion
+- **Testing**: Playwright
+- **Version Control**: Git + GitHub
 
-## 🗺️ 路线图
+## 🗺️ Roadmap
 
-### 已完成 ✅
+### Completed ✅
 
-#### Phase 1: 基础架构 (v0.1.0 - v0.1.10)
-- [x] 基础游戏框架
-- [x] 球场渲染
-- [x] 卡片系统
-- [x] 基础AI逻辑
-- [x] 对决系统
+#### Phase 1: Basic Architecture (v0.1.0 - v0.1.10)
+- [x] Basic game framework
+- [x] Field rendering
+- [x] Card system
+- [x] Basic AI logic
+- [x] Duel system
 
-#### Phase 2: 游戏机制 (v0.1.11 - v0.1.30)
-- [x] 协同卡系统
-- [x] 战术图标
-- [x] 控制权系统
-- [x] 射门机制
-- [x] 替补系统
+#### Phase 2: Game Mechanics (v0.1.11 - v0.1.30)
+- [x] Synergy card system
+- [x] Tactical icons
+- [x] Control system
+- [x] Shooting mechanism
+- [x] Substitution system
 
-#### Phase 3: UI优化 (v0.1.31 - v0.1.40)
-- [x] 卡片动画
-- [x] 场地高亮
-- [x] 对决动画
-- [x] 响应式设计
-- [x] 移动端适配
+#### Phase 3: UI Optimization (v0.1.31 - v0.1.40)
+- [x] Card animations
+- [x] Field highlighting
+- [x] Duel animations
+- [x] Responsive design
+- [x] Mobile adaptation
 
-#### Phase 4: 系统重构 (v0.1.41 - v0.1.55)
-- [x] 规则配置文件
-- [x] 回合阶段管理
-- [x] 卡片放置服务
-- [x] Bug跟踪系统
-- [x] 代码解耦
+#### Phase 4: System Refactoring (v0.1.41 - v0.1.55)
+- [x] Rule configuration file
+- [x] Turn phase management
+- [x] Card placement service
+- [x] Bug tracking system
+- [x] Code decoupling
 
-### 进行中 🚧
+### In Progress 🚧
 
-#### Phase 5: 游戏完善 (v0.1.56 - v0.1.70)
-- [ ] 完善AI逻辑
-- [ ] 优化对决动画
-- [ ] 添加音效系统
-- [ ] 完善协同卡效果
-- [ ] 添加成就系统
-- [ ] 优化性能
+#### Phase 5: Game Enhancement (v0.1.56 - v0.1.70)
+- [ ] Improve AI logic
+- [ ] Optimize duel animations
+- [ ] Add sound effects system
+- [ ] Improve synergy card effects
+- [ ] Add achievement system
+- [ ] Optimize performance
 
-### 计划中 📅
+### Planned 📅
 
-#### Phase 6: 高级特性 (v0.1.71 - v0.2.0)
-- [ ] 多人对战
-- [ ] 排位系统
-- [ ] 联赛模式
-- [ ] 皮肤系统
-- [ ] 数据统计
-- [ ] 社交功能
+#### Phase 6: Advanced Features (v0.1.71 - v0.2.0)
+- [ ] Multiplayer battles
+- [ ] Ranking system
+- [ ] League mode
+- [ ] Skin system
+- [ ] Data statistics
+- [ ] Social features
 
-#### Phase 7: 发布准备 (v0.2.0+)
-- [ ] 性能优化
-- [ ] 安全审计
-- [ ] 用户测试
-- [ ] 文档完善
-- [ ] 正式发布
+#### Phase 7: Release Preparation (v0.2.0+)
+- [ ] Performance optimization
+- [ ] Security audit
+- [ ] User testing
+- [ ] Documentation completion
+- [ ] Official release
 
-## 📊 当前状态
+## 📊 Current Status
 
-### 最新版本
+### Latest Version
 
-**当前版本**: v0.1.55
-**发布日期**: 2026-02-16
-**分支**: feature/duel-system-enhancement
+**Current Version**: v0.1.55
+**Release Date**: 2026-02-16
+**Branch**: feature/duel-system-enhancement
 
-### 最近更新
+### Recent Updates
 
 #### v0.1.55 (2026-02-16)
-- ✅ 修复点击选手没有高亮场地的问题
-- ✅ 允许在teamAction阶段放置卡片
-- ✅ 更新CenterField组件的canPlaceCards逻辑
+- ✅ Fixed issue where clicking players didn't highlight the field
+- ✅ Allow card placement in teamAction phase
+- ✅ Updated CenterField component's canPlaceCards logic
 
 #### v0.1.54 (2026-02-16)
-- ✅ 创建统一的回合阶段管理服务
-- ✅ 更新gameLogic使用TurnPhaseService
-- ✅ 移除分散的判断逻辑
+- ✅ Created unified turn phase management service
+- ✅ Updated gameLogic to use TurnPhaseService
+- ✅ Removed scattered judgment logic
 
 #### v0.1.53 (2026-02-16)
-- ✅ 修复AI卡片只显示一半在第一列的问题
-- ✅ 移除AI的列反转逻辑
-- ✅ 统一AI和玩家的卡片位置计算
+- ✅ Fixed issue where AI cards only showed half in the first column
+- ✅ Removed column reversal logic for AI
+- ✅ Unified AI and player card position calculation
 
 #### v0.1.52 (2026-02-16)
-- ✅ 创建规则配置文件
-- ✅ 创建卡片放置服务
-- ✅ 重构GameField和FieldCellHighlight组件
-- ✅ 更新GAME_MANUAL.md
+- ✅ Created rule configuration file
+- ✅ Created card placement service
+- ✅ Refactored GameField and FieldCellHighlight components
+- ✅ Updated GAME_MANUAL.md
 
-### 开发进度
+### Development Progress
 
-- **总体进度**: 65%
+- **Overall Progress**: 65%
 - **Phase 1-4**: 100% ✅
 - **Phase 5**: 20% 🚧
 - **Phase 6**: 0% 📅
 - **Phase 7**: 0% 📅
 
-## 🐛 Bug跟踪系统
+## 🐛 Bug Tracking System
 
-### Bug ID格式
+### Bug ID Format
 
-每个bug都有唯一的ID，格式为：`BUG-YYYY-MM-DD-序号`
+Each bug has a unique ID in the format: `BUG-YYYY-MM-DD-Number`
 
-例如：
+For example:
 - `BUG-2026-02-16-001`
 - `BUG-2026-02-16-002`
 
-### 最近修复的Bug
+### Recently Fixed Bugs
 
-#### BUG-2026-02-16-001: AI卡片只显示一半在第一列
-- **状态**: ✅ 已修复
-- **版本**: v0.1.53
-- **影响**: AI卡片显示
-- **详情**: [查看详情](../blob/main/BUG_TRACKING.md#bug-2026-02-16-001)
+#### BUG-2026-02-16-001: AI cards only show half in the first column
+- **Status**: ✅ Fixed
+- **Version**: v0.1.53
+- **Impact**: AI card display
+- **Details**: [View Details](../blob/main/BUG_TRACKING.md#bug-2026-02-16-001)
 
-#### BUG-2026-02-16-002: 点击选手没有高亮场地
-- **状态**: ✅ 已修复
-- **版本**: v0.1.55
-- **影响**: 卡片放置高亮
-- **详情**: [查看详情](../blob/main/BUG_TRACKING.md#bug-2026-02-16-002)
+#### BUG-2026-02-16-002: Clicking players doesn't highlight the field
+- **Status**: ✅ Fixed
+- **Version**: v0.1.55
+- **Impact**: Card placement highlighting
+- **Details**: [View Details](../blob/main/BUG_TRACKING.md#bug-2026-02-16-002)
 
-#### BUG-2026-02-16-003: 回合阶段判断相互影响
-- **状态**: ✅ 已修复
-- **版本**: v0.1.54
-- **影响**: 回合阶段管理
-- **详情**: [查看详情](../blob/main/BUG_TRACKING.md#bug-2026-02-16-003)
+#### BUG-2026-02-16-003: Turn phase judgment affects each other
+- **Status**: ✅ Fixed
+- **Version**: v0.1.54
+- **Impact**: Turn phase management
+- **Details**: [View Details](../blob/main/BUG_TRACKING.md#bug-2026-02-16-003)
 
-### Bug统计
+### Bug Statistics
 
-- **总Bug数**: 7
-- **已修复**: 7
-- **进行中**: 0
-- **待处理**: 0
-- **修复率**: 100%
+- **Total Bugs**: 7
+- **Fixed**: 7
+- **In Progress**: 0
+- **Pending**: 0
+- **Fix Rate**: 100%
 
-## 📖 开发指南
+## 📖 Development Guide
 
-### 开发环境设置
+### Development Environment Setup
 
 ```bash
-# 克隆仓库
+# Clone repository
 git clone https://github.com/JOLLITY-STUDIO/football-miracle-11.git
 
-# 进入项目目录
+# Enter project directory
 cd football-miracle-11
 
-# 安装依赖
+# Install dependencies
 npm install
 
-# 启动开发服务器
+# Start development server
 npm run dev
 ```
 
-### 项目结构
+### Project Structure
 
 ```
 football-miracle-11/
 ├── src/
-│   ├── components/       # React组件
-│   ├── game/            # 游戏逻辑
-│   ├── utils/            # 工具函数
-│   ├── data/             # 数据配置
-│   ├── config/           # 配置文件
+│   ├── components/       # React components
+│   ├── game/            # Game logic
+│   ├── utils/            # Utility functions
+│   ├── data/             # Data configuration
+│   ├── config/           # Configuration files
 │   ├── hooks/            # React Hooks
-│   └── types/            # TypeScript类型定义
-├── scripts/              # 脚本工具
-├── docs/                 # 文档
-├── tests/                # 测试文件
-├── public/               # 静态资源
-└── package.json           # 项目配置
+│   └── types/            # TypeScript type definitions
+├── scripts/              # Script tools
+├── docs/                 # Documentation
+├── tests/                # Test files
+├── public/               # Static assets
+└── package.json           # Project configuration
 ```
 
-### 代码规范
+### Code Standards
 
-#### 命名规范
+#### Naming Conventions
 
-- **组件**: PascalCase (例如：`GameField.tsx`)
-- **函数**: camelCase (例如：`calculateCellPosition`)
-- **常量**: UPPER_SNAKE_CASE (例如：`CELL_WIDTH`)
-- **类型**: PascalCase (例如：`GameState`)
+- **Components**: PascalCase (e.g., `GameField.tsx`)
+- **Functions**: camelCase (e.g., `calculateCellPosition`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `CELL_WIDTH`)
+- **Types**: PascalCase (e.g., `GameState`)
 
-#### 注释规范
+#### Comment Standards
 
-- **文件注释**: 描述文件用途
-- **函数注释**: 描述函数功能、参数、返回值
-- **复杂逻辑**: 添加详细注释说明
-- **Bug修复**: 添加Bug ID注释
+- **File Comments**: Describe file purpose
+- **Function Comments**: Describe function purpose, parameters, return values
+- **Complex Logic**: Add detailed comments
+- **Bug Fixes**: Add Bug ID comments
 
 ```typescript
 /**
@@ -234,28 +234,28 @@ export const calculateCellPosition = (context, row, col) => {
 };
 ```
 
-### Git工作流
+### Git Workflow
 
-#### 分支策略
+#### Branch Strategy
 
-- **main**: 主分支，稳定版本
-- **feature/xxx**: 功能开发分支
-- **bugfix/xxx**: Bug修复分支
-- **hotfix/xxx**: 紧急修复分支
+- **main**: Main branch, stable versions
+- **feature/xxx**: Feature development branch
+- **bugfix/xxx**: Bug fix branch
+- **hotfix/xxx**: Emergency fix branch
 
-#### 提交规范
+#### Commit Standards
 
 ```
 <type>: <description>
 
 Types:
-- feat: 新功能
-- fix: Bug修复
-- refactor: 代码重构
-- docs: 文档更新
-- style: 代码格式调整
-- test: 测试相关
-- chore: 构建/工具相关
+- feat: New feature
+- fix: Bug fix
+- refactor: Code refactoring
+- docs: Documentation update
+- style: Code formatting adjustment
+- test: Test related
+- chore: Build/tooling related
 
 Examples:
 - feat: Add shooting animation
@@ -264,138 +264,138 @@ Examples:
 - docs: Update GAME_MANUAL.md
 ```
 
-#### 版本管理
+#### Version Management
 
-遵循语义化版本控制 (Semantic Versioning)：
-- **主版本**: 不兼容的API修改
-- **次版本**: 向下兼容的功能性新增
-- **修订号**: 向下兼容的问题修正
+Follow Semantic Versioning:
+- **Major Version**: Incompatible API changes
+- **Minor Version**: Backwards compatible feature additions
+- **Patch Version**: Backwards compatible bug fixes
 
-格式：`v主版本.次版本.修订号`
+Format: `vMajor.Minor.Patch`
 
-例如：`v0.1.55`
+Example: `v0.1.55`
 
-### 测试指南
+### Testing Guide
 
-#### 运行测试
+#### Running Tests
 
 ```bash
-# 运行所有测试
+# Run all tests
 npm test
 
-# 运行UI测试
+# Run UI tests
 npm run test:ui
 
-# 运行调试测试
+# Run debug tests
 npm run test:debug
 
-# 查看测试报告
+# View test reports
 npm run test:report
 ```
 
-#### 测试覆盖
+#### Test Coverage
 
-- **单元测试**: 核心逻辑函数
-- **组件测试**: React组件
-- **集成测试**: 游戏流程
-- **E2E测试**: 端到端测试
+- **Unit Tests**: Core logic functions
+- **Component Tests**: React components
+- **Integration Tests**: Game flow
+- **E2E Tests**: End-to-end tests
 
-### 发布流程
+### Release Process
 
-#### 发布前检查清单
+#### Pre-Release Checklist
 
-- [ ] 所有测试通过
-- [ ] 类型检查通过 (`npm run typecheck`)
-- [ ] 代码审查完成
-- [ ] 文档更新完成
-- [ ] 版本号更新
-- [ ] CHANGELOG更新
-- [ ] Git标签创建
+- [ ] All tests pass
+- [ ] Type checking passes (`npm run typecheck`)
+- [ ] Code review completed
+- [ ] Documentation updated
+- [ ] Version number updated
+- [ ] CHANGELOG updated
+- [ ] Git tag created
 
-#### 发布步骤
+#### Release Steps
 
 ```bash
-# 1. 更新版本号
-# 编辑 package.json 中的 version 字段
+# 1. Update version number
+# Edit version field in package.json
 
-# 2. 运行测试
+# 2. Run tests
 npm test
 npm run typecheck
 
-# 3. 提交更改
+# 3. Commit changes
 git add .
 git commit -m "Release: v0.1.56"
 
-# 4. 创建标签
+# 4. Create tag
 git tag -a v0.1.56 -m "Release v0.1.56"
 
-# 5. 推送到远程
+# 5. Push to remote
 git push origin main
 git push origin v0.1.56
 
-# 6. 同步Bug
+# 6. Sync bugs
 npm run sync-bugs
 ```
 
-## 📚 相关文档
+## 📚 Related Documentation
 
-### 核心文档
+### Core Documentation
 
-- [GAME_MANUAL.md](../blob/main/GAME_MANUAL.md) - 游戏规则手册
-- [BUG_TRACKING.md](../blob/main/BUG_TRACKING.md) - Bug跟踪系统
-- [PROJECT_RULES.md](../blob/main/.trae/rules/project_rules.md) - 项目开发规范
+- [GAME_MANUAL.md](../blob/main/GAME_MANUAL.md) - Game rules manual
+- [BUG_TRACKING.md](../blob/main/BUG_TRACKING.md) - Bug tracking system
+- [PROJECT_RULES.md](../blob/main/.trae/rules/project_rules.md) - Project development standards
 
-### 技术文档
+### Technical Documentation
 
-- [RULE_IMPLEMENTATION_ANALYSIS.md](../blob/main/docs/RULE_IMPLEMENTATION_ANALYSIS.md) - 规则实现分析
-- [3D_IMPLEMENTATION_FIX.md](../blob/main/docs/3D_IMPLEMENTATION_FIX.md) - 3D实现修复
-- [DAILY_REPORT_2026-02-11.md](../blob/main/docs/DAILY_REPORT_2026-02-11.md) - 日常报告
+- [RULE_IMPLEMENTATION_ANALYSIS.md](../blob/main/docs/RULE_IMPLEMENTATION_ANALYSIS.md) - Rule implementation analysis
+- [3D_IMPLEMENTATION_FIX.md](../blob/main/docs/3D_IMPLEMENTATION_FIX.md) - 3D implementation fixes
+- [DAILY_REPORT_2026-02-11.md](../blob/main/docs/DAILY_REPORT_2026-02-11.md) - Daily report
 
-### 开发文档
+### Development Documentation
 
-- [scripts/README.md](../blob/main/scripts/README.md) - 脚本使用说明
-- [TEST_SETUP_CHECKLIST.md](../blob/main/docs/TEST_SETUP_CHECKLIST.md) - 测试设置清单
+- [scripts/README.md](../blob/main/scripts/README.md) - Script usage guide
+- [TEST_SETUP_CHECKLIST.md](../blob/main/docs/TEST_SETUP_CHECKLIST.md) - Test setup checklist
 
-## 🤝 贡献指南
+## 🤝 Contribution Guide
 
-### 如何贡献
+### How to Contribute
 
-1. **Fork项目**: 点击右上角的Fork按钮
-2. **创建分支**: `git checkout -b feature/your-feature`
-3. **进行开发**: 按照代码规范开发
-4. **提交更改**: `git commit -m "feat: Add your feature"`
-5. **推送分支**: `git push origin feature/your-feature`
-6. **创建PR**: 在GitHub上创建Pull Request
+1. **Fork Project**: Click the Fork button in the top right
+2. **Create Branch**: `git checkout -b feature/your-feature`
+3. **Develop**: Follow code standards to develop
+4. **Commit Changes**: `git commit -m "feat: Add your feature"`
+5. **Push Branch**: `git push origin feature/your-feature`
+6. **Create PR**: Create Pull Request on GitHub
 
-### 代码审查
+### Code Review
 
-- **代码风格**: 遵循项目代码规范
-- **测试覆盖**: 确保新功能有测试
-- **文档更新**: 更新相关文档
-- **Bug跟踪**: 在提交信息中引用Bug ID
+- **Code Style**: Follow project code standards
+- **Test Coverage**: Ensure new features have tests
+- **Documentation Update**: Update relevant documentation
+- **Bug Tracking**: Reference Bug ID in commit messages
 
-## 📞 联系方式
+## 📞 Contact Information
 
-### 项目维护者
+### Project Maintainers
 
 - **GitHub**: https://github.com/JOLLITY-STUDIO/football-miracle-11
 - **Issues**: https://github.com/JOLLITY-STUDIO/football-miracle-11/issues
 - **Discussions**: https://github.com/JOLLITY-STUDIO/football-miracle-11/discussions
 
-### 获取帮助
+### Getting Help
 
-- **文档**: 查看Wiki和README
-- **Issues**: 在GitHub Issues中提问
-- **Discussions**: 在Discussions中讨论
+- **Documentation**: Check Wiki and README
+- **Issues**: Ask questions in GitHub Issues
+- **Discussions**: Discuss in Discussions
 
-## 📜 许可证
+## 📜 License
 
-本项目版权所有。
+This project is copyrighted.
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-感谢所有为项目做出贡献的开发者和用户！
+Thanks to all developers and users who have contributed to this project!
 
 ---
 
-*最后更新: 2026-02-16*
+*Last Updated: 2026-02-16*
