@@ -137,7 +137,7 @@ const GameField: React.FC<GameFieldProps> = ({
     const CELL_WIDTH = FIELD_CONFIG.BASE_CELL_WIDTH;
     const CELL_HEIGHT = FIELD_CONFIG.BASE_CELL_HEIGHT;
     const COLS = FIELD_CONFIG.COLS;
-    const ROWS = FIELD_CONFIG.ROWS;
+    const ROWS = 4; // Each half only has 4 rows
 
     return (
       <div 
@@ -148,13 +148,15 @@ const GameField: React.FC<GameFieldProps> = ({
         style={{
           width: `${COLS * CELL_WIDTH}px`,
           height: `${ROWS * CELL_HEIGHT}px`,
-          zIndex: 100,
-          pointerEvents: 'auto'
+          zIndex: isAi ? 101 : 100, // AI field has higher z-index
+          pointerEvents: 'auto',
+          position: 'absolute',
+          top: isAi ? 0 : `${ROWS * CELL_HEIGHT}px` // Position AI half at top, player half at bottom
         }}
       >
         {/* SVG 3D渲染 */}
         <svg
-          viewBox="-396 -520 792 1040"
+          viewBox="-396 -260 792 520"
           style={{
             position: 'absolute',
             top: 0,
@@ -176,7 +178,7 @@ const GameField: React.FC<GameFieldProps> = ({
             
             // 计算正确的行位置
             // AI 卡片渲染在球场上方（行 0-3）
-            // 玩家卡片渲染在球场下方（行 4-7）
+            // 玩家卡片渲染在球场下方（行 0-3，相对于各自半场）
             const row = isAi ? zone.zone : zone.zone - 4;
             
             return (
@@ -193,7 +195,7 @@ const GameField: React.FC<GameFieldProps> = ({
                   const slot = zone.slots.find(s => s.position === colIdx);
                   const card = slot?.playerCard;
 
-                  // Calculate cell position (centered coordinate system)
+                  // Calculate cell position (centered coordinate system for 4-row half)
                   const x = -COLS * CELL_WIDTH / 2 + colIdx * CELL_WIDTH + CELL_WIDTH / 2;
                   const y = -ROWS * CELL_HEIGHT / 2 + row * CELL_HEIGHT + CELL_HEIGHT / 2;
                   
@@ -300,9 +302,9 @@ const GameField: React.FC<GameFieldProps> = ({
             if (isAi && zone.zone >= 4) return null;
             if (!isAi && zone.zone < 4) return null;
             
-            // 计算正确的行位置
+            // 计算正确的行位置（相对于各自半场）
             // AI 卡片渲染在球场上方（行 0-3）
-            // 玩家卡片渲染在球场下方（行 4-7）
+            // 玩家卡片渲染在球场下方（行 0-3，相对于各自半场）
             const row = isAi ? zone.zone : zone.zone - 4;
             
             return (
@@ -312,7 +314,7 @@ const GameField: React.FC<GameFieldProps> = ({
                   const slot = zone.slots.find(s => s.position === colIdx);
                   const card = slot?.playerCard;
 
-                  // Calculate cell position
+                  // Calculate cell position (absolute positioning within 4-row half)
                   const cellX = colIdx * CELL_WIDTH;
                   const cellY = row * CELL_HEIGHT;
 
@@ -530,8 +532,8 @@ const GameField: React.FC<GameFieldProps> = ({
         </svg>
       </div>
 
-      {/* Single 8-row grid - Render both AI and Player fields */}
-      <div className="flex-1 min-h-0 relative flex items-center justify-center">
+      {/* Single 8-row grid container - Render both AI and Player fields */}
+      <div className="flex-1 min-h-0 relative flex items-center justify-center" style={{ position: 'relative', width: '792px', height: '1040px' }}>
         {/* Render AI field (top half) */}
         {renderGrid(true)}
         {/* Render Player field (bottom half) */}

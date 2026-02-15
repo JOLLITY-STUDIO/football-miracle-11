@@ -1,7 +1,6 @@
-# 资源服务器配置
+// 资源服务器配置
 
-## 基础配置
-
+// 基础配置
 export const ASSETS_CONFIG = {
   // 资源基础 URL
   baseURL: import.meta.env.VITE_ASSETS_BASE_URL || 'https://your-domain.com/assets',
