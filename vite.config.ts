@@ -59,7 +59,7 @@ export default defineConfig({
       }
     })
   ],
-  base: process.env.NODE_ENV === 'production' ? '/football-miracle-11/' : '/',
+  base: '/',
   server: {
     port: 3001
   }

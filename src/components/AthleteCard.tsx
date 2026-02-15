@@ -220,7 +220,7 @@ export const AthleteCardComponent: React.FC<Props> = ({
           scale: selected ? 1.05 : 1,
           y: selected ? -5 : 0
         }}
-        whileHover={!disabled && !faceDown && variant !== 'away' ? { y: -3, scale: 1.02 } : {}}
+        whileHover={{}}
         className={clsx(
           "relative preserve-3d cursor-pointer transition-shadow overflow-hidden rounded-lg",
           selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-20 shadow-lg",

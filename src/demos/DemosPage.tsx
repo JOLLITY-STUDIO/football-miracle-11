@@ -5,8 +5,9 @@ import { Demo3_SVG3D } from './Demo3_SVG3D';
 import { Demo4_ThreeJSWithImages } from './Demo4_ThreeJSWithImages';
 import { Demo5_CSS3D_SVG3D } from './Demo5_CSS3D_SVG3D';
 import { Demo6_Interactive3D } from './Demo6_Interactive3D';
+import { Demo7_ArcLayout } from './Demo7_ArcLayout';
 
-type DemoType = 'threejs' | 'css3d' | 'svg3d' | 'threejs-images' | 'css3d-svg3d' | 'interactive3d';
+type DemoType = 'threejs' | 'css3d' | 'svg3d' | 'threejs-images' | 'css3d-svg3d' | 'interactive3d' | 'arclayout';
 
 export const DemosPage: React.FC = () => {
   const [currentDemo, setCurrentDemo] = useState<DemoType>('threejs');
@@ -31,6 +32,7 @@ export const DemosPage: React.FC = () => {
     { id: 'threejs-images' as DemoType, name: 'Three.js with Images', component: Demo4_ThreeJSWithImages, description: 'Three.js 3D网格 + 球员图片放置功能' },
     { id: 'css3d-svg3d' as DemoType, name: 'CSS 3D + SVG 3D', component: Demo5_CSS3D_SVG3D, description: '结合CSS 3D的视角控制和SVG 3D的精确点击检测' },
     { id: 'interactive3d' as DemoType, name: '交互式3D场景', component: Demo6_Interactive3D, description: 'CSS 3D + SVG 3D实现立体效果和丰富交互（滚动、缩放、点击、拖拽）' },
+    { id: 'arclayout' as DemoType, name: '弧形归路矩阵', component: Demo7_ArcLayout, description: '多层弧形排列，形成归路效果，支持交互和参数调节' },
   ];
 
   const CurrentDemo = demos.find(d => d.id === currentDemo)?.component;

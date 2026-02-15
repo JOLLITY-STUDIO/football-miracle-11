@@ -145,11 +145,20 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
       </motion.div>
 
       <motion.div 
-        className="mt-12 flex justify-center gap-8 w-full max-w-md px-4 flex-wrap z-10"
+        className="mt-12 flex justify-center gap-6 w-full max-w-md px-4 flex-wrap z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 0.8 }}
       >
+        <motion.button 
+          onClick={onViewDemos}
+          className="flex flex-col items-center text-white/80 hover:text-white transition-all duration-300 group"
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span className="text-3xl mb-2 group-hover:rotate-12 transition-transform duration-300">🎮</span>
+          <span className="text-sm font-medium">Demos</span>
+        </motion.button>
         <motion.button 
           className="flex flex-col items-center text-white/80 hover:text-white transition-all duration-300 group"
           whileHover={{ scale: 1.05, y: -2 }}

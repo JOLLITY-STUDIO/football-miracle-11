@@ -560,13 +560,13 @@ const handleCardSelect = (card: athleteCard) => {
     
     // 比赛结束时停止环境音
     if (gameState.phase === 'fullTime' || gameState.phase === 'penaltyShootout') {
-      stopMatchAmbience(3000);
+      stopMatchAmbience();
     }
     
     return () => {
       // 清理函数：组件卸载时停止所有环境音
       if (gameState.phase === 'fullTime' || gameState.phase === 'penaltyShootout') {
-        stopMatchAmbience(1000);
+        stopMatchAmbience();
       }
     };
   }, [gameState.phase]);
@@ -576,11 +576,11 @@ const handleCardSelect = (card: athleteCard) => {
     if (gameState.pendingShot && gameState.turnPhase === 'end') {
       const result = gameState.pendingShot.result;
       if (result === 'goal' || result === 'magicNumber') {
-        triggerCrowdReaction('cheer');
+        triggerCrowdReaction();
       } else if (result === 'saved') {
-        triggerCrowdReaction('applause');
+        triggerCrowdReaction();
       } else if (result === 'missed') {
-        triggerCrowdReaction('ooh');
+        triggerCrowdReaction();
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1051,7 +1051,7 @@ const handleCardSelect = (card: athleteCard) => {
 
       {/* 3. HUD Layer - Bottom (Player) */}
       {gameState.phase !== 'coinToss' && (
-        <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none" data-testid="game-board">
+        <div className="absolute bottom-0 left-0 right-0 z-30" data-testid="game-board">
 
 
          {/* Bottom Center: Player Hand */}
