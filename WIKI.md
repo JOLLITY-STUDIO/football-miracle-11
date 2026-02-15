@@ -379,12 +379,14 @@ npm run sync-bugs
 ### Project Maintainers
 
 - **GitHub**: https://github.com/JOLLITY-STUDIO/football-miracle-11
+- **Email**: jollitycn@foxmail.com
 - **Issues**: https://github.com/JOLLITY-STUDIO/football-miracle-11/issues
 - **Discussions**: https://github.com/JOLLITY-STUDIO/football-miracle-11/discussions
 
 ### Getting Help
 
 - **Documentation**: Check Wiki and README
+- **Email**: jollitycn@foxmail.com
 - **Issues**: Ask questions in GitHub Issues
 - **Discussions**: Discuss in Discussions
 
