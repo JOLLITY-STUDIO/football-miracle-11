@@ -60,7 +60,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   };
   
   return (
-    <div id="athlete-card-group" className="absolute bottom-[-5%] left-1/2 -translate-x-1/2 pointer-events-auto z-100">
+    <div id="athlete-card-group" className="absolute bottom-[-5%] left-0 right-0 pointer-events-auto z-100" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       <AnimatePresence>
         {cards.map((card, i) => {
           const { x, y, rotation } = calculateCardPosition(i);
