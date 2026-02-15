@@ -188,8 +188,7 @@ const GameField: React.FC<GameFieldProps> = ({
                   
                   const startColForValidation = colIdx === 7 ? 6 : colIdx;
                   const isValidPlacement = selectedCard && !isAi && 
-                    canPlaceCardAtSlot(selectedCard, playerField, zone.zone, startColForValidation, isFirstTurn) && 
-                    zone.zone >= 4; // Only allow placement in player's half (zones 4-7)
+                    canPlaceCardAtSlot(selectedCard, playerField, zone.zone, startColForValidation, isFirstTurn);
                   
                   // Find card in this slot
                   const slot = zone.slots.find(s => s.position === colIdx);
@@ -314,6 +313,11 @@ const GameField: React.FC<GameFieldProps> = ({
                   const slot = zone.slots.find(s => s.position === colIdx);
                   const card = slot?.playerCard;
 
+                  // Debug: log card rendering
+                  if (card && !isAi) {
+                    console.log(`Rendering card at zone ${zone.zone}, slot ${colIdx}:`, card.name, 'ID:', card.id);
+                  }
+
                   // Calculate cell position (absolute positioning within 8-row field)
                   // AI 卡片渲染在球场上方（行 0-3）
                   // 玩家卡片渲染在球场下方（行 4-7）
@@ -325,6 +329,7 @@ const GameField: React.FC<GameFieldProps> = ({
                   const isCardStart = card && (!prevSlot?.playerCard || prevSlot.playerCard.id !== card.id);
 
                   if (isCardStart) {
+                    console.log(`Card start at zone ${zone.zone}, slot ${colIdx}:`, card.name);
                     return (
                       <div 
                         key={`${isAi ? 'ai' : 'p'}-card-${zone.zone}-${colIdx}`}
