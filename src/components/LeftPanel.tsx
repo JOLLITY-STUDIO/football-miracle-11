@@ -149,7 +149,7 @@ export const LeftPanel: React.FC<Props> = ({
                       <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="rgba(220,38,38,0.1)" stroke="none" className="group-hover:fill-transparent transition-colors duration-300" />
                       {/* Card Content */}
                       <foreignObject x="0" y="0" width="198" height="130">
-                        <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-full h-full flex items-center justify-center transform rotate-180">
                           <PlayerCardComponent
                             card={card}
                             size="large"
