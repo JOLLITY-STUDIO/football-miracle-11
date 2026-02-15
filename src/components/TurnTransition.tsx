@@ -19,7 +19,7 @@ export const TurnTransition: React.FC<TurnTransitionProps> = ({ turn, onComplete
   }, [turn, onComplete]);
 
   const isPlayer = turn === 'player';
-  const text = isPlayer ? "YOUR TURN" : "OPPONENT TURN";
+  const text = isPlayer ? "Your Turn" : "Opponent Turn";
   const subText = isPlayer ? "Make your move" : "Wait for opponent";
   const primaryColor = isPlayer ? "bg-blue-600" : "bg-red-600";
   const secondaryColor = isPlayer ? "from-blue-900" : "from-red-900";
@@ -42,7 +42,7 @@ export const TurnTransition: React.FC<TurnTransitionProps> = ({ turn, onComplete
             animate={{ scaleX: 1, opacity: 1 }}
             exit={{ scaleX: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className={`relative w-full h-32 ${primaryColor}/90 flex items-center justify-center overflow-hidden border-y-4 border-white/20`}
+            className={`relative w-full py-12 ${primaryColor}/90 flex items-center justify-center overflow-hidden border-y-4 border-white/20`}
           >
             {/* Background Effects */}
             <div className={`absolute inset-0 bg-gradient-to-r ${secondaryColor} to-black opacity-80`} />

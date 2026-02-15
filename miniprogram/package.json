@@ -1,0 +1,18 @@
+{
+  "name": "football-miracle-11-miniprogram",
+  "version": "0.1.1",
+  "description": "足球奇迹11 - 微信小游戏",
+  "main": "game.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node simpleTest.cjs"
+  },
+  "keywords": [
+    "wechat",
+    "minigame",
+    "football",
+    "card-game"
+  ],
+  "author": "",
+  "license": "MIT"
+}

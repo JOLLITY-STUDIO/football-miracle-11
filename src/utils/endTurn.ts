@@ -33,6 +33,17 @@ export const performEndTurn = (state: GameState): GameState => {
   newState.aiActiveSynergy = [];
   newState.duelPhase = 'none';
   newState.pendingShot = null;
+  newState.currentAction = 'none'; // Reset current action for new turn
+  newState.selectedCard = null; // Reset selected card for new turn
+  newState.selectedSynergyCards = []; // Reset selected synergy cards for new turn
+  newState.pendingImmediateEffect = null; // Reset pending immediate effect
+  newState.substitutionMode = null; // Reset substitution mode
+  newState.instantShotMode = null; // Reset instant shot mode
+  newState.synergyChoice = null; // Reset synergy choice
+  newState.defenderSynergySelection = false; // Reset defender synergy selection
+  newState.defenderAvailableSynergyCards = []; // Reset defender available synergy cards
+  newState.defenderSelectedSynergyCards = []; // Reset defender selected synergy cards
+  newState.selectedShotIcon = null; // Reset selected shot icon
   
   // Set AI action step if it's AI turn
   if (newTurn === 'ai') {

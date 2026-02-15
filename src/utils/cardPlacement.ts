@@ -16,11 +16,21 @@ export const placeCard = (
   
   if (targetZoneIndex !== -1) {
     const targetZone = targetField[targetZoneIndex];
-    const slotPosition = Math.floor(slot / 2);
+    
+    // Check if slot is within bounds (0-7 for 8-column field)
+    if (slot < 0 || slot > 7) {
+      return state;
+    }
+    
+    // For 8-column field, each card occupies 2 slots
+    // Ensure slot is not the last column (7) as it would go out of bounds
+    if (slot === 7) {
+      return state;
+    }
     
     // Check if slots are empty
-    const slot1 = targetZone.slots.find(s => s.position === slotPosition);
-    const slot2 = targetZone.slots.find(s => s.position === slotPosition + 1);
+    const slot1 = targetZone.slots.find(s => s.position === slot);
+    const slot2 = targetZone.slots.find(s => s.position === slot + 1);
     
     if (slot1 && slot2 && !slot1.playerCard && !slot2.playerCard) {
       // Place card in both slots

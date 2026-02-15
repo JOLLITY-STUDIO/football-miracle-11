@@ -126,7 +126,7 @@ const StarCardDraft: React.FC<Props> = ({
               </div>
             ) : (
               <div className={`text-2xl font-bold ${isPlayerTurn ? 'text-green-400' : 'text-red-400'}`}>
-                {isPlayerTurn ? 'YOUR TURN TO PICK!' : 'AI IS CHOOSING...'}
+                {isPlayerTurn ? 'YOUR TURN TO CHOOSE!' : 'AI IS CHOOSING...'}
               </div>
             )}
           </div>

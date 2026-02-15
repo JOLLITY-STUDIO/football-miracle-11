@@ -67,6 +67,12 @@ export const useGameState = (
 
   // Action handlers
   const handleSlotClick = useCallback((zone: number, startCol: number) => {
+    console.log('Slot click handler called - zone:', zone, 'startCol:', startCol);
+    console.log('Current turn:', gameState.currentTurn);
+    console.log('Selected card:', gameState.selectedCard?.name);
+    console.log('Turn phase:', gameState.turnPhase);
+    console.log('Current action:', gameState.currentAction);
+    
     // 检查是否是玩家回合
     if (gameState.currentTurn !== 'player') {
       console.warn('Not player turn');
@@ -105,7 +111,10 @@ export const useGameState = (
                     gameState.turnPhase === 'teamAction' || 
                     (gameState.isFirstTurn && gameState.turnPhase === 'start');
 
+    console.log('Can place card:', canPlace);
+    
     if (!canPlace) {
+      console.log('Cannot place card - reason:', gameState.turnPhase);
       setGameState(prev => ({ 
         ...prev, 
         message: gameState.turnPhase === 'teamAction' 
@@ -131,6 +140,11 @@ export const useGameState = (
   }, [gameState, dispatch, playSound]);
 
   const handleAttack = useCallback((zone: number, slot: number) => {
+    console.log('Attack handler called - zone:', zone, 'slot:', slot);
+    console.log('Current turn:', gameState.currentTurn);
+    console.log('Turn phase:', gameState.turnPhase);
+    console.log('Current action:', gameState.currentAction);
+    
     if (gameState.currentTurn !== 'player') return;
     
     // 检查是否可以执行攻击操作
@@ -138,7 +152,10 @@ export const useGameState = (
                           gameState.turnPhase === 'teamAction' || 
                           (gameState.isFirstTurn && gameState.turnPhase === 'start');
 
+    console.log('Can perform attack:', canPerformAction);
+    
     if (!canPerformAction) {
+      console.log('Cannot perform attack - reason:', gameState.turnPhase);
       setGameState(prev => ({ ...prev, message: 'Cannot perform attack at this time' }));
       playSound('error');
       return;

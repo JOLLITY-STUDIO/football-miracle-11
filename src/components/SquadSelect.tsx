@@ -94,9 +94,9 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
         </div>
 
         <motion.div 
-          initial={{ scale: 0.8, opacity: 0, rotateX: 20 }}
-          animate={{ scale: 1, opacity: 1, rotateX: 0 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
           className="relative bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10 max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col perspective-1000"
         >
           {/* Header */}
@@ -145,9 +145,9 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
               {sortedPlayers.map((card, index) => (
                 <motion.div
                   key={card.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.floor(index / 7) * 0.1, duration: 0.4, ease: "easeOut" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => toggleSelect(card)}

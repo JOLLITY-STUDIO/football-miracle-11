@@ -20,7 +20,7 @@ const PhaseBanner: React.FC<Props> = ({ text, subtitle, show, onComplete, durati
   return (
     <AnimatePresence mode="wait">
       {show && (
-        <div key={`phase-banner-${text}`} className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+        <div key="phase-banner" className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <motion.div
             initial={{ x: '-100%', opacity: 0 }}
             animate={{ x: '0%', opacity: 1 }}

@@ -1,0 +1,10 @@
+# 微信小程序构建文件
+miniprogram/web/
+
+# 微信开发者工具生成的文件
+miniprogram/.DS_Store
+miniprogram/*.md
+
+# 临时文件
+*.log
+*.tmp
