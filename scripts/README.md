@@ -20,7 +20,7 @@
 ```javascript
 const CONFIG = {
   owner: 'your-username', // 替换为你的GitHub用户名
-  repo: 'magic-number-eleven', // 替换为你的仓库名
+  repo: 'football-miracle-11', // 替换为你的仓库名
   token: process.env.GITHUB_TOKEN, // GitHub Personal Access Token
   labels: ['bug', 'automated'],
 };
@@ -76,7 +76,7 @@ npm run sync-bugs
 
 🔍 Checking bug: BUG-2026-02-16-001
 ✅ Created Issue: BUG-2026-02-16-001
-   URL: https://github.com/username/magic-number-eleven/issues/1
+   URL: https://github.com/username/football-miracle-11/issues/1
 
 🔍 Checking bug: BUG-2026-02-16-002
 ⏭️  Skipping: BUG-2026-02-16-002 (already exists)

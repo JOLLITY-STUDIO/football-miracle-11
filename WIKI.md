@@ -172,7 +172,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/football-miracle-11.git
+git clone https://github.com/JOLLITY-STUDIO/football-miracle-11.git
 
 # 进入项目目录
 cd football-miracle-11
@@ -378,9 +378,9 @@ npm run sync-bugs
 
 ### 项目维护者
 
-- **GitHub**: https://github.com/your-username/football-miracle-11
-- **Issues**: https://github.com/your-username/football-miracle-11/issues
-- **Discussions**: https://github.com/your-username/football-miracle-11/discussions
+- **GitHub**: https://github.com/JOLLITY-STUDIO/football-miracle-11
+- **Issues**: https://github.com/JOLLITY-STUDIO/football-miracle-11/issues
+- **Discussions**: https://github.com/JOLLITY-STUDIO/football-miracle-11/discussions
 
 ### 获取帮助
 
