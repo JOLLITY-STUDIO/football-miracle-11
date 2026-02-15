@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { FIELD_CONFIG } from '../config/fieldDimensions';
 import FieldIcons from './FieldIcons';
 import { createFieldContext, calculateCellCenter, calculateCellPosition, getFieldViewBox } from '../utils/coordinateCalculator';
+import { FieldCellHighlight } from './FieldCellHighlight';
 
 interface GameFieldProps {
   playerField: FieldZone[];
@@ -192,67 +193,24 @@ const GameField: React.FC<GameFieldProps> = ({
             
             return (
               <React.Fragment key={`zone-${zone.zone}`}>
-                {Array.from({ length: COLS }).map((_, colIdx) => {
-                  const validZones = selectedCard ? getValidZones(selectedCard.type) : [];
-                  const isZoneHighlight = !isAi && selectedCard && validZones.includes(zone.zone) && zone.zone >= 4; // Only highlight player's half (zones 4-7)
-                  
-                  const startColForValidation = colIdx === 7 ? 6 : colIdx;
-                  const canDoPlacement = selectedCard && !isAi && canPlaceCards &&
-                    canPlaceCardAtSlot(selectedCard, playerField, zone.zone, startColForValidation, isFirstTurn);
-                  
-                  // Find card in this slot
-                  const slot = zone.slots.find(s => s.position === colIdx);
-                  const card = slot?.athleteCard;
-
-                  // Calculate cell position (simple coordinate system starting from 0,0)
-                  const x = colIdx * CELL_WIDTH;
-                  const y = row * CELL_HEIGHT;
-                  
-                  // Show highlight for all valid placement positions
-                  const isHighlightVisible = !isAi && canDoPlacement;
-                  const isZoneValid = !isAi && selectedCard && validZones.includes(zone.zone) && zone.zone >= 4;
-                  
-                  return (
-                    <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
-                      {/* Cell Background - Show for all 8 columns */}
-                      <rect
-                        x={x}
-                        y={y}
-                        width={CELL_WIDTH}
-                        height={CELL_HEIGHT}
-                        fill={isHighlightVisible
-                          ? 'rgba(255, 215, 0, 0.6)' // Golden yellow for valid placement
-                          : (isZoneValid
-                              ? 'rgba(147, 197, 114, 0.3)' // Light green for valid zone but not valid placement
-                              : 'transparent')}
-                        stroke={isHighlightVisible
-                          ? 'rgba(255, 215, 0, 0.8)' // Golden stroke for valid placement
-                          : (isZoneValid
-                              ? 'rgba(101, 163, 13, 0.6)' // Green stroke for valid zone
-                              : 'transparent')}
-                        strokeWidth={isHighlightVisible ? '2' : (isZoneValid ? '1' : '1')}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isAi && canDoPlacement) {
-                            // Use startColForValidation for actual placement
-                            console.log('SVG Click at zone:', zone.zone, 'col:', colIdx, 'using startCol:', startColForValidation);
-                            onSlotClick(zone.zone, startColForValidation);
-                          }
-                        }}
-                        onMouseEnter={() => {
-                          if (!isAi && canDoPlacement) {
-                            handleCellMouseEnter(zone.zone, startColForValidation);
-                          }
-                        }}
-                        onMouseLeave={handleCellMouseLeave}
-                        style={{
-                          cursor: !isAi && canDoPlacement ? 'pointer' : 'default',
-                          pointerEvents: 'auto'
-                        }}
-                      />
-                    </g>
-                  );
-                })}
+                {Array.from({ length: COLS }).map((_, colIdx) => (
+                  <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
+                    {/* Cell Background - Show for all 8 columns */}
+                    <FieldCellHighlight
+                      isAi={isAi}
+                      zone={zone.zone}
+                      colIdx={colIdx}
+                      selectedCard={selectedCard}
+                      playerField={playerField}
+                      canPlaceCards={canPlaceCards}
+                      isFirstTurn={isFirstTurn}
+                      onSlotClick={onSlotClick}
+                      onCellMouseEnter={handleCellMouseEnter}
+                      onCellMouseLeave={handleCellMouseLeave}
+                      getValidZones={getValidZones}
+                    />
+                  </g>
+                ))}
               </React.Fragment>
             );
           })}
