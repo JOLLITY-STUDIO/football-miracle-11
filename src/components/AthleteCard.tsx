@@ -32,8 +32,8 @@ const getRoleName = (type: string) => {
   }
 };
 
-const getCardBgColor = (type: string) => {
-  // 统一使用深色渐变背景，确保所有卡片背景一�?  return 'bg-gradient-to-br from-gray-800 to-gray-900';
+const getCardBgColor = (type: string): string => {
+  return 'bg-gradient-to-br from-gray-800 to-gray-900';
 };
 
 const getIconImage = (icon: TacticalIcon): string => {
