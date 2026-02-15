@@ -1,6 +1,6 @@
-# Magic Number Eleven - Project Wiki
+# football-miracle-11 - Project Wiki
 
-欢迎来到 Magic Number Eleven 项目 Wiki！这里是项目的文档中心，包含路线图、当前状态和开发指南。
+欢迎来到 football-miracle-11 项目 Wiki！这里是项目的文档中心，包含路线图、当前状态和开发指南。
 
 ## 📋 目录
 
@@ -13,7 +13,7 @@
 
 ## 🎯 项目概述
 
-**Magic Number Eleven** 是一款轻策略足球卡牌对战游戏。玩家通过部署球员卡、运用战术图标和协同卡，在8x4的球场版图上进行攻防博弈，最终比分高者获胜。
+**football-miracle-11** 是一款轻策略足球卡牌对战游戏。玩家通过部署球员卡、运用战术图标和协同卡，在8x4的球场版图上进行攻防博弈，最终比分高者获胜。
 
 ### 核心特性
 
