@@ -267,22 +267,22 @@ export const LeftPanel: React.FC<Props> = ({
         </div>
 
         {/* 1. Opponent Score (Top) */}
-        <div className="w-full bg-[#0a0a0a] rounded-lg p-2 border border-white/10 shadow-2xl mb-4">
-          <div className="flex justify-between items-center mb-1 px-1">
+        <div className="w-[150px] h-[220px] bg-[#0a0a0a] rounded-lg p-3 border border-white/10 shadow-2xl mb-4 flex flex-col">
+          <div className="flex justify-between items-center mb-2 px-1">
             <span className={clsx(
-              "text-[10px] font-black tracking-tighter px-2 py-0.5 rounded",
+              "text-[10px] font-black tracking-tighter px-1.5 py-0.5 rounded",
               isHomeTeam ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
             )}>
               {isHomeTeam ? 'AWAY' : 'HOME'}
             </span>
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
               <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
               <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
             </div>
           </div>
-          <div className="bg-[#1a1a1a] rounded flex flex-col items-center justify-center py-3 relative overflow-hidden">
+          <div className="bg-[#1a1a1a] rounded flex flex-col items-center justify-center flex-grow relative overflow-hidden">
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 0)', backgroundSize: '4px 4px' }} />
-            <div className="z-10">
+            <div className="z-10 flex items-center justify-center w-full h-full">
               <MultiDigitDotMatrix value={aiScore} digits={1} size="large" color="#f59e0b" />
             </div>
           </div>
@@ -290,47 +290,20 @@ export const LeftPanel: React.FC<Props> = ({
 
         {/* 2. Momentum Track (Center) */}
         <div className="flex-1 w-full flex flex-col items-center justify-center my-2">
-          {/* Momentum Track Labels */}
-          <div className="w-full flex justify-between px-2 mb-1">
-            <div className="flex flex-col items-center w-10">
-              <span className={clsx(
-                "text-[14px] font-black px-2 py-0.5 rounded w-full text-center",
-                isHomeTeam ? "bg-blue-500/20 text-blue-400" : "bg-red-500/20 text-red-400"
-              )}>
-                {isHomeTeam ? 'HOME' : 'AWAY'}
-              </span>
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mt-0.5">
-                <span className="text-[18px] text-white">↑</span>
-              </div>
-            </div>
-            <div className="bg-white/10 px-2 rounded-sm flex items-center">
-              <span className="text-[10px] text-white font-black">MOMENTUM</span>
-            </div>
-            <div className="flex flex-col items-center w-10">
-              <span className={clsx(
-                "text-[14px] font-black px-2 py-0.5 rounded w-full text-center",
-                isHomeTeam ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
-              )}>
-                {isHomeTeam ? 'AWAY' : 'HOME'}
-              </span>
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mt-0.5">
-                <span className="text-[18px] text-white rotate-180">↑</span>
-              </div>
-            </div>
-          </div>
-
           {/* Main Momentum Rail */}
           <div className="relative flex gap-1 p-1 bg-black/40 rounded-lg border border-white/10 shadow-inner h-[280px] overflow-hidden">
-            {/* Left labels */}
-            <div className="flex flex-col w-5 h-full rounded overflow-hidden">
-              <div className="flex-[1] bg-red-600/80 border-b border-white/5 flex items-center justify-center">
-                <span className="text-[6px] text-white font-black rotate-[-90deg]">ATT</span>
-              </div>
-              <div className="flex-[2] bg-green-600/80 border-b border-white/5 flex items-center justify-center">
-                <span className="text-[6px] text-white font-black rotate-[-90deg]">NORM</span>
-              </div>
-              <div className="flex-[2] bg-blue-600/80 flex items-center justify-center">
-                <span className="text-[6px] text-white font-black rotate-[-90deg]">DEF</span>
+            {/* Left Side - ATT/NORM/DEF */}
+            <div className="flex flex-col items-center">
+              <div className="flex flex-col w-5 h-full rounded overflow-hidden">
+                <div className="flex-[1] bg-red-600/80 border-b border-white/5 flex items-center justify-center">
+                  <span className="text-[6px] text-white font-black rotate-[-90deg]">ATT</span>
+                </div>
+                <div className="flex-[2] bg-green-600/80 border-b border-white/5 flex items-center justify-center">
+                  <span className="text-[6px] text-white font-black rotate-[-90deg]">NORM</span>
+                </div>
+                <div className="flex-[2] bg-blue-600/80 flex items-center justify-center">
+                  <span className="text-[6px] text-white font-black rotate-[-90deg]">DEF</span>
+                </div>
               </div>
             </div>
 
@@ -363,16 +336,18 @@ export const LeftPanel: React.FC<Props> = ({
               </motion.div>
             </div>
 
-            {/* Right labels */}
-            <div className="flex flex-col w-5 h-full rounded overflow-hidden">
-              <div className="flex-[2] bg-blue-600/80 border-b border-white/5 flex items-center justify-center">
-                <span className="text-[6px] text-white font-black rotate-[90deg]">DEF</span>
-              </div>
-              <div className="flex-[2] bg-green-600/80 border-b border-white/5 flex items-center justify-center">
-                <span className="text-[6px] text-white font-black rotate-[90deg]">NORM</span>
-              </div>
-              <div className="flex-[1] bg-red-600/80 flex items-center justify-center">
-                <span className="text-[6px] text-white font-black rotate-[90deg]">ATT</span>
+            {/* Right Side - ATT/NORM/DEF */}
+            <div className="flex flex-col items-center">
+              <div className="flex flex-col w-5 h-full rounded overflow-hidden">
+                <div className="flex-[2] bg-blue-600/80 border-b border-white/5 flex items-center justify-center">
+                  <span className="text-[6px] text-white font-black rotate-[90deg]">DEF</span>
+                </div>
+                <div className="flex-[2] bg-green-600/80 border-b border-white/5 flex items-center justify-center">
+                  <span className="text-[6px] text-white font-black rotate-[90deg]">NORM</span>
+                </div>
+                <div className="flex-[1] bg-red-600/80 flex items-center justify-center">
+                  <span className="text-[6px] text-white font-black rotate-[90deg]">ATT</span>
+                </div>
               </div>
             </div>
           </div>
@@ -385,20 +360,20 @@ export const LeftPanel: React.FC<Props> = ({
         </div>
 
         {/* 3. Player Score (Bottom) */}
-        <div className="w-full bg-[#0a0a0a] rounded-lg p-2 border border-white/10 shadow-2xl mt-4">
-          <div className="bg-[#1a1a1a] rounded flex flex-col items-center justify-center py-3 relative overflow-hidden mb-1">
+        <div className="w-[150px] h-[220px] bg-[#0a0a0a] rounded-lg p-3 border border-white/10 shadow-2xl mt-4 flex flex-col">
+          <div className="bg-[#1a1a1a] rounded flex flex-col items-center justify-center flex-grow relative overflow-hidden mb-2">
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 0)', backgroundSize: '4px 4px' }} />
-            <div className="z-10">
+            <div className="z-10 flex items-center justify-center w-full h-full">
               <MultiDigitDotMatrix value={playerScore} digits={1} size="large" color="#f59e0b" />
             </div>
           </div>
           <div className="flex justify-between items-center px-1">
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]" />
               <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
             </div>
             <span className={clsx(
-              "text-[10px] font-black tracking-tighter px-2 py-0.5 rounded",
+              "text-[10px] font-black tracking-tighter px-1.5 py-0.5 rounded",
               isHomeTeam ? "bg-blue-500/20 text-blue-400" : "bg-red-500/20 text-red-400"
             )}>
               {isHomeTeam ? 'HOME' : 'AWAY'}

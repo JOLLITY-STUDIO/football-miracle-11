@@ -22,10 +22,10 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
   const GOAL_AREA_HEIGHT = FIELD_CONFIG.GOAL_AREA_ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT; // 0.5 * 130 = 65px
   
   // Relative dimensions for field elements
-  const CENTER_CIRCLE_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.3; // 30% of smallest dimension
-  const PENALTY_ARC_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.25; // 25% of smallest dimension
+  const CENTER_CIRCLE_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.2; // 20% of smallest dimension
+  const PENALTY_ARC_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.15; // 15% of smallest dimension
   const CORNER_SIZE = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.05; // 5% of smallest dimension
-  const PENALTY_SPOT_POSITION = PENALTY_AREA_HEIGHT * 0.75; // 75% of penalty area height (closer to goal)
+  const PENALTY_SPOT_POSITION = PENALTY_AREA_HEIGHT * 0.5; // 50% of penalty area height (center)
 
   return (
     <div 

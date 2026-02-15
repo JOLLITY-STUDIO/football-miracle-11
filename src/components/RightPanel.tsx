@@ -49,45 +49,43 @@ export const RightPanel: React.FC<Props> = ({
       
       <div className="relative flex h-full w-full gap-4 z-30 flex-row items-stretch justify-center">
         {/* Left Side - Battle Front */}
-        <div className="flex flex-col gap-4 justify-stretch h-full">
-          {/* Battle Front - Shows both sides */}
-          <div className="bg-[#C52B1D] border border-white/10 shadow-xl p-3 relative flex flex-col gap-4" style={{ height: '100%' }}>
-            <div className="flex flex-col gap-4 flex-grow">
-              {/* Opponent Battle Front */}
-              <div className="bg-stone-900/60 p-2 border border-white/5 flex-grow">
-                <SynergyPanel
-                  synergyHand={aiActiveSynergy}
-                  selectedCards={[]}
-                  isAi={true}
-                  revealed={isEndPhase}
-                  transparent={true}
-                />
-              </div>
-              
-              {/* Middle Title */}
-              <div className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] my-1 text-center">
-                SYNERGY BATTLE FRONT
-              </div>
-              
-              {/* Your Battle Front */}
-              <div className="bg-stone-900/60 p-2 border border-white/5 flex-grow">
-                <SynergyPanel
-                  synergyHand={playerActiveSynergy}
-                  selectedCards={selectedSynergyCards}
-                  onSelect={onSynergySelect}
-                  isAi={false}
-                  revealed={isEndPhase}
-                  transparent={true}
-                />
-              </div>
+        <div className="flex flex-col gap-4 justify-stretch h-full flex-grow">
+          {/* Opponent Battle Front */}
+          <div className="bg-[#C32A1D] border border-white/10 shadow-xl p-3 relative flex flex-col gap-2 flex-grow">
+            <div className="bg-stone-900/60 p-2 border border-white/5 flex-grow">
+              <SynergyPanel
+                synergyHand={aiActiveSynergy}
+                selectedCards={[]}
+                isAi={true}
+                revealed={isEndPhase}
+                transparent={true}
+              />
+            </div>
+          </div>
+          
+          {/* Middle Title */}
+          <div className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] text-center">
+            SYNERGY BATTLE FRONT
+          </div>
+          
+          {/* Player Battle Front */}
+          <div className="bg-[#C32A1D] border border-white/10 shadow-xl p-3 relative flex flex-col gap-2 flex-grow">
+            <div className="bg-stone-900/60 p-2 border border-white/5 flex-grow">
+              <SynergyPanel
+                synergyHand={playerActiveSynergy}
+                selectedCards={selectedSynergyCards}
+                onSelect={onSynergySelect}
+                isAi={false}
+                revealed={isEndPhase}
+                transparent={true}
+              />
             </div>
           </div>
         </div>
 
-        {/* Right Side - Both Synergy Hands + Draw Area */}
-        <div className="flex-shrink-0 w-[200px] flex flex-col justify-center gap-3 h-full">
-          
-          {/* Opponent Synergy Hand - Horizontal Version */}
+        {/* Right Side - Draw Area + Synergy Hands */}
+        <div className="flex-shrink-0 w-[200px] flex flex-col justify-between h-full">
+          {/* Opponent Synergy Hand - Top */}
           <div className="bg-stone-900/80 rounded-2xl border border-white/10 shadow-xl p-2 flex-shrink-0">
             <div className="flex justify-between items-center mb-1">
               <div className="text-[8px] font-black text-white/40 uppercase tracking-[0.3em]">
@@ -125,7 +123,7 @@ export const RightPanel: React.FC<Props> = ({
 
           {/* Draw Area - Middle Section */}
           <div className="flex flex-col gap-2 flex-shrink-0">
-            {/* Penalty Kick Stack (Top) - Blue Stack */}
+            {/* Penalty Kick Stack - Blue Stack */}
             <div className="relative flex flex-col items-center group">
               <span className="text-[10px] text-white/40 font-bold mb-1 uppercase tracking-tighter">Penalty Defense</span>
               <div className="relative" style={{ width: `${STACK_W}px`, height: `${STACK_H}px` }}>
@@ -178,7 +176,7 @@ export const RightPanel: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Synergy Deck Stack (Middle) - Red Stack */}
+            {/* Synergy Deck Stack - Red Stack */}
             <div 
               className="relative flex flex-col items-center group cursor-pointer"
               onClick={() => onOpenPile('deck')}
@@ -232,7 +230,7 @@ export const RightPanel: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Discard Pile Stack (Bottom) - Black Stack */}
+            {/* Discard Pile Stack - Black Stack */}
             <div 
               className="relative flex flex-col items-center group cursor-pointer"
               onClick={() => onOpenPile('discard')}
@@ -287,8 +285,8 @@ export const RightPanel: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Your Synergy Hand - Bottom Section */}
-          <div className="bg-stone-900/80 rounded-2xl border border-white/10 shadow-xl p-2">
+          {/* Player Synergy Hand - Bottom */}
+          <div className="bg-stone-900/80 rounded-2xl border border-white/10 shadow-xl p-2 flex-shrink-0">
             <div className="flex justify-between items-center mb-1">
               <div className="text-[8px] font-black text-white/40 uppercase tracking-[0.3em]">
                 Your Synergy Hand
