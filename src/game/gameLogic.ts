@@ -15,6 +15,7 @@ import { performPenalty } from '../utils/penalty';
 import { performEndTurn } from '../utils/endTurn';
 import { aiTurn, processAiActionStep } from '../utils/ai';
 import { starPlayerCards, basePlayerCards } from '../data/cards';
+import { getSynergyDeckFixed } from '../data/synergyConfig';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps';
 
 export interface GameState {
@@ -131,7 +132,7 @@ export const createInitialState = (
     aiHand: [],
     aiBench: [],
     aiSynergyHand: [],
-    synergyDeck: [],
+    synergyDeck: getSynergyDeckFixed(),
     synergyDiscard: [],
     selectedCard: null,
     isHomeTeam: true,

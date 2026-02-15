@@ -157,7 +157,7 @@ export const DotMatrixDisplay: React.FC<Props> = ({
 }) => {
   // 确保值在0-9之间
   const digit = Math.max(0, Math.min(9, Math.floor(value)));
-  const pattern = digitPatterns[digit];
+  const pattern = digitPatterns[digit] || Array(7 * 11).fill(0);
   
   // 根据size设置点的大小和间距
   const dotSize = {
@@ -173,9 +173,9 @@ export const DotMatrixDisplay: React.FC<Props> = ({
   }[size];
 
   return (
-    <div className="flex flex-row gap-[${gapSize}]">
+    <div className="flex flex-row" style={{ gap: gapSize }}>
       {Array.from({ length: 7 }).map((_, colIndex) => (
-        <div key={colIndex} className="flex flex-col gap-[${gapSize}]">
+        <div key={colIndex} className="flex flex-col" style={{ gap: gapSize }}>
           {Array.from({ length: 11 }).map((_, rowIndex) => {
             const index = rowIndex * 7 + colIndex;
             const isOn = pattern[index] === 1;
