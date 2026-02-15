@@ -13,6 +13,7 @@
     "test:ui": "npx playwright test --ui",
     "test:debug": "npx playwright test --debug",
     "test:report": "npx playwright show-report test-results/html",
+    "sync-bugs": "node scripts/create-github-issues.js",
     "test:unit": "npx vitest run",
     "copy:miniprogram": "node scripts/copy-to-miniprogram.js",
     "build:miniprogram": "npm run build && npm run copy:miniprogram",
