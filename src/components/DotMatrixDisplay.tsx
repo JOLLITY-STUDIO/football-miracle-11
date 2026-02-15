@@ -140,15 +140,15 @@ export const DotMatrixDisplay: React.FC<Props> = ({
   
   // 根据size设置点的大小和间距
   const dotSize = {
-    small: '5px',
-    medium: '7px',
-    large: '10px'
+    small: '6px',
+    medium: '9px',
+    large: '12px'
   }[size];
   
   const gapSize = {
-    small: '2px',
-    medium: '3px',
-    large: '4px'
+    small: '3px',
+    medium: '4px',
+    large: '5px'
   }[size];
 
   return (
