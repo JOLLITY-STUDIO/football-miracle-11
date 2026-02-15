@@ -66,8 +66,8 @@ export const calculateCellPosition = (context: FieldContext, row: number, col: n
   const adjustedCol = isAi ? context.cols - 1 - col : col;
   
   // Calculate absolute positions
-  // Both AI and player need to adjust for card width (cards span 2 columns)
-  const x = (adjustedCol - 1) * cellWidth;
+  // Cards start at the clicked column and span 2 columns
+  const x = adjustedCol * cellWidth;
   const y = row * cellHeight;
   
   return { x, y };

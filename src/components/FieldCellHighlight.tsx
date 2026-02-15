@@ -41,14 +41,16 @@ export const FieldCellHighlight: React.FC<FieldCellHighlightProps> = ({
   // Check if this is a valid zone for the player
   const isZoneValid = !isAi && selectedCard && validZones.includes(zone) && zone >= 4;
 
-  // Column 7 (8th column) cannot be used as starting position since cards span 2 columns
+  // Column 7 (8th column) should be highlighted but maps to column 6 for placement
   // Cards can only start at columns 0-6, occupying columns [0-1], [1-2], ..., [6-7]
+  // When clicking column 7, the card should be placed starting at column 6
   const isLastColumn = colIdx === 7;
+  const startColForPlacement = isLastColumn ? 6 : colIdx;
 
   // Check if placement is allowed
-  // Column 7 should never be highlighted as valid placement position
-  const canDoPlacement = selectedCard && !isAi && canPlaceCards && !isLastColumn &&
-    canPlaceCardAtSlot(selectedCard, playerField, zone, colIdx, isFirstTurn);
+  // Column 7 should be highlighted but placement starts at column 6
+  const canDoPlacement = selectedCard && !isAi && canPlaceCards &&
+    canPlaceCardAtSlot(selectedCard, playerField, zone, startColForPlacement, isFirstTurn);
 
   // Determine highlight visibility
   const isHighlightVisible = !isAi && canDoPlacement;
@@ -81,15 +83,15 @@ export const FieldCellHighlight: React.FC<FieldCellHighlightProps> = ({
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAi && canDoPlacement) {
-      console.log('SVG Click at zone:', zone, 'col:', colIdx);
-      onSlotClick(zone, colIdx);
+      console.log('SVG Click at zone:', zone, 'col:', colIdx, 'placement start col:', startColForPlacement);
+      onSlotClick(zone, startColForPlacement);
     }
   };
 
   // Handle mouse enter event
   const handleMouseEnter = () => {
     if (!isAi && canDoPlacement) {
-      onCellMouseEnter(zone, colIdx);
+      onCellMouseEnter(zone, startColForPlacement);
     }
   };
 
