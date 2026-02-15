@@ -47,7 +47,8 @@ export const performEndTurn = (state: GameState): GameState => {
   
   // Set AI action step if it's AI turn
   if (newTurn === 'ai') {
-    newState.aiActionStep = 'teamAction';
+    // Skip team action on first turn for AI as well
+    newState.aiActionStep = state.isFirstTurn ? 'placeCard' : 'teamAction';
     newState.message = 'AI is thinking...';
   } else {
     newState.message = 'Your turn!';

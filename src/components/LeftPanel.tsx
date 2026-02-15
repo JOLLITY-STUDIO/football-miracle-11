@@ -39,7 +39,7 @@ export const LeftPanel: React.FC<Props> = ({
   onToggleLeftControls,
 }) => {
   return (
-    <div className="h-full flex z-15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] overflow-hidden">
+    <div className="h-full flex items-center justify-center z-15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] overflow-hidden">
       {/* 1. Control Panel (Leftmost - SVG 3D Buttons) */}
       <div className="w-[60px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
         {/* SVG 3D Control Buttons Console */}
@@ -118,7 +118,7 @@ export const LeftPanel: React.FC<Props> = ({
       </div>
       
       {/* 2. Substitutes Area (Center - Dark) */}
-      <div className="w-[130px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
+      <div className="w-[220px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
         <div className="absolute inset-0 opacity-10 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at center, #444 0%, transparent 80%)' }} />
         
@@ -133,7 +133,7 @@ export const LeftPanel: React.FC<Props> = ({
                 <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/5 rounded-full" />
                 
                 {/* SVG 3D Card Slot */}
-                <svg width="96" height="64" viewBox="0 0 96 64" className="w-24 aspect-[3/2]">
+                <svg width="198" height="130" viewBox="0 0 198 130" className="w-[198px] h-[130px]">
                   <defs>
                     <linearGradient id={`aiCardGradient-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#1a1a1a" />
@@ -144,15 +144,15 @@ export const LeftPanel: React.FC<Props> = ({
                   {card ? (
                     <g>
                       {/* Card Background */}
-                      <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="url(#aiCardGradient-${idx})" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="url(#aiCardGradient-${idx})" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
                       {/* Hover Effect */}
-                      <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="rgba(220,38,38,0.1)" stroke="none" className="group-hover:fill-transparent transition-colors duration-300" />
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="rgba(220,38,38,0.1)" stroke="none" className="group-hover:fill-transparent transition-colors duration-300" />
                       {/* Card Content */}
-                      <foreignObject x="0" y="0" width="96" height="64">
+                      <foreignObject x="0" y="0" width="198" height="130">
                         <div className="w-full h-full flex items-center justify-center">
                           <PlayerCardComponent
                             card={card}
-                            size="tiny"
+                            size="large"
                             variant="away"
                             disabled={false}
                             onMouseEnter={() => onHoverEnter(card)}
@@ -163,8 +163,8 @@ export const LeftPanel: React.FC<Props> = ({
                     </g>
                   ) : (
                     <g>
-                      <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                      <text x="48" y="36" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="6" fontWeight="bold">EMPTY</text>
+                      <rect x="0" y="0" width="132" height="86" rx="3" ry="3" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                      <text x="66" y="43" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="6" fontWeight="bold">EMPTY</text>
                     </g>
                   )}
                 </svg>
@@ -185,7 +185,7 @@ export const LeftPanel: React.FC<Props> = ({
                 <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/5 rounded-full" />
                 
                 {/* SVG 3D Card Slot */}
-                <svg width="96" height="64" viewBox="0 0 96 64" className="w-24 aspect-[3/2]">
+                <svg width="198" height="130" viewBox="0 0 198 130" className="w-[198px] h-[130px]">
                   <defs>
                     <linearGradient id={`playerCardGradient-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#1a1a1a" />
@@ -200,19 +200,19 @@ export const LeftPanel: React.FC<Props> = ({
                   {card ? (
                     <g>
                       {/* Card Background */}
-                      <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="url(#playerCardGradient-${idx})" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="url(#playerCardGradient-${idx})" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
                       {/* Selected Indicator */}
                       {substitutionSelectedId === card.id && (
-                        <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="none" stroke="url(#selectedGradient-${idx})" strokeWidth="2" />
+                        <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="none" stroke="url(#selectedGradient-${idx})" strokeWidth="2" />
                       )}
                       {/* Hover Effect */}
-                      <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="rgba(59,130,246,0.1)" stroke="none" className="group-hover:fill-transparent transition-colors duration-300" />
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="rgba(59,130,246,0.1)" stroke="none" className="group-hover:fill-transparent transition-colors duration-300" />
                       {/* Card Content */}
-                      <foreignObject x="0" y="0" width="96" height="64">
+                      <foreignObject x="0" y="0" width="198" height="130">
                         <div className="w-full h-full flex items-center justify-center">
                           <PlayerCardComponent
                             card={card}
-                            size="tiny"
+                            size="large"
                             variant="home"
                             disabled={playerSubstitutionsLeft <= 0}
                             selected={substitutionSelectedId === card.id}
@@ -222,12 +222,12 @@ export const LeftPanel: React.FC<Props> = ({
                         </div>
                       </foreignObject>
                       {/* Clickable Area */}
-                      <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="transparent" stroke="none" onClick={() => onSubstituteSelect(card)} style={{ cursor: 'pointer' }} />
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="transparent" stroke="none" onClick={() => onSubstituteSelect(card)} style={{ cursor: 'pointer' }} />
                     </g>
                   ) : (
                     <g>
-                      <rect x="2" y="2" width="92" height="60" rx="3" ry="3" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                      <text x="48" y="36" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="6" fontWeight="bold">EMPTY</text>
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                      <text x="99" y="65" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="8" fontWeight="bold">EMPTY</text>
                     </g>
                   )}
                 </svg>
@@ -292,29 +292,29 @@ export const LeftPanel: React.FC<Props> = ({
         <div className="flex-1 w-full flex flex-col items-center justify-center my-2">
           {/* Momentum Track Labels */}
           <div className="w-full flex justify-between px-2 mb-1">
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center w-10">
               <span className={clsx(
-                "text-[10px] font-black px-2 py-0.5 rounded",
+                "text-[14px] font-black px-2 py-0.5 rounded w-full text-center",
                 isHomeTeam ? "bg-blue-500/20 text-blue-400" : "bg-red-500/20 text-red-400"
               )}>
                 {isHomeTeam ? 'HOME' : 'AWAY'}
               </span>
-              <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center mt-0.5">
-                <span className="text-[10px] text-white">↑</span>
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mt-0.5">
+                <span className="text-[18px] text-white">↑</span>
               </div>
             </div>
             <div className="bg-white/10 px-2 rounded-sm flex items-center">
-              <span className="text-[8px] text-white font-black">MOMENTUM</span>
+              <span className="text-[10px] text-white font-black">MOMENTUM</span>
             </div>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center w-10">
               <span className={clsx(
-                "text-[10px] font-black px-2 py-0.5 rounded",
+                "text-[14px] font-black px-2 py-0.5 rounded w-full text-center",
                 isHomeTeam ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
               )}>
                 {isHomeTeam ? 'AWAY' : 'HOME'}
               </span>
-              <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center mt-0.5">
-                <span className="text-[10px] text-white rotate-180">↑</span>
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mt-0.5">
+                <span className="text-[18px] text-white rotate-180">↑</span>
               </div>
             </div>
           </div>

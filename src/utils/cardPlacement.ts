@@ -41,20 +41,27 @@ export const placeCard = (
     }
     
     // Check if slots are empty
-    const slot1 = targetZone.slots.find((s: any) => s.position === slot);
-    const slot2 = targetZone.slots.find((s: any) => s.position === slot + 1);
+    const slot1Index = targetZone.slots.findIndex((s: any) => s.position === slot);
+    const slot2Index = targetZone.slots.findIndex((s: any) => s.position === slot + 1);
     
-    console.log('Slot1:', slot1 ? { pos: slot1.position, hasCard: !!slot1.playerCard } : 'not found');
-    console.log('Slot2:', slot2 ? { pos: slot2.position, hasCard: !!slot2.playerCard } : 'not found');
+    console.log('Slot1 index:', slot1Index, 'Slot2 index:', slot2Index);
     
-    // 检查插槽是否为null，如果为null则初始化为空对象
-                  const safeSlot1 = slot1 || { position: slot, playerCard: null, usedShotIcons: [], shotMarkers: 0 };
-                  const safeSlot2 = slot2 || { position: slot + 1, playerCard: null, usedShotIcons: [], shotMarkers: 0 };
-                  
-                  if (!safeSlot1.playerCard && !safeSlot2.playerCard) {
+    // 确保插槽存在
+    if (slot1Index === -1 || slot2Index === -1) {
+      console.log('Slots not found in zone');
+      return state;
+    }
+    
+    const slot1 = targetZone.slots[slot1Index];
+    const slot2 = targetZone.slots[slot2Index];
+    
+    console.log('Slot1:', { pos: slot1.position, hasCard: !!slot1.playerCard });
+    console.log('Slot2:', { pos: slot2.position, hasCard: !!slot2.playerCard });
+    
+    if (!slot1.playerCard && !slot2.playerCard) {
       // Place card in both slots
-safeSlot1.playerCard = card;
-                  safeSlot2.playerCard = card;
+      targetZone.slots[slot1Index].playerCard = card;
+      targetZone.slots[slot2Index].playerCard = card;
       console.log('Card placed successfully in slots', slot, 'and', slot + 1);
       
       // Remove card from hand

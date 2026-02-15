@@ -59,10 +59,10 @@ export const CenterField: React.FC<Props> = ({
   const canDoAction = (turnPhase === 'playerAction' || turnPhase === 'start') && currentTurn === 'player';
   const canPlaceCards = canDoAction && currentAction === 'none';
 
-  // Pitch dimensions matching GameField's fixed cells (8 cols * 99px, 8 rows * 130px)
-  const PITCH_WIDTH = 792;
-  const PITCH_HEIGHT = 1040;
-  const BORDER_THICKNESS = 6;
+  // Calculate pitch dimensions from configuration
+  const PITCH_WIDTH = getPitchWidth();
+  const PITCH_HEIGHT = getPitchHeight();
+  const BORDER_THICKNESS = FIELD_CONFIG.BORDER_THICKNESS;
   const RED_PADDING = 40;
 
   return (
@@ -79,10 +79,10 @@ export const CenterField: React.FC<Props> = ({
         
         {/* Game Field Content - Positioned inside the green area */}
         <div className="absolute z-40 pointer-events-auto" style={{ 
-          top: '6px',
-          left: '6px',
-          width: '792px',
-          height: '1040px'
+          top: `${FIELD_CONFIG.FIELD_PADDING}px`,
+          left: `${FIELD_CONFIG.FIELD_PADDING}px`,
+          width: `${PITCH_WIDTH}px`,
+          height: `${PITCH_HEIGHT}px`
         }}>
           <GameField
             playerField={playerField}

@@ -22,7 +22,7 @@ export const SynergyCardComponent: React.FC<Props> = ({
   selected, 
   disabled = false,
   faceDown = false,
-  size = 'medium'
+  size = 'large'
 }) => {
   const isAttack = card.type === 'attack';
   const isDefense = card.type === 'defense';

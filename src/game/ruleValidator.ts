@@ -40,7 +40,22 @@ export class RuleValidator {
       return { valid: false, reason: 'Invalid column position' };
     }
     
-    if (!card.zones.includes(zone)) {
+    // 基于球员类型判断可放置区域
+    const getValidZones = (type: string): number[] => {
+      switch (type) {
+        case 'fw':
+          return [2, 3, 4, 5]; // 前锋可放置在2-5区域
+        case 'mf':
+          return [1, 2, 5, 6]; // 中场只能放置在1、2、5、6行
+        case 'df':
+          return [0, 1, 6, 7]; // 后卫只能放置在0、1、6、7行
+        default:
+          return [];
+      }
+    };
+    
+    const validZones = getValidZones(card.type);
+    if (!validZones.includes(zone)) {
       return { valid: false, reason: 'Card cannot be placed in this zone' };
     }
     
@@ -57,9 +72,15 @@ export class RuleValidator {
     
     const hasAnyCard = fieldSlots.some(z => z.slots.some(s => s.playerCard));
     
+    // 场上没有其他卡时，前锋不能放在3、4行
+    if (!hasAnyCard && card.type === 'fw' && (zone === 3 || zone === 4)) {
+      return { valid: false, reason: 'Forward cannot be placed in Zone 3 or 4 when no other cards are on field' };
+    }
+    
+    // Zone 1: 第三行（AI半场）- 需要相邻验证
     if (zone === 1) {
       if (!hasAnyCard) {
-        return { valid: false, reason: 'First card cannot be placed in Zone 1 (Front)' };
+        return { valid: false, reason: 'First card cannot be placed in Zone 1' };
       }
       
       const zone1 = fieldSlots.find(z => z.zone === 1);
@@ -74,6 +95,48 @@ export class RuleValidator {
       
       if (!hasAdjacentInZone1 && !hasBehindInZone2) {
         return { valid: false, reason: 'Zone 1 requires adjacent card in Zone 1 or Zone 2' };
+      }
+    }
+    
+    // Zone 3: AI半场第一行（最靠近中线）- 第一回合前锋需要相邻验证
+    if (zone === 3 && isFirstTurn && card.type === 'fw') {
+      const zone3 = fieldSlots.find(z => z.zone === 3);
+      const zone2 = fieldSlots.find(z => z.zone === 2);
+      const zone4 = fieldSlots.find(z => z.zone === 4);
+      
+      const hasAdjacentInZone3 = zone3?.slots.some(s => 
+        s.playerCard && Math.abs(s.position - startCol) <= 1
+      );
+      const hasBehindInZone2 = zone2?.slots.some(s => 
+        s.playerCard && Math.abs(s.position - startCol) <= 1
+      );
+      const hasAheadInZone4 = zone4?.slots.some(s => 
+        s.playerCard && Math.abs(s.position - startCol) <= 1
+      );
+      
+      if (!hasAdjacentInZone3 && !hasBehindInZone2 && !hasAheadInZone4) {
+        return { valid: false, reason: 'First turn: Forward in Zone 3 requires adjacent players' };
+      }
+    }
+    
+    // Zone 4: 玩家半场第一行（最靠近中线）- 第一回合前锋需要相邻验证
+    if (zone === 4 && isFirstTurn && card.type === 'fw') {
+      const zone4 = fieldSlots.find(z => z.zone === 4);
+      const zone3 = fieldSlots.find(z => z.zone === 3);
+      const zone5 = fieldSlots.find(z => z.zone === 5);
+      
+      const hasAdjacentInZone4 = zone4?.slots.some(s => 
+        s.playerCard && Math.abs(s.position - startCol) <= 1
+      );
+      const hasBehindInZone3 = zone3?.slots.some(s => 
+        s.playerCard && Math.abs(s.position - startCol) <= 1
+      );
+      const hasAheadInZone5 = zone5?.slots.some(s => 
+        s.playerCard && Math.abs(s.position - startCol) <= 1
+      );
+      
+      if (!hasAdjacentInZone4 && !hasBehindInZone3 && !hasAheadInZone5) {
+        return { valid: false, reason: 'First turn: Forward in Zone 4 requires adjacent players' };
       }
     }
     

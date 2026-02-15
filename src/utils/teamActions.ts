@@ -10,7 +10,7 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
   
   switch (action) {
     case 'pass':
-      newControlPosition += state.currentTurn === 'player' ? 10 : -10;
+      // Pass 不影响控制权，只根据 pass 图标数量抽取协同卡
       
       // 统计场上pass图标的数量
       const field = state.currentTurn === 'player' ? state.playerField : state.aiField;
@@ -19,7 +19,7 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
       field.forEach(zone => {
         zone.slots.forEach(slot => {
           if (slot.playerCard) {
-            passIconCount += slot.playerCard.icons.filter(icon => icon === 'pass').length;
+            passIconCount += slot.playerCard.icons.filter((icon: string) => icon === 'pass').length;
           }
         });
       });
@@ -45,8 +45,30 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
       break;
       
     case 'press':
-      newControlPosition += state.currentTurn === 'player' ? 5 : -5;
-      message = 'Press action performed';
+      // 统计场上press图标的数量
+      const pressField = state.currentTurn === 'player' ? state.playerField : state.aiField;
+      let pressIconCount = 0;
+      
+      pressField.forEach(zone => {
+        zone.slots.forEach(slot => {
+          if (slot.playerCard) {
+            pressIconCount += slot.playerCard.icons.filter((icon: string) => icon === 'press').length;
+          }
+        });
+      });
+      
+      // 计算控制权移动格数 (总控制权分为5格，每格20%)
+      // 根据press图标数量移动对应格数
+      const moveAmount = pressIconCount * 20; // 每格20%，所以1格=20%，2格=40%，等等
+      
+      // Press moves control towards the player performing the action
+      // Player press: move up (decrease position value)
+      // AI press: move down (increase position value)
+      newControlPosition += state.currentTurn === 'player' ? -moveAmount : moveAmount;
+      
+      message = pressIconCount > 0 
+        ? `Press action performed. Moved ${pressIconCount} zone(s) with ${pressIconCount} press icon(s).` 
+        : 'Press action performed. No press icons on field.';
       break;
   }
   

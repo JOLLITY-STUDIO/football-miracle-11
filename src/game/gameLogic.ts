@@ -206,6 +206,7 @@ export type GameAction =
   | { type: 'SELECT_SYNERGY_CARD'; card: SynergyCard }
   | { type: 'SELECT_SYNERGY_CARD'; card: SynergyCard }
   | { type: 'SYNERGY_CHOICE_SELECT'; index: number }
+  | { type: 'MOVE_SYNERGY_TO_DECK'; cardId: string }
   | { type: 'CANCEL_SUBSTITUTION' }
   | { type: 'START_SECOND_HALF' }
   | { type: 'TRIGGER_EFFECT' }
@@ -613,6 +614,21 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         return newState;
       }
       return state;
+    }
+    
+    case 'MOVE_SYNERGY_TO_DECK': {
+      const cardToMove = state.playerSynergyHand.find(c => c.id === action.cardId);
+      if (!cardToMove) return state;
+      
+      let newState = { ...state };
+      newState.playerSynergyHand = newState.playerSynergyHand.filter(c => c.id !== action.cardId);
+      newState.synergyDeck = [cardToMove, ...newState.synergyDeck];
+      newState.message = `Moved ${cardToMove.name} to deck`;
+      newState.matchLogs = addLog(newState, {
+        type: 'synergy',
+        message: `Moved synergy card ${cardToMove.name} to deck`
+      });
+      return newState;
     }
     
     case 'CANCEL_SUBSTITUTION':

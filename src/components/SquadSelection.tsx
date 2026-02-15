@@ -9,6 +9,20 @@ interface SquadSelectionProps {
   onComplete: (starters: PlayerCard[], substitutes: PlayerCard[], initialField: FieldZone[]) => void;
 }
 
+// Helper function to get valid zones based on player type
+const getValidZones = (type: string): number[] => {
+  switch (type) {
+    case 'fw':
+      return [2, 3, 4, 5]; // 前锋可放置在2-5区域
+    case 'mf':
+      return [1, 2, 5, 6]; // 中场只能放置在1、2、5、6行
+    case 'df':
+      return [0, 1, 6, 7]; // 后卫只能放置在0、1、6、7行
+    default:
+      return [];
+  }
+};
+
 const FormationView: React.FC<{
   starters: PlayerCard[];
   onBack: () => void;
@@ -42,8 +56,9 @@ const FormationView: React.FC<{
     if (isOccupied) return;
 
     // Check if zone is valid for card
-    if (!card.zones.includes(zone)) {
-      alert(`This player can only play in zones: ${card.zones.join(', ')}`);
+    const validZones = getValidZones(card.type);
+    if (!validZones.includes(zone)) {
+      alert(`This player can only play in zones: ${validZones.join(', ')}`);
       return;
     }
 
@@ -82,7 +97,8 @@ const FormationView: React.FC<{
 
     starters.forEach(card => {
         // Try to place in preferred zone first
-        for (const zone of card.zones) {
+        const validZones = getValidZones(card.type);
+        for (const zone of validZones) {
             for (const slot of [2, 3, 1, 4]) { // Prefer middle slots
                 const key = `${zone}-${slot}`;
                 if (!usedSlots.has(key)) {

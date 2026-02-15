@@ -465,6 +465,11 @@ const handleCardSelect = (card: PlayerCard) => {
     playSound('draw');
   };
 
+  const handleSynergyMoveToDeck = (card: SynergyCard) => {
+    dispatch({ type: 'MOVE_SYNERGY_TO_DECK', cardId: card.id });
+    playSound('draw');
+  };
+
   const handleHoverEnterCard = (card: PlayerCard, event?: React.MouseEvent) => {
     setHoveredCard(card);
     if (event) {
@@ -628,12 +633,12 @@ const handleCardSelect = (card: PlayerCard) => {
           style={{
             width: `${BASE_WIDTH}px`,
             height: `${BASE_HEIGHT}px`,
-            transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height - 50}px) scale(${viewSettings.zoom})`,
+            transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height}px) scale(${viewSettings.zoom})`,
           }}
         >
 
              {/* Board Container (Includes Side Panels) */}
-             <div className="relative w-[1920px] h-[1080px] flex flex-row items-stretch justify-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-xl overflow-visible bg-stone-900 border-[12px] border-stone-800 transform-style-3d perspective-2000">
+             <div className="relative w-[2100px] h-[1200px] flex flex-row items-stretch justify-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-xl overflow-visible bg-stone-900 border-[12px] border-stone-800 transform-style-3d perspective-2000">
                 <div className="absolute inset-[-20px] rounded-[28px] bg-[radial-gradient(circle_at_50%_40%,_rgba(16,99,39,0.8),_rgba(0,0,0,0.9))] blur-[8px]" style={{ transform: 'translateZ(-60px)' }} />
                 
                 {/* 3D Thickness/Volume Layer - Full Width Unified Board */}
@@ -728,12 +733,14 @@ const handleCardSelect = (card: PlayerCard) => {
                 initial={{ x: 200, opacity: 0 }}
                 animate={setupStep >= 1 ? { x: 0, opacity: 1 } : { x: 200, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                className="h-full"
               >
                 <RightPanel 
                   aiSynergyHand={gameState.aiSynergyHand}
                   playerSynergyHand={gameState.playerSynergyHand}
                   selectedSynergyCards={gameState.selectedSynergyCards}
                   onSynergySelect={handleSynergySelect}
+                  onSynergyMoveToDeck={handleSynergyMoveToDeck}
                   synergyDeckCount={gameState.synergyDeck.length}
                   synergyDiscardCount={gameState.synergyDiscard.length}
                   onOpenPile={setViewingPile}
@@ -982,7 +989,7 @@ const handleCardSelect = (card: PlayerCard) => {
                   >
                      <PlayerCardComponent 
                         card={card} 
-                        size="medium" 
+                        size="small" 
                         faceDown={false}
                         variant="away"
                      />
@@ -1030,7 +1037,7 @@ const handleCardSelect = (card: PlayerCard) => {
                     card={card}
                     onClick={() => handleCardSelect(card)}
                     selected={gameState.selectedCard?.id === card.id}
-                    size="medium" 
+                    size="small" 
                   />
                 </motion.div>
               ))}
