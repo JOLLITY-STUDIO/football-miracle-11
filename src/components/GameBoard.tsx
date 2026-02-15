@@ -1024,11 +1024,11 @@ const handleCardSelect = (card: athleteCard) => {
                   const radian = (currentAngle * Math.PI) / 180;
                   
                   // Calculate position (mirror of player hand)
-                  const x = Math.sin(radian) * radius;
+                  const x = -Math.sin(radian) * radius; // Negative x for mirror effect
                   const baseY = -Math.cos(radian) * radius + radius;
                   const heightAdjustment = Math.cos(radian) * 80;
                   const y = -(baseY - heightAdjustment + 43); // Negative y to place at top
-                  const rotation = 180 + currentAngle; // 180 degrees to invert cards
+                  const rotation = 180 - currentAngle; // 180 degrees to invert cards, negative angle for mirror effect
                   
                   return (
                     <motion.div
