@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlayerCard, SynergyCard } from '../data/cards';
+import type { AthleteCard, SynergyCard } from '../data/cards';
 import type { ShotResult, DuelPhase } from '../types/game';
-import { PlayerCardComponent } from './PlayerCard';
+import { AthleteCardComponent } from './AthleteCard';
 import { SynergyCardComponent } from './SynergyCard';
 import ShotIconSelector from './ShotIconSelector';
 import AnimatedCounter from './AnimatedCounter';
@@ -10,8 +10,8 @@ import clsx from 'clsx';
 
 interface DuelOverlayProps {
   duelPhase: DuelPhase;
-  attacker: PlayerCard;
-  defender: PlayerCard | null;
+  attacker: AthleteCard;
+  defender: AthleteCard | null;
   attackSynergy: SynergyCard[];
   defenseSynergy: SynergyCard[];
   attackPower: number;
@@ -310,7 +310,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                  transition={{ duration: 4, repeat: Infinity }}
                  className="absolute -inset-8 bg-blue-500/20 rounded-full blur-[60px] group-hover:bg-blue-500/30 transition-all duration-500" 
                />
-               <PlayerCardComponent card={attacker} size="large" usedShotIcons={attackerUsedShotIcons || []} />
+               <AthleteCardComponent card={attacker} size="large" usedShotIcons={attackerUsedShotIcons || []} />
                
                {/* Enhanced Shot Icon Selection */}
                {duelPhase === 'select_shot_icon' && (
@@ -509,7 +509,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     transition={{ duration: 4, repeat: Infinity, delay: 2 }}
                     className="absolute -inset-8 bg-red-500/20 rounded-full blur-[60px] group-hover:bg-red-500/30 transition-all duration-500" 
                   />
-                  <PlayerCardComponent card={defender} size="large" />
+                  <AthleteCardComponent card={defender} size="large" />
                   
                   {/* Defender Power Badge */}
                   <motion.div 
@@ -864,8 +864,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                           filter: 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))'
                         }}
                       >
-                        ⭐
-                      </motion.div>
+                        �?                      </motion.div>
                     ))}
                   </>
                 )}
@@ -930,8 +929,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                           filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.8))'
                         }}
                       >
-                        🛡️
-                      </motion.div>
+                        🛡�?                      </motion.div>
                     ))}
                   </>
                 )}
@@ -994,8 +992,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     transition={{ delay: 0.3, duration: 0.5 }}
                     className="text-2xl font-black text-yellow-300 uppercase tracking-widest drop-shadow-lg"
                   >
-                    ⚽ INCREDIBLE SHOT! ⚽
-                  </motion.div>
+                    �?INCREDIBLE SHOT! �?                  </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1016,8 +1013,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
                     transition={{ delay: 0.3, duration: 0.5 }}
                     className="text-2xl font-black text-blue-300 uppercase tracking-widest drop-shadow-lg"
                   >
-                    🛡️ MAGNIFICENT SAVE! 🛡️
-                  </motion.div>
+                    🛡�?MAGNIFICENT SAVE! 🛡�?                  </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1078,3 +1074,4 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
     </motion.div>
   );
 };
+

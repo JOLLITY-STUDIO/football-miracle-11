@@ -1,36 +1,36 @@
 import type { GameState } from '../game/gameLogic';
-import type { PlayerCard } from '../data/cards';
-import { starPlayerCards, basePlayerCards } from '../data/cards';
+import type { athleteCard } from '../data/cards';
+import { starathleteCards, baseathleteCards } from '../data/cards';
 
 export const startDraftRound = (state: GameState): GameState => {
-  // 从明星卡池中随机选择3张明星卡，过滤掉已被选择和已被弃掉的卡片
-  const shuffledStars = [...starPlayerCards]
+  // Randomly select 3 star cards from the pool, filtering out already selected and discarded cards
+  const shuffledStars = [...starathleteCards]
     .filter(card => !state.playerHand.some(c => c.id === card.id) && !state.aiDraftHand.some(c => c.id === card.id) && !state.discardedDraftCards.some(c => c.id === card.id))
     .sort(() => Math.random() - 0.5);
   const draftCards = shuffledStars.slice(0, 3);
   
-  // 选秀顺序交替：第1轮客队先选，第2轮主队先选，第3轮客队先选
+  // Draft order alternates: Round 1 - Away picks first, Round 2 - Home picks first, Round 3 - Away picks first
   // draftRound: 1, 2, 3
-  // 奇数轮(1,3): 客队先选
-  // 偶数轮(2): 主队先选
-  const isAwayFirst = state.draftRound % 2 === 1; // 奇数轮客队先选
+  // Odd rounds (1,3): Away picks first
+  // Even rounds (2): Home picks first
+  const isAwayFirst = state.draftRound % 2 === 1; // Odd rounds: Away picks first
   
-  // 确定谁先选
-  // isHomeTeam = true: 玩家是主队，AI是客队
-  // isHomeTeam = false: 玩家是客队，AI是主队
+  // Determine who picks first
+  // isHomeTeam = true: Player is Home, AI is Away
+  // isHomeTeam = false: Player is Away, AI is Home
   let firstSelector: 'player' | 'ai';
   if (state.isHomeTeam) {
-    // 玩家是主队
+    // Player is Home team
     firstSelector = isAwayFirst ? 'ai' : 'player';
   } else {
-    // 玩家是客队
+    // Player is Away team
     firstSelector = isAwayFirst ? 'player' : 'ai';
   }
   
   return {
     ...state,
     availableDraftCards: draftCards,
-    draftStep: firstSelector === 'ai' ? 2 : 1, // 1: 玩家选择, 2: AI选择, 3: 弃卡
+    draftStep: firstSelector === 'ai' ? 2 : 1, // 1: Player selects, 2: AI selects, 3: Discard
     message: `Draft Round ${state.draftRound} - ${firstSelector === 'player' ? 'Your turn to choose first!' : 'AI is choosing first...'}`
   };
 };
@@ -42,16 +42,16 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
     
     const newPlayerHand = [...state.playerHand, selectedCard];
     
-    // 移除玩家选择的卡片
-    const remainingCards = state.availableDraftCards.filter((_, idx) => idx !== cardIndex) as PlayerCard[];
+    // Remove selected card from available cards
+    const remainingCards = state.availableDraftCards.filter((_, idx) => idx !== cardIndex) as athleteCard[];
     
-    // 如果是玩家先选（从draftStep=1开始），则玩家选完后轮到AI选择
-    // 如果是AI先选后玩家选（从draftStep=1开始，但之前AI已经选过），则玩家选完后进入弃卡阶段
-    const isPlayerFirst = state.draftStep === 1 && state.availableDraftCards.length === 3; // 玩家先选时，初始有3张卡
-    const isAiFirstThenPlayer = state.draftStep === 1 && state.availableDraftCards.length === 2; // AI先选后玩家选时，剩余2张卡
+    // If player picks first (starting from draftStep=1), after player picks it's AI's turn
+    // If AI picked first then player picks (starting from draftStep=1 but AI already picked), after player pick go to discard phase
+    const isPlayerFirst = state.draftStep === 1 && state.availableDraftCards.length === 3; // When player picks first, starts with 3 cards
+    const isAiFirstThenPlayer = state.draftStep === 1 && state.availableDraftCards.length === 2; // When AI picked first then player, 2 cards remain
     
     if (isPlayerFirst) {
-      // 玩家先选后，轮到AI选择
+      // After player picks first, it's AI's turn
       return {
         ...state,
         playerHand: newPlayerHand,
@@ -60,21 +60,21 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
         message: `You selected ${selectedCard.name}. AI is choosing...`
       };
     } else if (isAiFirstThenPlayer) {
-      // AI先选后玩家选，进入弃卡阶段
+      // AI picked first then player, go to discard phase
       return {
         ...state,
         playerHand: newPlayerHand,
         availableDraftCards: remainingCards,
-        draftStep: 3, // 弃卡阶段
+        draftStep: 3, // Discard phase
         message: `You selected ${selectedCard.name}. Discarding remaining card...`
       };
     } else {
-      // 其他情况，默认进入AI选择阶段
+      // Other cases, default to AI selection phase
       return {
         ...state,
         playerHand: newPlayerHand,
         availableDraftCards: remainingCards,
-        draftStep: 2, // AI选择阶段
+        draftStep: 2, // AI selection phase
         message: `You selected ${selectedCard.name}. AI is choosing...`
       };
     }
@@ -83,39 +83,39 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
   return state;
 };
 
-// AI选秀逻辑
+// AI draft logic
 export const aiPickDraftCard = (state: GameState): GameState => {
   if (state.availableDraftCards.length > 0) {
-    // AI随机选择一张卡片
+    // AI randomly selects a card
     const aiIndex = Math.floor(Math.random() * state.availableDraftCards.length);
     const selectedCard = state.availableDraftCards[aiIndex];
     if (!selectedCard) return state;
     
     const newAiDraftHand = [...state.aiDraftHand, selectedCard];
     
-    // 移除AI选择的卡片
-    const remainingCards = state.availableDraftCards.filter((_, idx) => idx !== aiIndex) as PlayerCard[];
+    // Remove AI selected card from available cards
+    const remainingCards = state.availableDraftCards.filter((_, idx) => idx !== aiIndex) as athleteCard[];
     
-    // 如果是AI先选（从draftStep=2开始），则AI选完后轮到玩家选择
-    // 如果是玩家先选后AI选（从draftStep=1开始到draftStep=2），则AI选完后进入弃卡阶段
-    const isAiFirst = state.draftStep === 2 && state.availableDraftCards.length === 3; // AI先选时，初始有3张卡
+    // If AI picks first (starting from draftStep=2), after AI picks it's player's turn
+    // If player picked first then AI picks (from draftStep=1 to draftStep=2), after AI pick go to discard phase
+    const isAiFirst = state.draftStep === 2 && state.availableDraftCards.length === 3; // When AI picks first, starts with 3 cards
     
     if (isAiFirst) {
-      // AI先选后，轮到玩家选择
+      // After AI picks first, it's player's turn
       return {
         ...state,
         aiDraftHand: newAiDraftHand,
         availableDraftCards: remainingCards,
-        draftStep: 1, // 玩家选择阶段
+        draftStep: 1, // Player selection phase
         message: `AI selected ${selectedCard.name}. Your turn to choose!`
       };
     } else {
-      // 玩家先选后AI选，进入弃卡阶段
+      // Player picked first then AI, go to discard phase
       return {
         ...state,
         aiDraftHand: newAiDraftHand,
         availableDraftCards: remainingCards,
-        draftStep: 3, // 弃卡阶段
+        draftStep: 3, // Discard phase
         message: `AI selected ${selectedCard.name}. Discarding remaining card...`
       };
     }
@@ -124,17 +124,17 @@ export const aiPickDraftCard = (state: GameState): GameState => {
   return state;
 };
 
-// 弃卡逻辑
+// Discard card logic
 export const discardDraftCard = (state: GameState): GameState => {
-  // 清空剩余卡片并添加到已弃卡集合
+  // Clear remaining cards and add to discarded collection
   const discardedCards = state.availableDraftCards;
   const newDiscardedDraftCards = [...state.discardedDraftCards, ...discardedCards];
   const nextRound = state.draftRound + 1;
   
-  // 检查是否完成选秀（双方都选了3张明星卡）
+  // Check if draft is complete (both sides have selected 3 star cards)
   if (state.playerHand.length >= 3 && state.aiDraftHand.length >= 3) {
-    // 选秀完成，添加基础球员
-    const playerBaseTeamCards = basePlayerCards.filter(card => {
+    // Draft complete, add base player cards
+    const playerBaseTeamCards = baseathleteCards.filter(card => {
       if (state.isHomeTeam) {
         return card.id.startsWith('H');
       } else {
@@ -142,7 +142,7 @@ export const discardDraftCard = (state: GameState): GameState => {
       }
     });
     
-    const aiBaseTeamCards = basePlayerCards.filter(card => {
+    const aiBaseTeamCards = baseathleteCards.filter(card => {
       if (state.isHomeTeam) {
         return card.id.startsWith('A');
       } else {
@@ -165,21 +165,20 @@ export const discardDraftCard = (state: GameState): GameState => {
     };
   }
   
-  // 进入下一轮选秀
-  const shuffledStars = [...starPlayerCards]
+  // Proceed to next draft round
+  const shuffledStars = [...starathleteCards]
     .filter(card => !state.playerHand.some(c => c.id === card.id) && !state.aiDraftHand.some(c => c.id === card.id) && !newDiscardedDraftCards.some(c => c.id === card.id))
     .sort(() => Math.random() - 0.5);
-  const nextDraftCards = shuffledStars.slice(0, 3) as PlayerCard[];
+  const nextDraftCards = shuffledStars.slice(0, 3) as athleteCard[];
   
-  // 选秀顺序交替：第1轮客队先选，第2轮主队先选，第3轮客队先选
-  const nextIsAwayFirst = nextRound % 2 === 1; // 奇数轮客队先选
-  
+  // Draft order alternates: Round 1 - Away picks first, Round 2 - Home picks first, Round 3 - Away picks first
+  const nextIsAwayFirst = nextRound % 2 === 1; // Odd rounds: Away picks first
   let nextFirstSelector: 'player' | 'ai';
   if (state.isHomeTeam) {
-    // 玩家是主队
+    // Player is Home team
     nextFirstSelector = nextIsAwayFirst ? 'ai' : 'player';
   } else {
-    // 玩家是客队
+    // Player is Away team
     nextFirstSelector = nextIsAwayFirst ? 'player' : 'ai';
   }
   
@@ -188,7 +187,7 @@ export const discardDraftCard = (state: GameState): GameState => {
     availableDraftCards: nextDraftCards,
     discardedDraftCards: newDiscardedDraftCards,
     draftRound: nextRound,
-    draftStep: nextFirstSelector === 'ai' ? 2 : 1, // 1: 玩家选择, 2: AI选择
+    draftStep: nextFirstSelector === 'ai' ? 2 : 1, // 1: Player selects, 2: AI selects
     message: `Round ${nextRound} started! ${nextFirstSelector === 'player' ? 'Your turn to choose first!' : 'AI is choosing first...'}`
   };
 };

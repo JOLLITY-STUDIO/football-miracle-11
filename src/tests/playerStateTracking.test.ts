@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { gameReducer, createInitialState } from '../game/gameLogic';
-import { PlayerCard } from '../types/game';
+import { athleteCard } from '../types/game';
 
 describe('Player State Tracking', () => {
-  const createTestPlayer = (id: string, name: string, iconPositions: any[]): PlayerCard => ({
+  const createTestPlayer = (id: string, name: string, iconPositions: any[]): athleteCard => ({
     id,
     name,
     position: 'CF',
@@ -16,21 +16,21 @@ describe('Player State Tracking', () => {
 
   it('should track used shot icons when performing a shot', () => {
     const initialState = createInitialState();
-    const playerCard = createTestPlayer('player1', 'Test Player', [
+    const athleteCard = createTestPlayer('player1', 'Test Player', [
       { type: 'attack', position: 'top-25%' },
       { type: 'defense', position: 'bottom-25%' }
     ]);
 
     const stateWithPlayer = {
       ...initialState,
-      playerHand: [playerCard],
+      playerHand: [athleteCard],
       turnPhase: 'playerAction' as const,
       currentTurn: 'player' as const
     };
 
     const action = {
       type: 'PERFORM_SHOT' as const,
-      card: playerCard,
+      card: athleteCard,
       slot: 0,
       zone: 0
     };
@@ -44,7 +44,7 @@ describe('Player State Tracking', () => {
 
   it('should prevent using the same shot icon twice', () => {
     const initialState = createInitialState();
-    const playerCard = createTestPlayer('player1', 'Test Player', [
+    const athleteCard = createTestPlayer('player1', 'Test Player', [
       { type: 'attack', position: 'top-25%' },
       { type: 'attack', position: 'top-75%' },
       { type: 'defense', position: 'bottom-25%' }
@@ -52,16 +52,16 @@ describe('Player State Tracking', () => {
 
     const stateWithPlayer = {
       ...initialState,
-      playerHand: [playerCard],
+      playerHand: [athleteCard],
       turnPhase: 'playerAction' as const,
       currentTurn: 'player' as const,
-      playerField: [{ cards: [playerCard], active: true, synergyCards: [] }]
+      playerField: [{ cards: [athleteCard], active: true, synergyCards: [] }]
     };
 
     // First shot
     const firstAction = {
       type: 'PERFORM_SHOT' as const,
-      card: playerCard,
+      card: athleteCard,
       slot: 0,
       zone: 0
     };
@@ -76,7 +76,7 @@ describe('Player State Tracking', () => {
 
   it('should reset used shot icons at half-time', () => {
     const initialState = createInitialState();
-    const playerCard = createTestPlayer('player1', 'Test Player', [
+    const athleteCard = createTestPlayer('player1', 'Test Player', [
       { type: 'attack', position: 'top-25%' }
     ]);
 

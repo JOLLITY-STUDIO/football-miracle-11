@@ -99,3 +99,4 @@ const PlayerAvatar: React.FC<Props> = ({ seed = 'default', imageUrl, className }
 };
 
 export default PlayerAvatar;
+

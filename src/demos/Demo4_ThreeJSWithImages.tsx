@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-interface PlayerCard {
+interface athleteCard {
   id: string;
   name: string;
   imageUrl: string;
@@ -20,8 +20,8 @@ export const Demo4_ThreeJSWithImages: React.FC<Demo4Props> = ({ onCellClick }) =
   const ROWS = 4;
 
   const [hoveredCell, setHoveredCell] = useState<{ zone: number; col: number } | null>(null);
-  const [selectedCard, setSelectedCard] = useState<PlayerCard | null>(null);
-  const [placedCards, setPlacedCards] = useState<PlayerCard[]>([
+  const [selectedCard, setSelectedCard] = useState<athleteCard | null>(null);
+  const [placedCards, setPlacedCards] = useState<athleteCard[]>([
     { id: '1', name: 'Player 1', imageUrl: '/images/player1.png', position: { zone: 0, col: 0 } },
     { id: '2', name: 'Player 2', imageUrl: '/images/player2.png', position: { zone: 1, col: 2 } },
     { id: '3', name: 'Player 3', imageUrl: '/images/player3.png', position: { zone: 2, col: 4 } },
@@ -124,8 +124,7 @@ export const Demo4_ThreeJSWithImages: React.FC<Demo4Props> = ({ onCellClick }) =
               cursor: 'pointer'
             }}
           >
-            选择新球员
-          </button>
+            选择新球�?          </button>
         </div>
       </div>
       
@@ -159,8 +158,7 @@ export const Demo4_ThreeJSWithImages: React.FC<Demo4Props> = ({ onCellClick }) =
         <p>Hovered: {hoveredCell ? `Zone ${hoveredCell.zone}, Col ${hoveredCell.col}` : 'None'}</p>
         <p>Selected: {selectedCard ? selectedCard.name : 'None'}</p>
         <p style={{ fontSize: '12px', color: '#9ca3af' }}>
-          点击网格单元放置球员，选择"选择新球员"后点击绿色网格放置
-        </p>
+          点击网格单元放置球员，选择"选择新球�?后点击绿色网格放�?        </p>
       </div>
     </div>
   );

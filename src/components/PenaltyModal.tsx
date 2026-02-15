@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { penaltyCards, penaltyDefenseCards, penaltyDefenseCoverage } from '../data/cards';
 
 interface Props {
   isOpen: boolean;
@@ -10,24 +11,61 @@ interface Props {
 // 5 Attack Zones (Left to Right)
 const ATTACK_ZONES = [1, 2, 3, 4, 5];
 
-// 5 Defense Cards with coverage
-const DEFENSE_CARDS = [
-  { id: 'save_far_left', name: 'Far Left Dive', coverage: [1, 2], icon: '⬅️' },
-  { id: 'save_left', name: 'Left Dive', coverage: [2, 3], icon: '↙️' },
-  { id: 'save_center', name: 'Center Block', coverage: [3], icon: '✋' },
-  { id: 'save_right', name: 'Right Dive', coverage: [3, 4], icon: '↘️' },
-  { id: 'save_far_right', name: 'Far Right Dive', coverage: [4, 5], icon: '➡️' },
+// 点球位置映射
+const PENALTY_POSITIONS = [
+  { zone: 1, name: '左上', icon: '↖️' },
+  { zone: 2, name: '左下', icon: '↙️' },
+  { zone: 3, name: '中间', icon: '⬇️' },
+  { zone: 4, name: '右上', icon: '↗️' },
+  { zone: 5, name: '右下', icon: '↘️' },
 ];
+
+// 获取防守卡的覆盖范围
+const getDefenseCoverage = (defenseCard: typeof penaltyDefenseCards[0]) => {
+  return penaltyDefenseCoverage[defenseCard.id] || [];
+};
+
+// 获取守门员X轴偏移量
+const getKeeperXOffset = (defenseCard: typeof penaltyDefenseCards[0]) => {
+  const coverage = getDefenseCoverage(defenseCard);
+  if (coverage.length === 0) {
+    return 0; // 判断失误，站在原�?  } else if (coverage.includes('左上') || coverage.includes('左下')) {
+    return -120; // 向左移动
+  } else if (coverage.includes('右上') || coverage.includes('右下')) {
+    return 120; // 向右移动
+  } else {
+    return 0; // 中间位置
+  }
+};
+
+// 获取守门员旋转角度
+const getKeeperRotation = (defenseCard: typeof penaltyDefenseCards[0]) => {
+  const coverage = getDefenseCoverage(defenseCard);
+  if (coverage.length === 0) {
+    return 0; // 判断失误，直立
+  } else if (coverage.includes('左上') || coverage.includes('左下')) {
+    return -20; // 向左倾斜
+  } else if (coverage.includes('右上') || coverage.includes('右下')) {
+    return 20; // 向右倾斜
+  } else {
+    return 0; // 直立
+  }
+};
 
 export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
   const [phase, setPhase] = useState<'aim' | 'result'>('aim');
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
-  const [aiDefenseCard, setAiDefenseCard] = useState<typeof DEFENSE_CARDS[0] | null>(null);
+  const [aiDefenseCard, setAiDefenseCard] = useState<typeof penaltyDefenseCards[0] | null>(null);
   const [result, setResult] = useState<'goal' | 'saved' | null>(null);
+  const [shuffledDefenseCards, setShuffledDefenseCards] = useState<typeof penaltyDefenseCards>([]);
 
   // Reset state when opened
   useEffect(() => {
     if (isOpen) {
+      // 洗牌：每次打开点球模态框时重新洗牌
+      const shuffled = [...penaltyDefenseCards].sort(() => Math.random() - 0.5);
+      setShuffledDefenseCards(shuffled);
+      
       setPhase('aim');
       setSelectedZone(null);
       setAiDefenseCard(null);
@@ -43,15 +81,25 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
   const handleShoot = () => {
     if (selectedZone === null) return;
 
-    // AI Randomly picks a defense card
-    const randomDefense = DEFENSE_CARDS[Math.floor(Math.random() * DEFENSE_CARDS.length)];
-    if (!randomDefense) return;
+    // Get player penalty card based on zone
+    const athleteCard = penaltyCards[selectedZone - 1];
+    
+    // AI selects random defense card from shuffled deck
+    const availableCards = shuffledDefenseCards.length > 0 ? shuffledDefenseCards : penaltyDefenseCards;
+    const aiCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+    if (!aiCard) return;
 
-    setAiDefenseCard(randomDefense);
+    setAiDefenseCard(aiCard);
 
+    // Get defense card coverage
+    const defenseCoverage = getDefenseCoverage(aiCard);
+    
+    // Extract shot position from player card name (e.g., "点球-左上" -> "左上")
+    const shotPosition = athleteCard.name.split('-')[1];
+    
     // Check Result
-    // Goal if selectedZone is NOT in coverage
-    const isGoal = !randomDefense.coverage.includes(selectedZone);
+    // Goal if shot position is NOT in defense coverage
+    const isGoal = !defenseCoverage.includes(shotPosition);
     setResult(isGoal ? 'goal' : 'saved');
     setPhase('result');
 
@@ -95,7 +143,7 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
                    backgroundImage: "url('images/player_card_2.webp')", // Placeholder keeper
                    filter: 'grayscale(1) brightness(0.5)',
                    transform: phase === 'result' && aiDefenseCard
-                     ? `translateX(${((aiDefenseCard.coverage[0] ?? 3) - 3) * 60}px) translateY(20px) rotate(${aiDefenseCard.id.includes('left') ? -20 : aiDefenseCard.id.includes('right') ? 20 : 0}deg)`
+                     ? `translateX(${getKeeperXOffset(aiDefenseCard)}px) translateY(20px) rotate(${getKeeperRotation(aiDefenseCard)}deg)`
                      : 'translateX(-50%)'
                  }}
             />
@@ -133,7 +181,7 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
           <div className="flex-1 w-full flex flex-col items-center justify-center">
              {phase === 'aim' ? (
                <div className="flex flex-col items-center gap-6">
-                 {/* Player Attack Cards (Visual Only for now) */}
+                 {/* Player Attack Cards (Flat Design) */}
                  <div className="flex gap-4">
                    {ATTACK_ZONES.map(z => (
                      <motion.div
@@ -141,12 +189,46 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
                        whileHover={{ y: -10 }}
                        onClick={() => handleZoneSelect(z)}
                        className={clsx(
-                         "w-20 h-28 rounded-lg border-2 flex flex-col items-center justify-center cursor-pointer transition-colors shadow-lg bg-gradient-to-b from-gray-800 to-black",
-                         selectedZone === z ? "border-red-500 ring-2 ring-red-500 ring-offset-2 ring-offset-black" : "border-gray-600 hover:border-gray-400"
+                         "w-24 h-32 rounded-lg border-2 border-black/30 overflow-hidden cursor-pointer transition-colors shadow-lg",
+                         selectedZone === z ? "ring-2 ring-red-500 ring-offset-2 ring-offset-black" : ""
                        )}
                      >
-                       <span className="text-2xl mb-1">🥅</span>
-                       <span className="text-lg font-bold text-white">#{z}</span>
+                       {/* Flat Design Attack Card */}
+                       <div className="h-full flex">
+                         {/* Left Half: Red Background */}
+                         <div className="relative w-1/2 h-full border-r border-black/30 bg-gradient-to-br from-red-500 to-red-700">
+                           <div className="w-full h-full flex items-center justify-center">
+                             <span className="text-3xl">👟</span>
+                           </div>
+                            
+                           {/* Attack Icon */}
+                           <div className="absolute bottom-2 left-2 w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                             <span className="text-xs font-black text-white">⚔️</span>
+                           </div>
+                         </div>
+                         
+                         {/* Right Half: White Info Area */}
+                         <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-1">
+                           <div className="flex flex-col items-center justify-center space-y-2">
+                             {/* Position Label */}
+                             <div className="bg-red-600 px-1.5 py-0.5 rounded-md">
+                               <span className="text-[8px] font-black tracking-wider text-white">ATTACK</span>
+                             </div>
+                              
+                             {/* Zone Number */}
+                             <div className="text-sm font-black tracking-wider text-center leading-none text-red-800">
+                               ZONE #{z}
+                             </div>
+                              
+                             {/* Skill Icon */}
+                             <div className="flex items-center justify-center">
+                               <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center border-2 border-red-500">
+                                 <span className="text-xs font-bold text-red-800">+1</span>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
                      </motion.div>
                    ))}
                  </div>
@@ -162,7 +244,7 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
              ) : (
                <div className="flex flex-col items-center gap-4">
                  <div className="text-6xl mb-4 animate-bounce">
-                   {result === 'goal' ? '⚽ GOAL!' : '🧤 SAVED!'}
+                   {result === 'goal' ? '�?GOAL!' : '🧤 SAVED!'}
                  </div>
                  
                  {/* Reveal AI Card */}
@@ -170,16 +252,45 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
                    <motion.div 
                      initial={{ rotateY: 90, opacity: 0 }}
                      animate={{ rotateY: 0, opacity: 1 }}
-                     className="w-40 h-56 bg-gradient-to-br from-blue-800 to-blue-950 rounded-xl border-4 border-blue-500 flex flex-col items-center justify-center shadow-2xl"
+                     className="w-40 h-56 rounded-xl border-2 border-black/30 overflow-hidden shadow-2xl"
                    >
-                     <div className="text-6xl mb-2">{aiDefenseCard.icon}</div>
-                     <div className="text-xl text-center px-2 font-bold text-white">{aiDefenseCard.name}</div>
-                     <div className="mt-4 flex gap-1">
-                        {aiDefenseCard.coverage.map(c => (
-                          <span key={c} className="w-6 h-6 rounded bg-white text-blue-900 flex items-center justify-center font-bold text-xs">
-                            {c}
-                          </span>
-                        ))}
+                     {/* Flat Design Card */}
+                     <div className="h-full flex">
+                       {/* Left Half: Orange Background */}
+                       <div className="relative w-1/2 h-full border-r border-black/30 bg-gradient-to-br from-orange-500 to-orange-700">
+                         <div className="w-full h-full flex items-center justify-center">
+                           <div className="text-6xl">🧤</div>
+                         </div>
+                          
+                         {/* Goal Icon */}
+                         <div className="absolute bottom-2 left-2 w-6 h-6 rounded bg-white/20 flex items-center justify-center">
+                           <span className="text-xs font-black text-white">🥅</span>
+                         </div>
+                       </div>
+                       
+                       {/* Right Half: White Info Area */}
+                       <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-2">
+                         <div className="flex flex-col items-center justify-center space-y-3">
+                           {/* Position Label */}
+                           <div className="bg-orange-600 px-2 py-0.5 rounded-md">
+                             <span className="text-xs font-black tracking-wider text-white">DEFENSE</span>
+                           </div>
+                           
+                           {/* Card Name */}
+                           <div className="text-xs font-black tracking-wider text-center leading-none text-orange-800">
+                             {aiDefenseCard.name}
+                           </div>
+                           
+                           {/* Coverage */}
+                           <div className="flex gap-1">
+                             {aiDefenseCard.coverage.map(c => (
+                               <span key={c} className="w-6 h-6 rounded bg-orange-100 text-orange-800 flex items-center justify-center font-bold text-xs border border-orange-300">
+                                 {c}
+                               </span>
+                             ))}
+                           </div>
+                         </div>
+                       </div>
                      </div>
                    </motion.div>
                  )}
@@ -192,3 +303,4 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
     </AnimatePresence>
   );
 };
+

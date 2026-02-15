@@ -34,8 +34,9 @@ export interface FieldZone {
   synergyCards: any[];
   slots: {
     position: number;
-    playerCard: any;
+    athleteCard: any;
     usedShotIcons?: number[];
     shotMarkers?: number;
   }[];
 }
+

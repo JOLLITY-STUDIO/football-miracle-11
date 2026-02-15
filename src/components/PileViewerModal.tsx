@@ -35,7 +35,7 @@ export const PileViewerModal: React.FC<Props> = ({ isOpen, title, cards, onClose
             {/* Header */}
             <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{type === 'deck' ? '⚡' : '🗑️'}</span>
+                <span className="text-2xl">{type === 'deck' ? '🎴' : '🗑️'}</span>
                 <h2 className="text-2xl font-bold text-white uppercase tracking-widest">{title}</h2>
                 <span className="text-white/40 font-mono text-sm">({cards.length})</span>
               </div>
@@ -94,3 +94,4 @@ export const PileViewerModal: React.FC<Props> = ({ isOpen, title, cards, onClose
     </AnimatePresence>
   );
 };
+

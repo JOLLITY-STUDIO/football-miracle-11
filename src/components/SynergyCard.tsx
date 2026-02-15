@@ -55,14 +55,9 @@ export const SynergyCardComponent: React.FC<Props> = ({
     if (isDefense) return '🛡️';
     if (isTackle) return '👟';
     if (isSetPiece) return '🚩';
-    return '⭐';
+    return '📚';
   };
 
-  const frontImage = card.stars === 1 
-    ? (isTackle ? 'cards/synergy/synergy-card-1-trackle.png' : 'cards/synergy/synergy-card-1.png')
-    : undefined;
-  const frontImageStars2 = card.stars === 2 ? 'cards/synergy/synergy-card-2.png' : undefined;
-  const frontImageResolved = frontImage || frontImageStars2;
   const typeLabel = isTackle ? 'TACKLE!' : isAttack ? 'ATTACK!' : isDefense ? 'DEFENSE!' : isSetPiece ? 'SET PIECE' : isSpecial ? 'SPECIAL' : '';
 
   return (
@@ -86,62 +81,77 @@ export const SynergyCardComponent: React.FC<Props> = ({
       >
         {/* Front Face */}
         <div className={`
-          absolute inset-0 backface-hidden overflow-hidden border-2
+          absolute inset-0 backface-hidden overflow-hidden border-2 border-stone-800
           ${getBgGradient()}
           ${getBorderColor()}
         `}
         style={{ backfaceVisibility: 'hidden' }}
         >
-          {frontImageResolved ? (
-            <img 
-              src={frontImageResolved} 
-              alt="Synergy Card Front"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-white">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className={`w-full h-full flex flex-col items-center justify-center ${getBgGradient()} text-white p-2`}>
-                  <div className="text-4xl mb-1">{getIcon()}</div>
-                  <div className="text-[10px] font-black tracking-tighter uppercase text-center leading-none">
-                    {card.name}
-                  </div>
-                  {card.stars > 0 && (
-                    <div className="mt-1 flex gap-0.5">
-                      {[...Array(card.stars)].map((_, i) => (
-                        <span key={i} className="text-yellow-400 text-sm">★</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+          {/* 卡片内容 - 左右布局 */}
+          <div className="h-full flex">
+            {/* 左边1/2：背景色区域 */}
+            <div className="relative w-1/2 h-full border-r border-black/30">
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-4xl">{getIcon()}</div>
+              </div>
+              
+              {/* 类型图标 */}
+              <div className="absolute bottom-2 left-2 w-6 h-6 rounded bg-white/20 flex items-center justify-center">
+                <span className="text-xs font-black text-white">
+                  {isAttack ? '⚔️' : isDefense ? '🛡️' : isTackle ? '👟' : '📚'}
+                </span>
               </div>
             </div>
-          )}
-          
-          {/* Label strip */}
-          {!frontImageResolved && (
-            <div className="absolute top-0 left-0 right-0 h-4 bg-black/40 flex items-center px-2">
-              <span className="text-[8px] font-bold text-white tracking-widest uppercase">{typeLabel}</span>
+            
+            {/* 右边1/2：白色信息区�?*/}
+            <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-2">
+              <div className="flex flex-col items-center justify-center space-y-2">
+                {/* 类型标签 */}
+                <div className={`px-2 py-0.5 rounded-md ${isAttack ? 'bg-red-600' : isDefense ? 'bg-blue-600' : isTackle ? 'bg-purple-600' : 'bg-amber-600'}`}>
+                  <span className="text-xs font-black tracking-wider text-white">{typeLabel}</span>
+                </div>
+                
+                {/* 卡片名称 */}
+                <div className="text-xs font-black tracking-wider text-center leading-none" style={{ color: isAttack ? '#dc2626' : isDefense ? '#2563eb' : isTackle ? '#8b5cf6' : '#d97706' }}>
+                  {card.name}
+                </div>
+                
+                {/* 技能�?*/}
+                {card.stars > 0 && (
+                  <div className="flex items-center justify-center space-x-1">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isAttack ? 'bg-red-100 border-red-500' : isDefense ? 'bg-blue-100 border-blue-500' : isTackle ? 'bg-purple-100 border-purple-500' : 'bg-amber-100 border-amber-500'}`}>
+                      <span className={`text-xs font-bold ${isAttack ? 'text-red-800' : isDefense ? 'text-blue-800' : isTackle ? 'text-purple-800' : 'text-amber-800'}`}>+{card.stars}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Back Face */}
-        <div className="absolute inset-0 backface-hidden bg-stone-900 flex items-center justify-center overflow-hidden"
+        <div className="absolute inset-0 backface-hidden overflow-hidden"
              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-          <img 
-            src="cards/synergy/synergy-card-back.png" 
-            alt="Synergy Card Back" 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback if image doesn't exist
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.parentElement!.classList.add('bg-stone-800');
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-16 h-16 rounded-full border-4 border-white/10 flex items-center justify-center">
-              <img src="/icons/synergy_plus_ring.svg" alt="Synergy" className="w-10 h-10 opacity-40" />
+          {/* 统一卡牌背面设计 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center overflow-hidden">
+            {/* 大五角星背景 */}
+            <div className="absolute inset-0 flex items-center justify-center z-0">
+              <div className="w-full h-full flex items-center justify-center transform rotate-90">
+                {/* SVG 金色五角�?*/}
+                <svg width="200" height="200" viewBox="0 0 100 100">
+                  <path 
+                    d="M50 0 L63 38 L100 38 L69 61 L81 100 L50 76 L19 100 L31 61 L0 38 L37 38 Z" 
+                    fill="#fbbf24"
+                    stroke="#fcd34d"
+                    stroke-width="6"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="w-16 h-16 rounded-full border-4 border-yellow-400/30 flex items-center justify-center bg-black/30">
+                <img src="/icons/synergy_plus_ring.svg" alt="Card Back" className="w-10 h-10 opacity-90" />
+              </div>
             </div>
           </div>
         </div>
@@ -149,3 +159,4 @@ export const SynergyCardComponent: React.FC<Props> = ({
     </motion.div>
   );
 };
+

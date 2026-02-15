@@ -1,9 +1,9 @@
 import type { GameState } from '../game/gameLogic';
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 import type { SynergyCard } from '../data/cards';
 import { calculateAttackPower } from './gameUtils';
 
-export const performShot = (state: GameState, card: PlayerCard, slot: number, zone: number, synergyCards?: SynergyCard[]): GameState => {
+export const performShot = (state: GameState, card: athleteCard, slot: number, zone: number, synergyCards?: SynergyCard[]): GameState => {
   // Check if the card has available shot icons
   const isPlayer = state.currentTurn === 'player';
   const usedShotIcons = isPlayer ? state.playerUsedShotIcons[card.id] || [] : state.aiUsedShotIcons[card.id] || [];
@@ -73,7 +73,7 @@ export const performShot = (state: GameState, card: PlayerCard, slot: number, zo
         return {
           ...z,
           slots: z.slots.map(s => {
-            if (s.position === slot && s.playerCard?.id === card.id) {
+            if (s.position === slot && s.athleteCard?.id === card.id) {
               return {
                 ...s,
                 shotMarkers: (s.shotMarkers || 0) + 1
@@ -93,7 +93,7 @@ export const performShot = (state: GameState, card: PlayerCard, slot: number, zo
         return {
           ...z,
           slots: z.slots.map(s => {
-            if (s.position === slot && s.playerCard?.id === card.id) {
+            if (s.position === slot && s.athleteCard?.id === card.id) {
               return {
                 ...s,
                 shotMarkers: (s.shotMarkers || 0) + 1

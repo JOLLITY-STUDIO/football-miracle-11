@@ -8,13 +8,13 @@ import {
   getMaxSynergyCardsForAttack,
   countIcons
 } from '../game/gameLogic';
-import type { PlayerCard, SynergyCard } from '../data/cards';
+import type { athleteCard, SynergyCard } from '../data/cards';
 import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
 
-// 类型定义，用于修复 TypeScript 错误
+// 类型定义，用于修�?TypeScript 错误
 interface PerformShotAction {
   type: 'PERFORM_SHOT';
-  card: PlayerCard;
+  card: athleteCard;
   slot: number;
   zone: number;
   synergyCards?: SynergyCard[];
@@ -26,9 +26,9 @@ interface PenaltyCompleteAction {
   aiPoints: number;
 }
 
-interface SelectPlayerCardAction {
+interface SelectathleteCardAction {
   type: 'SELECT_PLAYER_CARD';
-  card: PlayerCard | null;
+  card: athleteCard | null;
 }
 
 interface TeamActionAction {
@@ -38,11 +38,11 @@ interface TeamActionAction {
 
 interface StartSubstitutionAction {
   type: 'START_SUBSTITUTION';
-  card: PlayerCard;
+  card: athleteCard;
 }
 
 export const useGameState = (
-  playerTeam: { starters: PlayerCard[]; substitutes: PlayerCard[]; initialField?: any[] } | null, 
+  playerTeam: { starters: athleteCard[]; substitutes: athleteCard[]; initialField?: any[] } | null, 
   playSound: (sound: string) => void,
   onBack: () => void
 ) => {
@@ -87,11 +87,11 @@ export const useGameState = (
       const slotIdx = Math.floor(startCol / 2) + 1;
       const targetSlot = targetZone.slots.find(s => s.position === slotIdx);
       
-      if (targetSlot?.playerCard) {
+      if (targetSlot?.athleteCard) {
         // 执行替换
         dispatch({
           type: 'SUBSTITUTE', 
-          outgoingCardId: targetSlot.playerCard.id, 
+          outgoingCardId: targetSlot.athleteCard.id, 
           incomingCardId: gameState.substitutionMode.incomingCard.id 
         });
         playSound('whistle');
@@ -106,7 +106,7 @@ export const useGameState = (
       return;
     }
 
-    // 检查是否可以放置卡牌 - 改进的逻辑
+    // 检查是否可以放置卡�?- 改进的逻辑
     const canPlace = gameState.turnPhase === 'playerAction' || 
                     gameState.turnPhase === 'teamAction' || 
                     (gameState.isFirstTurn && gameState.turnPhase === 'start');
@@ -147,8 +147,7 @@ export const useGameState = (
     
     if (gameState.currentTurn !== 'player') return;
     
-    // 检查是否可以执行攻击操作
-    const canPerformAction = gameState.turnPhase === 'playerAction' || 
+    // 检查是否可以执行攻击操�?    const canPerformAction = gameState.turnPhase === 'playerAction' || 
                           gameState.turnPhase === 'teamAction' || 
                           (gameState.isFirstTurn && gameState.turnPhase === 'start');
 
@@ -169,9 +168,9 @@ export const useGameState = (
 
     const attackerZone = gameState.playerField.find(z => z.zone === zone);
     const attackerSlot = attackerZone?.slots.find(s => s.position === slot);
-    if (!attackerSlot || !attackerSlot.playerCard) return;
+    if (!attackerSlot || !attackerSlot.athleteCard) return;
     
-    const attacker = attackerSlot.playerCard;
+    const attacker = attackerSlot.athleteCard;
     if (!attacker.icons.includes('attack')) {
       setGameState(prev => ({ ...prev, message: 'This card cannot attack' }));
       playSound('error');
@@ -221,7 +220,7 @@ export const useGameState = (
     playSound('whistle');
   }, [dispatch, playSound]);
 
-  const handleSubstituteSelect = useCallback((card: PlayerCard) => {
+  const handleSubstituteSelect = useCallback((card: athleteCard) => {
     if (gameState.playerSubstitutionsLeft <= 0) return;
     if (gameState.currentTurn !== 'player') return;
     dispatch({ type: 'START_SUBSTITUTION', card });
@@ -283,3 +282,4 @@ export const useGameState = (
     handlePenaltyComplete
   };
 };
+

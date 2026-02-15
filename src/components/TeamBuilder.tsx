@@ -1,19 +1,19 @@
-﻿import React, { useState } from 'react';
-import type { PlayerCard } from '../data/cards';
-import { basePlayerCards } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import React, { useState } from 'react';
+import type { AthleteCard } from '../data/cards';
+import { baseathleteCards } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 
 interface Props {
-  onComplete: (squad: PlayerCard[], starters: PlayerCard[], substitutes: PlayerCard[]) => void;
+  onComplete: (squad: AthleteCard[], starters: AthleteCard[], substitutes: AthleteCard[]) => void;
 }
 
 export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
-  const [selectedCards, setSelectedCards] = useState<PlayerCard[]>([]);
+  const [selectedCards, setSelectedCards] = useState<AthleteCard[]>([]);
   const [step, setStep] = useState<'select' | 'starters'>('select');
-  const [starters, setStarters] = useState<PlayerCard[]>([]);
-  const [substitutes, setSubstitutes] = useState<PlayerCard[]>([]);
+  const [starters, setStarters] = useState<AthleteCard[]>([]);
+  const [substitutes, setSubstitutes] = useState<AthleteCard[]>([]);
 
-  const handleCardSelect = (card: PlayerCard) => {
+  const handleCardSelect = (card: AthleteCard) => {
     if (step === 'select') {
       const isSelected = selectedCards.some(c => c.id === card.id);
       if (isSelected) {
@@ -51,7 +51,7 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
   };
 
   const handleAutoSelect = () => {
-    const shuffled = [...basePlayerCards].sort(() => Math.random() - 0.5);
+    const shuffled = [...baseathleteCards].sort(() => Math.random() - 0.5);
     setSelectedCards(shuffled.slice(0, 13));
   };
 
@@ -79,10 +79,10 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
         {step === 'select' ? (
           <>
             <div className="bg-black/30 rounded-lg p-4 mb-4">
-              <h2 className="text-white font-bold mb-3">Forwards ({basePlayerCards.filter(c => c.type === 'forward').length})</h2>
+              <h2 className="text-white font-bold mb-3">Forwards ({baseathleteCards.filter(c => c.type === 'forward').length})</h2>
               <div className="flex flex-wrap gap-2">
-                {basePlayerCards.filter(c => c.type === 'forward').map(card => (
-                  <PlayerCardComponent
+                {baseathleteCards.filter(c => c.type === 'forward').map(card => (
+                  <AthleteCardComponent
                     key={card.id}
                     card={card}
                     size="small"
@@ -94,10 +94,10 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
             </div>
 
             <div className="bg-black/30 rounded-lg p-4 mb-4">
-              <h2 className="text-white font-bold mb-3">Midfielders ({basePlayerCards.filter(c => c.type === 'midfielder').length})</h2>
+              <h2 className="text-white font-bold mb-3">Midfielders ({baseathleteCards.filter(c => c.type === 'midfielder').length})</h2>
               <div className="flex flex-wrap gap-2">
-                {basePlayerCards.filter(c => c.type === 'midfielder').map(card => (
-                  <PlayerCardComponent
+                {baseathleteCards.filter(c => c.type === 'midfielder').map(card => (
+                  <AthleteCardComponent
                     key={card.id}
                     card={card}
                     size="small"
@@ -109,10 +109,10 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
             </div>
 
             <div className="bg-black/30 rounded-lg p-4 mb-4">
-              <h2 className="text-white font-bold mb-3">Defenders ({basePlayerCards.filter(c => c.type === 'defender').length})</h2>
+              <h2 className="text-white font-bold mb-3">Defenders ({baseathleteCards.filter(c => c.type === 'defender').length})</h2>
               <div className="flex flex-wrap gap-2">
-                {basePlayerCards.filter(c => c.type === 'defender').map(card => (
-                  <PlayerCardComponent
+                {baseathleteCards.filter(c => c.type === 'defender').map(card => (
+                  <AthleteCardComponent
                     key={card.id}
                     card={card}
                     size="small"
@@ -150,7 +150,7 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
               <div className="flex flex-wrap gap-2">
                 {selectedCards.map(card => (
                   <div key={card.id} className="relative">
-                    <PlayerCardComponent
+                    <AthleteCardComponent
                       card={card}
                       size="small"
                       selected={starters.some(c => c.id === card.id)}
@@ -172,7 +172,7 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
                 <h3 className="text-green-300 font-bold mb-2">Starting XI ({starters.length}/10)</h3>
                 <div className="flex flex-wrap gap-2 min-h-20">
                   {starters.map(card => (
-                    <PlayerCardComponent
+                    <AthleteCardComponent
                       key={card.id}
                       card={card}
                       size="small"
@@ -185,7 +185,7 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
                 <h3 className="text-yellow-300 font-bold mb-2">Substitutes ({substitutes.length}/3)</h3>
                 <div className="flex flex-wrap gap-2 min-h-20">
                   {substitutes.map(card => (
-                    <PlayerCardComponent
+                    <AthleteCardComponent
                       key={card.id}
                       card={card}
                       size="small"
@@ -227,6 +227,7 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
     </div>
   );
 };
+
 
 
 

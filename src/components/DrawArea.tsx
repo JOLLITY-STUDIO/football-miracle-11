@@ -33,3 +33,4 @@ export const DrawArea: React.FC<Props> = ({
     </div>
   );
 };
+

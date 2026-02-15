@@ -1,11 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import type { PlayerCard as PlayerCardType, TacticalIcon, IconPosition } from '../data/cards';
+import type { AthleteCard, TacticalIcon, IconPosition } from '../data/cards';
 import { SkillEffectBadge } from './SkillEffectBadge';
 
+// Type alias for clarity
+type athleteCardType = AthleteCard;
+
 interface Props {
-  card: PlayerCardType;
+  card: athleteCardType;
   onClick?: () => void;
   onMouseEnter?: (event?: React.MouseEvent) => void;
   onMouseLeave?: () => void;
@@ -13,7 +16,7 @@ interface Props {
   size?: 'tiny' | 'small' | 'medium' | 'large';
   faceDown?: boolean;
   draggable?: boolean;
-  onDragStart?: (card: PlayerCardType) => void;
+  onDragStart?: (card: athleteCardType) => void;
   onDragEnd?: () => void;
   disabled?: boolean;
   variant?: 'home' | 'away';
@@ -30,8 +33,7 @@ const getRoleName = (type: string) => {
 };
 
 const getCardBgColor = (type: string) => {
-  // 统一使用深色渐变背景，确保所有卡片背景一致
-  return 'bg-gradient-to-br from-gray-800 to-gray-900';
+  // 统一使用深色渐变背景，确保所有卡片背景一�?  return 'bg-gradient-to-br from-gray-800 to-gray-900';
 };
 
 const getIconImage = (icon: TacticalIcon): string => {
@@ -83,7 +85,7 @@ const getThemeColor = (type: string) => {
   }
 };
 
-export const PlayerCardComponent: React.FC<Props> = ({ 
+export const AthleteCardComponent: React.FC<Props> = ({ 
   card, 
   onClick, 
   onMouseEnter,
@@ -162,7 +164,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
         key={`half-${iconPos.position}-${index}`}
         style={containerStyle}
       >
-        {/* 背景图片的凹进部分 */}
+        {/* 背景图片的凹进部�?*/}
         <div
           className="absolute inset-0"
           style={{
@@ -200,15 +202,19 @@ export const PlayerCardComponent: React.FC<Props> = ({
   };
 
   return (
-    <div 
+    <div
       className="relative perspective-1000"
+      style={{
+        width: cardSize[size].width,
+        height: cardSize[size].height
+      }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       <motion.div
         layout
         initial={false}
-        animate={{ 
+        animate={{
           rotateY: faceDown ? 180 : 0,
           rotate: 0,
           scale: selected ? 1.05 : 1,
@@ -216,17 +222,14 @@ export const PlayerCardComponent: React.FC<Props> = ({
         }}
         whileHover={!disabled && !faceDown && variant !== 'away' ? { y: -3, scale: 1.02 } : {}}
         className={clsx(
-          "relative preserve-3d cursor-pointer transition-shadow rounded-lg overflow-hidden",
+          "relative preserve-3d cursor-pointer transition-shadow overflow-hidden rounded-lg",
           selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-20 shadow-lg",
           disabled && "cursor-not-allowed"
         )}
         style={{
-          ...cardSize[size],
-          boxSizing: 'border-box',
-          minWidth: cardSize[size].width,
-          minHeight: cardSize[size].height,
-          maxWidth: cardSize[size].width,
-          maxHeight: cardSize[size].height
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box'
         }}
         onClick={() => {
           console.log('Player card clicked:', card.name, 'ID:', card.id);
@@ -237,14 +240,14 @@ export const PlayerCardComponent: React.FC<Props> = ({
         onDragEnd={() => onDragEnd?.()}
       >
         {/* Front Face - 横版布局 左右各半 */}
-        <div 
+        <div
           className={clsx(
-            "absolute inset-0 backface-hidden flex rounded-lg overflow-hidden border-2 border-stone-800"
+            "absolute inset-0 backface-hidden flex overflow-hidden rounded-lg"
           )}
           style={{ backfaceVisibility: 'hidden' }}
         >
           {/* 左边1/2：背景色区域 */}
-          <div className={clsx("relative w-1/2 h-full border-r border-black/30", cardBg)}>
+          <div className={clsx("relative w-1/2 h-full border-r border-black/30 rounded-l-lg", cardBg)}>
             {card.imageUrl ? (
               <img 
                 src={card.imageUrl} 
@@ -258,23 +261,23 @@ export const PlayerCardComponent: React.FC<Props> = ({
               </div>
             )}
             
-            {/* 明星卡标识 */}
+            {/* 明星卡标记*/}
             {card.isStar && (
               <div className="absolute top-1 left-1">
-                <span className="text-yellow-400 text-lg drop-shadow-lg">★</span>
+                <span className="text-yellow-400 text-lg drop-shadow-lg">⭐</span>
               </div>
             )}
 
-            {/* 攻击力 */}
+            {/* 攻击力*/}
             <div className="absolute top-1 right-1 w-6 h-6 rounded bg-white/20 flex items-center justify-center backdrop-blur-sm">
               <span className="text-xs font-black text-white">
-                {card.isStar ? '★' : card.attack}
+                {card.isStar ? '⭐' : card.attack}
               </span>
             </div>
           </div>
 
           {/* 右边1/2：纯白色信息区域 */}
-          <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-2">
+          <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-2 rounded-r-lg">
             <div className="flex flex-col items-center justify-center space-y-1">
               {/* 位置标签 - 徽章样式 */}
               <div className="bg-stone-800 px-2 py-0.5 rounded-md shadow-sm mb-1">
@@ -293,7 +296,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
                 {card.realName}
               </div>
 
-              {/* 技能图标区域 - 与文字信息紧凑排列 */}
+              {/* 技能图标区�?- 与文字信息紧凑排�?*/}
               <div className="flex items-center justify-center space-x-1 pt-1">
                 {/* 完整图标（球员自带技能） */}
                 {card.completeIcon && (
@@ -308,7 +311,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
                   </div>
                 )}
 
-                {/* 技能效果徽章 */}
+                {/* 技能效果徽�?*/}
                 {card.immediateEffect !== 'none' && (
                   <div className="w-5 h-5 flex items-center justify-center">
                     <SkillEffectBadge 
@@ -322,22 +325,42 @@ export const PlayerCardComponent: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* 半圆图标 - 仅在存在图标时绘制 */}
+          {/* 半圆图标 - 仅在存在图标时绘�?*/}
           {card.iconPositions?.map((iconPos, index) => renderHalfIcon(iconPos, index))}
         </div>
 
         {/* Back Face */}
         <div 
-          className="absolute inset-0 backface-hidden bg-stone-800 flex items-center justify-center overflow-hidden rounded-lg border-2 border-stone-700"
+          className="absolute inset-0 backface-hidden overflow-hidden rounded-lg border-2 border-stone-700"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <img 
-            src="/icons/home_card_back.svg" 
-            alt="Card Back (Home)" 
-            className="w-full h-full object-cover"
-          />
+          {/* 统一卡牌背面设计 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center overflow-hidden">
+            {/* 大五角星背景 */}
+            <div className="absolute inset-0 flex items-center justify-center z-0">
+              <div className="w-full h-full flex items-center justify-center transform rotate-90">
+                {/* SVG 金色五角�?*/}
+                <svg width="200" height="200" viewBox="0 0 100 100">
+                  <path 
+                    d="M50 0 L63 38 L100 38 L69 61 L81 100 L50 76 L19 100 L31 61 L0 38 L37 38 Z" 
+                    fill="#fbbf24"
+                    stroke="#fcd34d"
+                    strokeWidth="6"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="w-20 h-20 rounded-full border-4 border-yellow-400/30 flex items-center justify-center bg-black/30">
+                <img src="/icons/synergy_plus_ring.svg" alt="Card Back" className="w-14 h-14 opacity-90" />
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>
   );
 };
+
+
+

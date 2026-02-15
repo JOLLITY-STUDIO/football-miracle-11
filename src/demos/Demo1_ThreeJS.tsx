@@ -52,8 +52,7 @@ export const Demo1_ThreeJS: React.FC<Demo1Props> = ({ onCellClick }) => {
   return (
     <div style={{ width: '100%', height: '100vh', background: '#1a1a1a' }}>
       <h2 style={{ color: 'white', textAlign: 'center', padding: '20px' }}>
-        Demo 1: Three.js 3D Grid - 优化版
-      </h2>
+        Demo 1: Three.js 3D Grid - 优化�?      </h2>
       <Canvas
         camera={{ position: [0, 5, 10], fov: 60 }}
         style={{ width: '100%', height: 'calc(100vh - 80px)' }}

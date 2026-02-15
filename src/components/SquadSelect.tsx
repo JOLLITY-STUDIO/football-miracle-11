@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlayerCard } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import type { AthleteCard } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 import { playSound } from '../utils/audio';
 
 interface Props {
-  allPlayers: PlayerCard[];
-  onConfirm: (starters: PlayerCard[], subs: PlayerCard[]) => void;
+  allPlayers: AthleteCard[];
+  onConfirm: (starters: AthleteCard[], subs: AthleteCard[]) => void;
   isHomeTeam: boolean;
 }
 
@@ -23,7 +23,7 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
     });
   }, [allPlayers]);
 
-  const toggleSelect = (card: PlayerCard) => {
+  const toggleSelect = (card: AthleteCard) => {
     const newSelected = new Set(selectedIds);
     if (newSelected.has(card.id)) {
       newSelected.delete(card.id);
@@ -50,7 +50,7 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
 
   const autoSelect = () => {
     playSound('click');
-    const byType: { defender: PlayerCard[]; midfielder: PlayerCard[]; forward: PlayerCard[] } = { defender: [], midfielder: [], forward: [] };
+    const byType: { defender: AthleteCard[]; midfielder: AthleteCard[]; forward: AthleteCard[] } = { defender: [], midfielder: [], forward: [] };
     sortedPlayers.forEach(p => {
       if (p.type === 'defender' || p.type === 'midfielder' || p.type === 'forward') {
         byType[p.type].push(p);
@@ -160,7 +160,7 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
                   <div className={`relative bg-stone-900/40 rounded-lg overflow-hidden transition-all duration-300 border-2 ${
                     selectedIds.has(card.id) ? 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-white/5 hover:border-white/20'
                   }`}>
-                    <PlayerCardComponent
+                    <AthleteCardComponent
                       card={card}
                       size="small"
                     />
@@ -227,7 +227,7 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
                 }`}
               >
                 CONFIRM SQUAD
-                <span className="text-xl">→</span>
+                <span className="text-xl">✓</span>
               </motion.button>
             </div>
           </div>
@@ -238,3 +238,4 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
 };
 
 export default SquadSelect;
+

@@ -6,7 +6,7 @@ interface Props {
   color?: string;
 }
 
-// 5x7数字模式，将居中放置在7x11网格中
+// 5x7数字模式，将居中放置到7x11网格中
 const digitPatterns5x7: number[][] = [
   // 0
   [
@@ -207,3 +207,4 @@ export const MultiDigitDotMatrix: React.FC<MultiDigitProps> = ({
     </div>
   );
 };
+

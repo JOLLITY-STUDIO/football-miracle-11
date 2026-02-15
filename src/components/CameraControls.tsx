@@ -33,3 +33,4 @@ export const CameraControls: React.FC<Props> = ({ pitch, onToggleView, onRotatio
     </div>
   );
 };
+

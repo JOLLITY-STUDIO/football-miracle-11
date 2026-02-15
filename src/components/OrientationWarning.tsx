@@ -45,9 +45,10 @@ export const OrientationWarning: React.FC = () => {
 
       <div className="mt-12 flex gap-4">
         <div className="w-12 h-8 border-2 border-white/20 rounded-sm rotate-90"></div>
-        <div className="text-white/20 text-2xl">➔</div>
+        <div className="text-white/20 text-2xl">➡️</div>
         <div className="w-12 h-8 border-2 border-yellow-500/50 rounded-sm"></div>
       </div>
     </div>
   );
 }; 
+

@@ -1,4 +1,4 @@
-import type { PlayerCard, SynergyCard } from '../data/cards';
+import type { athleteCard, SynergyCard } from '../data/cards';
 import type { GamePhase } from './gameLogic';
 
 export type ActionType = 
@@ -24,8 +24,8 @@ export interface GameAction {
 export interface GameSnapshot {
   playerScore: number;
   aiScore: number;
-  playerField: { zone: number; slots: { position: number; playerCardId: string | null }[] }[];
-  aiField: { zone: number; slots: { position: number; playerCardId: string | null }[] }[];
+  playerField: { zone: number; slots: { position: number; athleteCardId: string | null }[] }[];
+  aiField: { zone: number; slots: { position: number; athleteCardId: string | null }[] }[];
   playerHand: string[];
   aiHand: string[];
   controlPosition: number;
@@ -136,9 +136,9 @@ export function clearAllGameRecords(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export function formatAction(action: GameAction, playerCards: PlayerCard[], synergyCards: SynergyCard[]): string {
+export function formatAction(action: GameAction, athleteCards: athleteCard[], synergyCards: SynergyCard[]): string {
   const actor = action.actor === 'player' ? 'You' : 'AI';
-  const cardById = (id: string) => playerCards.find(c => c.id === id)?.name || id;
+  const cardById = (id: string) => athleteCards.find(c => c.id === id)?.name || id;
   const synergyById = (id: string) => synergyCards.find(c => c.id === id)?.name || id;
 
   switch (action.type) {
@@ -146,7 +146,7 @@ export function formatAction(action: GameAction, playerCards: PlayerCard[], syne
       return `${actor} ${cardById(action.details.cardId as string)} placed at ${action.details.zone}line`;
     case 'attack':
       const result = action.details.success ? 'Success' : 'Failed';
-      return `${actor}AttackedÔºå${result}ÔºÅ(Attack:${action.details.attackPower} vs Defense:${action.details.defensePower})`;
+      return `${actor}AttackedÔº?{result}Ôº?Attack:${action.details.attackPower} vs Defense:${action.details.defensePower})`;
     case 'select_synergy':
       return `${actor} selected synergy card: ${synergyById(action.details.cardId as string)}`;
     case 'end_turn':
@@ -162,6 +162,7 @@ export function formatAction(action: GameAction, playerCards: PlayerCard[], syne
       return `${actor}Executed ${action.type}`;
   }
 }
+
 
 
 

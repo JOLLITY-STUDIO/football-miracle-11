@@ -54,9 +54,9 @@ function calculateConnections(field: FieldZone[]): Connection[] {
 
   for (const zone of field) {
     for (const slot of zone.slots) {
-      if (!slot.playerCard) continue;
+      if (!slot.athleteCard) continue;
 
-      const card = slot.playerCard;
+      const card = slot.athleteCard;
       
       // 遍历当前卡牌的所有图标位置
       for (const iconWithPos of card.iconPositions) {
@@ -66,7 +66,7 @@ function calculateConnections(field: FieldZone[]): Connection[] {
         // 检查相邻的所有slot
         for (const adjacentZone of field) {
           for (const adjacentSlot of adjacentZone.slots) {
-            if (!adjacentSlot.playerCard) continue;
+            if (!adjacentSlot.athleteCard) continue;
             if (zone.zone === adjacentZone.zone && slot.position === adjacentSlot.position) continue;
 
             // 检查是否真的相邻
@@ -84,7 +84,7 @@ function calculateConnections(field: FieldZone[]): Connection[] {
             if (processed.has(pairKey)) continue;
 
             // 检查是否有匹配的图标
-            const hasMatch = adjacentSlot.playerCard.iconPositions.some(
+            const hasMatch = adjacentSlot.athleteCard.iconPositions.some(
               pos => pos.position === matchingPos && pos.type === iconWithPos.type
             );
 
@@ -109,7 +109,7 @@ function calculateConnections(field: FieldZone[]): Connection[] {
   return connections;
 }
 
-// 计算卡牌在网格中的中心坐标 (每个slot占2列)
+// 计算卡牌在网格中的中心坐标(每个slot中心)
 function getSlotCenter(zone: number, slot: number): { x: number; y: number } {
   const row = zone - 1; // zone 1-4 -> row 0-3
   const col = (slot - 1) * 2 + 1; // slot 1-4 -> col 1,3,5,7 (中心)
@@ -162,7 +162,7 @@ export const TacticalConnections: React.FC<Props> = ({ playerField, aiField, gri
         const dist = Math.sqrt(dx * dx + dy * dy);
         const curve = Math.min(dist * 0.2, 15); // 弧度
 
-        // 垂直方向的偏移(让线条弯曲)
+        // 垂直方向的偏移让线条弯曲
         const offsetX = -dy / dist * curve;
         const offsetY = dx / dist * curve;
         const ctrlX = midX + offsetX;

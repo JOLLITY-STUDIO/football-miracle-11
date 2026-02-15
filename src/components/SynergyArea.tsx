@@ -10,23 +10,23 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
   const commonRows = [
     { 
       color: 'bg-[#EF4444]', // Red
-      stripIcon: '⚽', 
-      leftIcons: ['✋'], 
+      stripIcon: '⚔️', 
+      leftIcons: ['⚔️'], 
       rightIcons: [],
       hasDefense: false,
       defenseIcon: ''
     },
     { 
       color: 'bg-[#22C55E]', // Green
-      stripIcon: '⚽', 
-      leftIcons: ['✋'], 
-      rightIcons: ['✋', '📚'],
+      stripIcon: '⚔️', 
+      leftIcons: ['⚔️'], 
+      rightIcons: ['📚', '📚'],
       hasDefense: true,
       defenseIcon: '🛡️'
     },
     { 
       color: 'bg-[#3B82F6]', // Blue
-      stripIcon: '⚽', 
+      stripIcon: '⚔️', 
       leftIcons: ['📚'], 
       rightIcons: ['📚'],
       hasDefense: true,
@@ -64,7 +64,7 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
                           alt="Synergy"
                           className="w-6 h-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                         />
-                      ) : icon === '✋' ? (
+                      ) : icon === '🛡️' ? (
                         <img
                           key={idx}
                           src="/icons/defense_shield.svg"
@@ -91,7 +91,7 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
                           alt="Synergy"
                           className="w-6 h-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                         />
-                      ) : icon === '✋' ? (
+                      ) : icon === '🛡️' ? (
                         <img
                           key={idx}
                           src="/icons/defense_shield.svg"
@@ -138,3 +138,4 @@ export const SynergyArea: React.FC<SynergyAreaProps> = ({ isOpponent = false, cl
     </div>
   );
 };
+

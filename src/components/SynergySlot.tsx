@@ -49,7 +49,7 @@ export const SynergySlot: React.FC<Props> = ({
               backgroundColor: colorMap[type],
             }}
           >
-            ⚽
+            <img src="/icons/attack_ball.svg" alt="Attack" className="w-6 h-6" />
           </div>
           
           {/* Card Slot */}
@@ -106,7 +106,7 @@ export const SynergySlot: React.FC<Props> = ({
                   className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-1 bg-gradient-to-r from-yellow-600 to-yellow-400 px-4 py-2 rounded-full border-2 border-white shadow-[0_0_20px_rgba(234,179,8,0.6)]"
                 >
                   <span className="text-[14px] font-black text-black drop-shadow-sm">+{totalStars}</span>
-                  <span className="text-[12px] text-black/80">★</span>
+                  <span className="text-[12px] text-black/80">星</span>
                   
                   {/* Glowing pulse effect */}
                   <motion.div 
@@ -143,3 +143,4 @@ export const SynergySlot: React.FC<Props> = ({
     </div>
   );
 };
+

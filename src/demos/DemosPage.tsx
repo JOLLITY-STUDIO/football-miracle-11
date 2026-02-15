@@ -37,7 +37,7 @@ export const DemosPage: React.FC = () => {
 
   return (
     <div style={{ width: '100%', height: '100vh', background: '#0f0f0f', overflow: 'hidden' }}>
-      {/* 顶部导航 */}
+      {/* 顶部导航栏 */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -77,14 +77,14 @@ export const DemosPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 当前Demo */}
+      {/* Current Demo */}
       <div style={{ marginTop: '60px' }}>
         {CurrentDemo && (
           <CurrentDemo onCellClick={(zone, col) => handleCellClick(demos.find(d => d.id === currentDemo)!.name, zone, col)} />
         )}
       </div>
 
-      {/* 点击日志 */}
+      {/* Click Log */}
       <div style={{
         position: 'fixed',
         bottom: 0,
@@ -97,7 +97,7 @@ export const DemosPage: React.FC = () => {
         overflow: 'auto'
       }}>
         <h3 style={{ color: 'white', margin: '0 0 10px 0', fontSize: '14px' }}>
-          点击日志 (最近10次)
+          Click Log (Last 10)
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
           {clickLog.map((log, index) => (
@@ -118,13 +118,13 @@ export const DemosPage: React.FC = () => {
           
           {clickLog.length === 0 && (
             <div style={{ color: '#6b7280', fontSize: '12px', textAlign: 'center', padding: '20px' }}>
-              暂无点击记录
+              鏆傛棤鐐瑰嚮璁板綍
             </div>
           )}
         </div>
       </div>
 
-      {/* Demo说明 */}
+      {/* 点击日志 */}
       <div style={{
         position: 'fixed',
         top: '80px',
@@ -146,35 +146,35 @@ export const DemosPage: React.FC = () => {
         
         <div style={{ marginTop: '15px', padding: '10px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px' }}>
           <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#f59e0b' }}>
-            特点
+            Features
           </h4>
           <ul style={{ margin: 0, paddingLeft: '20px', color: '#9ca3af', fontSize: '12px' }}>
             {currentDemo === 'threejs' && (
               <>
-                <li>成熟的3D引擎，功能丰富</li>
-                <li>精确的射线投射点击检测</li>
-                <li>优秀的性能和社区支持</li>
+                <li>Mature 3D engine with rich features</li>
+                <li>Precise raycasting for click detection</li>
+                <li>Excellent performance and community support</li>
               </>
             )}
             {currentDemo === 'css3d' && (
               <>
-                <li>不需要额外的3D库</li>
-                <li>通过JavaScript精确控制坐标</li>
-                <li>保持CSS 3D的视觉效果</li>
+                <li>No external 3D library required</li>
+                <li>Precise coordinate control via JavaScript</li>
+                <li>Maintains CSS 3D perspective effects</li>
               </>
             )}
             {currentDemo === 'svg3d' && (
               <>
-                <li>原生支持3D变换</li>
-                <li>矢量图形，缩放不失真</li>
-                <li>简单的事件处理</li>
+                <li>Native support for 3D transforms</li>
+                <li>Small size, minimal overhead</li>
+                <li>Simple event handling</li>
               </>
             )}
             {currentDemo === 'threejs-images' && (
               <>
-                <li>完整的3D游戏体验</li>
-                <li>支持球员图片放置</li>
-                <li>精确的点击检测和交互</li>
+                <li>Complete 3D game experience</li>
+                <li>Supports player image placement</li>
+                <li>Precise click testing and interaction</li>
               </>
             )}
           </ul>

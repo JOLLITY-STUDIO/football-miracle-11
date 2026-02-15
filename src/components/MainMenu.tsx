@@ -63,7 +63,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
               },
             }}
           >
-            âš½
+            âš?
           </motion.div>
         ))}
       </div>
@@ -105,7 +105,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
           }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          âš½ FOOTBALL MIRACLE 11
+          âš?FOOTBALL MIRACLE 11
         </motion.h1>
         <motion.p 
           className="text-white/90 text-xl font-medium tracking-wide"
@@ -239,5 +239,6 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
     </div>
   );
 };
+
 
 

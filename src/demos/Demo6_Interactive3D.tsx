@@ -4,7 +4,7 @@ interface Demo6Props {
   onCellClick?: (zone: number, col: number) => void;
 }
 
-interface PlayerCard {
+interface athleteCard {
   id: string;
   name: string;
   imageUrl: string;
@@ -30,8 +30,8 @@ export const Demo6_Interactive3D: React.FC<Demo6Props> = ({ onCellClick }) => {
     offsetY: 0
   });
   const [hoveredCell, setHoveredCell] = useState<{ zone: number; col: number } | null>(null);
-  const [selectedCard, setSelectedCard] = useState<PlayerCard | null>(null);
-  const [placedCards, setPlacedCards] = useState<PlayerCard[]>([
+  const [selectedCard, setSelectedCard] = useState<athleteCard | null>(null);
+  const [placedCards, setPlacedCards] = useState<athleteCard[]>([
     { id: '1', name: 'Player 1', imageUrl: '/images/player1.png', position: { zone: 0, col: 0 } },
     { id: '2', name: 'Player 2', imageUrl: '/images/player2.png', position: { zone: 1, col: 2 } },
     { id: '3', name: 'Player 3', imageUrl: '/images/player3.png', position: { zone: 2, col: 4 } },
@@ -384,7 +384,7 @@ export const Demo6_Interactive3D: React.FC<Demo6Props> = ({ onCellClick }) => {
             </defs>
             <rect x="-960" y="-540" width="1920" height="1080" fill="url(#grid)" />
             
-            {/* 3D立方体 */}
+            {/* 3D立方�?*/}
             {cubes.map(cube => render3DCube(cube))}
             
             {/* 球场网格 */}
@@ -494,8 +494,7 @@ export const Demo6_Interactive3D: React.FC<Demo6Props> = ({ onCellClick }) => {
             cursor: 'pointer'
           }}
         >
-          选择新球员
-        </button>
+          选择新球�?        </button>
         
         <button
           onClick={() => setCubes([

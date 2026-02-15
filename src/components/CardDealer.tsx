@@ -84,7 +84,7 @@ export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type }) => {
           
           <div className="text-[10px] font-black text-white/60 mb-1 tracking-[0.2em]">{label}</div>
           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 shadow-inner">
-            <span className="text-2xl filter drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">⚽</span>
+            <span className="text-2xl filter drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">🎴</span>
           </div>
           <div className="mt-2 w-8 h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full" />
           
@@ -99,3 +99,4 @@ export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type }) => {
     </AnimatePresence>
   );
 };
+

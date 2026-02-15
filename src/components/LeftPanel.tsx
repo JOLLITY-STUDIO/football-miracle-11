@@ -1,13 +1,14 @@
 import React from 'react';
-import type { PlayerCard } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import type { athleteCard } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import { MultiDigitDotMatrix } from './DotMatrixDisplay';
+import { SubLabel } from './SubLabel';
 
 interface Props {
-  aiBench: PlayerCard[];
-  playerBench: PlayerCard[];
+  aiBench: athleteCard[];
+  playerBench: athleteCard[];
   playerScore: number;
   aiScore: number;
   controlPosition: number;
@@ -15,11 +16,12 @@ interface Props {
   isHomeTeam: boolean;
   playerSubstitutionsLeft: number;
   substitutionSelectedId?: string | undefined;
-  onHoverEnter: (card: PlayerCard, event?: React.MouseEvent) => void;
+  onHoverEnter: (card: athleteCard, event?: React.MouseEvent) => void;
   onHoverLeave: () => void;
-  onSubstituteSelect: (card: PlayerCard) => void;
+  onSubstituteSelect: (card: athleteCard) => void;
   onToggleMatchLog?: () => void;
   onToggleLeftControls?: () => void;
+  onOpenAmbientControls?: () => void;
 }
 
 export const LeftPanel: React.FC<Props> = ({
@@ -37,11 +39,12 @@ export const LeftPanel: React.FC<Props> = ({
   onSubstituteSelect,
   onToggleMatchLog,
   onToggleLeftControls,
+  onOpenAmbientControls,
 }) => {
   return (
     <div className="h-full flex items-center justify-center z-15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] overflow-hidden">
       {/* 1. Control Panel (Leftmost - SVG 3D Buttons) */}
-      <div className="w-[60px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
+      <div className="w-[50px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
         {/* SVG 3D Control Buttons Console */}
         <svg width="50" height="400" viewBox="0 0 50 400" className="w-full">
           {/* Background Panel */}
@@ -67,13 +70,15 @@ export const LeftPanel: React.FC<Props> = ({
             </g>
           )}
           
-          {/* Audio Button */}
-          <g transform="translate(25, 140)">
-            <circle cx="0" cy="0" r="15" fill="url(#greenGradient)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-            <text x="0" y="5" textAnchor="middle" fill="white" fontSize="12">🔊</text>
-            <circle cx="0" cy="0" r="18" fill="none" stroke="rgba(16, 185, 129, 0.3)" strokeWidth="2" filter="blur(2px)" />
-            <circle cx="0" cy="0" r="15" fill="transparent" stroke="none" onClick={onToggleLeftControls} style={{ cursor: 'pointer' }} />
-          </g>
+          {/* Audio/Ambient Button */}
+          {onOpenAmbientControls && (
+            <g transform="translate(25, 140)">
+              <circle cx="0" cy="0" r="15" fill="url(#greenGradient)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+              <text x="0" y="5" textAnchor="middle" fill="white" fontSize="12">🔊</text>
+              <circle cx="0" cy="0" r="18" fill="none" stroke="rgba(16, 185, 129, 0.3)" strokeWidth="2" filter="blur(2px)" />
+              <circle cx="0" cy="0" r="15" fill="transparent" stroke="none" onClick={onOpenAmbientControls} style={{ cursor: 'pointer' }} />
+            </g>
+          )}
           
           {/* View Button */}
           <g transform="translate(25, 190)">
@@ -118,17 +123,22 @@ export const LeftPanel: React.FC<Props> = ({
       </div>
       
       {/* 2. Substitutes Area (Center - Dark) */}
-      <div className="w-[220px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
-        <div className="absolute inset-0 opacity-10 pointer-events-none" 
+      <div className="w-[200px] h-full bg-[#0a0a0a] relative flex flex-col items-center py-8 px-2 border-r border-white/5">
+        <div className="absolute inset-0 opacity-10 pointer-events-none"
              style={{ backgroundImage: 'radial-gradient(circle at center, #444 0%, transparent 80%)' }} />
-        
+
         {/* Opponent Bench (Top) */}
-        <div className="flex-1 w-full flex flex-col gap-6 items-center">
+        <div className="flex-1 w-full flex flex-col justify-center gap-6 items-center relative">
           <div className="text-[7px] text-red-500/50 font-black tracking-[0.2em] uppercase mb-[-10px]">Opponent Subs</div>
           {[0, 1, 2].map((idx) => {
             const card = aiBench[idx];
+            const subNum = 3 - idx; // SUB 03, SUB 02, SUB 01 (从上到下)
             return (
               <div key={`ai-sub-slot-${idx}`} className="relative group">
+                {/* SUB Label - 贴在控制面板左侧 */}
+                <div className="absolute -right-[2px] top-1/2 -translate-y-1/2 z-10">
+                  <SubLabel subNum={subNum} isAi={true} id={`ai-sub-label-${subNum}`} />
+                </div>
                 {/* Slot Label Background */}
                 <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/5 rounded-full" />
                 
@@ -150,7 +160,7 @@ export const LeftPanel: React.FC<Props> = ({
                       {/* Card Content */}
                       <foreignObject x="0" y="0" width="198" height="130">
                         <div className="w-full h-full flex items-center justify-center transform rotate-180">
-                          <PlayerCardComponent
+                          <AthleteCardComponent
                             card={card}
                             size="large"
                             variant="away"
@@ -163,8 +173,8 @@ export const LeftPanel: React.FC<Props> = ({
                     </g>
                   ) : (
                     <g>
-                      <rect x="0" y="0" width="132" height="86" rx="3" ry="3" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                      <text x="66" y="43" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="6" fontWeight="bold">EMPTY</text>
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                      <text x="99" y="65" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="8" fontWeight="bold">EMPTY</text>
                     </g>
                   )}
                 </svg>
@@ -174,17 +184,22 @@ export const LeftPanel: React.FC<Props> = ({
         </div>
 
         {/* Player Bench (Bottom) */}
-        <div className="flex-1 w-full flex flex-col gap-6 items-center justify-end">
+        <div className="flex-1 w-full flex flex-col justify-center gap-6 items-center relative">
           {[0, 1, 2].map((idx) => {
             const card = playerBench[idx];
+            const subNum = idx + 1; // SUB 01, SUB 02, SUB 03 (从上到下)
             return (
               <div key={`player-sub-slot-${idx}`} className="relative group">
+                {/* SUB Label - 贴在控制面板左侧 */}
+                <div className="absolute -right-[2px] top-1/2 -translate-y-1/2 z-10">
+                  <SubLabel subNum={subNum} isAi={false} id={`player-sub-label-${subNum}`} />
+                </div>
                 <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/5 rounded-full" />
                 
                 {/* SVG 3D Card Slot */}
                 <svg width="198" height="130" viewBox="0 0 198 130" className="w-[198px] h-[130px]">
                   <defs>
-                    <linearGradient id={`playerCardGradient-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id={`athleteCardGradient-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#1a1a1a" />
                       <stop offset="100%" stopColor="#0a0a0a" />
                     </linearGradient>
@@ -197,7 +212,7 @@ export const LeftPanel: React.FC<Props> = ({
                   {card ? (
                     <g>
                       {/* Card Background */}
-                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="url(#playerCardGradient-${idx})" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+                      <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="url(#athleteCardGradient-${idx})" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
                       {/* Selected Indicator */}
                       {substitutionSelectedId === card.id && (
                         <rect x="0" y="0" width="198" height="130" rx="3" ry="3" fill="none" stroke="url(#selectedGradient-${idx})" strokeWidth="2" />
@@ -207,7 +222,7 @@ export const LeftPanel: React.FC<Props> = ({
                       {/* Card Content */}
                       <foreignObject x="0" y="0" width="198" height="130">
                         <div className="w-full h-full flex items-center justify-center">
-                          <PlayerCardComponent
+                          <AthleteCardComponent
                             card={card}
                             size="large"
                             variant="home"
@@ -243,26 +258,6 @@ export const LeftPanel: React.FC<Props> = ({
           boxShadow: 'inset 5px 0 15px rgba(0,0,0,0.2)'
         }}
       >
-        {/* SUB Tabs */}
-        <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between py-12 -translate-x-full z-30 pointer-events-none">
-          {/* Away Tabs */}
-          <div className="flex flex-col gap-[3.25rem]">
-            {[3, 2, 1].map(num => (
-              <div key={`away-tab-${num}`} className="bg-[#D43D2A] px-2 py-1.5 rounded-l-md border-y border-l border-white/20 shadow-[-2px_0_5px_rgba(0,0,0,0.3)] pointer-events-auto">
-                <span className="text-[7px] text-white font-black rotate-180 block whitespace-nowrap">SUB 0{num}</span>
-              </div>
-            ))}
-          </div>
-          {/* Home Tabs */}
-          <div className="flex flex-col gap-[3.25rem]">
-            {[1, 2, 3].map(num => (
-              <div key={`home-tab-${num}`} className="bg-[#B02314] px-2 py-1.5 rounded-l-md border-y border-l border-white/20 shadow-[-2px_0_5px_rgba(0,0,0,0.3)] pointer-events-auto">
-                <span className="text-[7px] text-white font-black whitespace-nowrap">SUB 0{num}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* 1. Opponent Score (Top) */}
         <div className="w-[150px] h-[220px] bg-[#0a0a0a] rounded-lg p-3 border border-white/10 shadow-2xl mb-4 flex flex-col">
           <div className="flex justify-between items-center mb-2 px-1">
@@ -288,7 +283,7 @@ export const LeftPanel: React.FC<Props> = ({
         {/* 2. Momentum Track (Center) */}
         <div className="flex-1 w-full flex flex-col items-center justify-center my-2">
           {/* Main Momentum Rail */}
-          <div className="relative flex gap-1 p-1 bg-black/40 rounded-lg border border-white/10 shadow-inner h-[280px] overflow-hidden">
+          <div className="relative flex gap-1 p-1 bg-black/40 rounded-lg border border-white/10 shadow-inner h-[400px] overflow-hidden">
             {/* Left Side - ATT/NORM/DEF */}
             <div className="flex flex-col items-center">
               <div className="flex flex-col w-5 h-full rounded overflow-hidden">
@@ -305,7 +300,7 @@ export const LeftPanel: React.FC<Props> = ({
             </div>
 
             {/* The Rail */}
-            <div className="relative w-10 h-full bg-[#050505] rounded border border-white/5 flex flex-col">
+            <div className="relative w-[80px] h-full bg-[#050505] rounded border border-white/5 flex flex-col">
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
                 <div key={i} className="flex-1 border-b border-white/5 relative">
                   {i === 5 && <div className="absolute inset-0 bg-white/5" />}
@@ -315,7 +310,7 @@ export const LeftPanel: React.FC<Props> = ({
               
               {/* The Puck */}
               <motion.div 
-                className="absolute left-0 right-0 h-[9.09%] z-20 flex items-center justify-center"
+                className="absolute left-0 right-0 h-[7%] z-20 flex items-center justify-center"
                 initial={{ top: '50%', y: '-50%', opacity: 0 }}
                 animate={{ 
                   top: `${controlPosition}%`,
@@ -325,9 +320,9 @@ export const LeftPanel: React.FC<Props> = ({
                 transition={{ type: "spring", stiffness: 150, damping: 15 }}
                 exit={{ opacity: 0 }}
               >
-                <div className="w-8 h-8 rounded-full bg-stone-100 border-2 border-stone-800 shadow-[0_3px_10px_rgba(0,0,0,0.6)] flex items-center justify-center">
-                  <div className="w-6 h-6 rounded-full border border-stone-300 flex items-center justify-center bg-stone-200">
-                    <span className="text-stone-900 text-[10px] font-black">⇅</span>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-stone-200 to-stone-400 border-2 border-stone-700 shadow-[0_5px_15px_rgba(0,0,0,0.8),inset_0_2px_0px_rgba(255,255,255,0.5),inset_0 -2px_0px_rgba(0,0,0,0.2)] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-stone-100 to-stone-300 border-2 border-stone-500 shadow-[inset_0_1px_0px_rgba(255,255,255,0.6),inset_0 -1px_0px_rgba(0,0,0,0.3)] flex items-center justify-center">
+                    <span className="text-stone-900 text-[18px] font-black drop-shadow-sm">⚽</span>
                   </div>
                 </div>
               </motion.div>
@@ -381,3 +376,4 @@ export const LeftPanel: React.FC<Props> = ({
     </div>
   );
 };
+

@@ -19,7 +19,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'card-selection',
-    title: '选择你的第一张卡牌',
+    title: '选择你的第一张卡片',
     description: '点击手牌区域中的卡片来选择它。被选中的卡片会有放大和阴影效果。',
     targetElement: 'hand-card',
     highlight: true,
@@ -27,8 +27,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'field-placement',
-    title: '放置卡牌到场地',
-    description: '选择卡片后，点击绿色高亮的有效位置来放置卡片。这些位置表示你可以放置卡牌的区域。',
+    title: '放置卡片到场地',
+    description: '选择卡片后，点击绿色高亮的有效位置来放置卡片。这些位置表示你可以放置卡片的区域。',
     targetElement: 'game-field',
     highlight: true,
     position: { x: 50, y: 50 }

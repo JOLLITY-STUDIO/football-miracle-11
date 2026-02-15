@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlayerCard } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import type { AthleteCard } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 
 interface Props {
-  playerBench: PlayerCard[];
-  aiBench: PlayerCard[];
-  onPlayerBenchClick?: (card: PlayerCard) => void;
-  selectedBenchCard?: PlayerCard | null;
+  playerBench: AthleteCard[];
+  aiBench: AthleteCard[];
+  onPlayerBenchClick?: (card: AthleteCard) => void;
+  selectedBenchCard?: AthleteCard | null;
   isPlayerTurn: boolean;
   playerSubstitutionsLeft: number;
 }
@@ -47,7 +47,7 @@ export const BenchArea: React.FC<Props> = ({
                   transition={{ delay: index * 0.1 }}
                   className="relative transform scale-90 origin-center"
                 >
-                  <PlayerCardComponent
+                  <AthleteCardComponent
                     card={card}
                     size="tiny"
                     variant="away"
@@ -89,7 +89,7 @@ export const BenchArea: React.FC<Props> = ({
                     }
                   }}
                 >
-                  <PlayerCardComponent
+                  <AthleteCardComponent
                     card={card}
                     size="tiny"
                     variant="home"
@@ -115,3 +115,4 @@ export const BenchArea: React.FC<Props> = ({
     </div>
   );
 };
+

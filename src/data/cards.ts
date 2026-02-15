@@ -1,4 +1,4 @@
-// 由于 PlayerCard 与 SynergyCard 接口已在本文件定义，无需再从外部 types 文件导入
+// 由于 athleteCard �?SynergyCard 接口已在本文件定义，无需再从外部 types 文件导入
 // 如后续抽离到独立 types 文件，可恢复对应 import
 import { RuleValidator } from '../game/ruleValidator';
 
@@ -27,7 +27,7 @@ export interface IconWithPosition {
   position: IconPosition;
 }
 
-export interface PlayerCard {
+export interface AthleteCard {
   id: string;
   name: string;
   realName: string;
@@ -46,6 +46,9 @@ export interface PlayerCard {
   status?: 'yellow' | 'red';
   traits?: string[];
 }
+
+// Backward compatibility
+export type athleteCard = AthleteCard;
 
 export interface SynergyCard {
   id: string;
@@ -67,7 +70,7 @@ export interface PenaltyCard {
   imageUrl?: string;
 }
 
-export const basePlayerCards: PlayerCard[] = [
+export const baseathleteCards: athleteCard[] = [
   // Home Team (H01-H10)
   { id: 'H01', name: 'Striker', realName: 'John Smith', type: 'fw', positionLabel: 'CF', attack: 3, defense: 0, isStar: false, unlocked: true, unlockCondition: 'Default', icons: ['attack', 'attack', 'attack', 'attack', 'press', 'attack'], iconPositions: [{ type: 'attack', position: 'slot1-topLeft' }, { type: 'attack', position: 'slot1-topRight' }, { type: 'attack', position: 'slot1-middleLeft' }, { type: 'attack', position: 'slot1-middleRight' }, { type: 'press', position: 'slot1-bottomLeft' }, { type: 'attack', position: 'slot1-bottomRight' }], completeIcon: 'attack', immediateEffect: 'none', imageUrl: '/images/cards/players/player-home-cf-striker.png' },
   { id: 'H02', name: 'Left Winger', realName: 'David Johnson', type: 'fw', positionLabel: 'LWF', attack: 2, defense: 0, isStar: false, unlocked: true, unlockCondition: 'Default', icons: ['attack', 'attack', 'press', 'attack'], iconPositions: [{ type: 'attack', position: 'slot1-topRight' }, { type: 'attack', position: 'slot1-middleRight' }, { type: 'press', position: 'slot1-bottomLeft' }, { type: 'attack', position: 'slot1-bottomRight' }], completeIcon: 'breakthrough', immediateEffect: 'none', imageUrl: '/images/cards/players/player-home-lw-winger.png' },
@@ -93,7 +96,7 @@ export const basePlayerCards: PlayerCard[] = [
   { id: 'A10', name: 'Right Back', realName: 'Javier Moreno', type: 'df', positionLabel: 'RB', attack: 1, defense: 2, isStar: false, unlocked: true, unlockCondition: 'Default', icons: ['press', 'pass', 'defense'], iconPositions: [{ type: 'press', position: 'slot1-topLeft' }, { type: 'pass', position: 'slot1-middleLeft' }, { type: 'defense', position: 'slot1-bottomLeft' }], completeIcon: 'pass', immediateEffect: 'draw_synergy_1', imageUrl: '/images/cards/players/player-away-rb-fullback.png' },
 ];
 
-export const starPlayerCards: PlayerCard[] = [
+export const starathleteCards: athleteCard[] = [
   { id: 'SF1', name: 'Star Striker - Ace', realName: 'Messi', type: 'fw', positionLabel: 'CF', attack: 4, defense: 1, isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['attack', 'attack', 'attack', 'attack'], iconPositions: [{ type: 'attack', position: 'slot1-topLeft' }, { type: 'attack', position: 'slot1-topRight' }, { type: 'attack', position: 'slot1-bottomLeft' }, { type: 'attack', position: 'slot1-bottomRight' }], completeIcon: 'attack', immediateEffect: 'instant_shot', imageUrl: '/images/cards/players/star-cf-target-man.png' },
   { id: 'SF2', name: 'Star Striker - Lightning', realName: 'Mbappe', type: 'fw', positionLabel: 'LWF', attack: 4, defense: 0, isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['attack', 'attack', 'press', 'attack'], iconPositions: [{ type: 'attack', position: 'slot1-topRight' }, { type: 'attack', position: 'slot1-middleRight' }, { type: 'press', position: 'slot1-bottomLeft' }, { type: 'attack', position: 'slot1-bottomRight' }], completeIcon: 'breakthrough', immediateEffect: 'none', imageUrl: '/images/cards/players/player-home-lw-winger.png' },
   { id: 'SF3', name: 'Star Striker - Finisher', realName: 'Haaland', type: 'fw', positionLabel: 'CF', attack: 5, defense: 0, isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['attack', 'attack', 'attack', 'press'], iconPositions: [{ type: 'attack', position: 'slot1-topLeft' }, { type: 'attack', position: 'slot1-topRight' }, { type: 'attack', position: 'slot1-bottomLeft' }, { type: 'press', position: 'slot1-bottomRight' }], completeIcon: 'attack', immediateEffect: 'none', imageUrl: '/images/cards/players/star-cf-target-man.png' },
@@ -109,56 +112,66 @@ export const starPlayerCards: PlayerCard[] = [
   { id: 'SB4', name: 'Star Defender - Overlap King', realName: 'Robertson', type: 'df', positionLabel: 'RB', attack: 1, defense: 3, isStar: true, unlocked: true, unlockCondition: 'Unlocked', icons: ['press', 'pass', 'defense'], iconPositions: [{ type: 'press', position: 'slot1-topLeft' }, { type: 'pass', position: 'slot1-middleLeft' }, { type: 'defense', position: 'slot1-bottomLeft' }], completeIcon: 'press', immediateEffect: 'draw_synergy_1', imageUrl: '/images/cards/players/star-lb-overlapping.png' },
 ];
 
-export const playerCards: PlayerCard[] = [...basePlayerCards, ...starPlayerCards];
+export const athleteCards: athleteCard[] = [...baseathleteCards, ...starathleteCards];
 
 export const synergyCards: SynergyCard[] = [
-  { id: '4001', name: '进攻加成+1', type: 'attack', value: 1, stars: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4001', name: '1', type: 'special', value: 1, stars: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
 
-  { id: '4002', name: '进攻加成+2', type: 'attack', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4003', name: '进攻加成+2', type: 'attack', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4004', name: '防守加成+2', type: 'defense', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4005', name: '铲球', type: 'tackle', value: 1, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4006', name: '铲球', type: 'tackle', value: 1, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4002', name: '2', type: 'special', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4003', name: '2', type: 'special', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4004', name: '2', type: 'special', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4005', name: '2', type: 'special', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4006', name: '2', type: 'special', value: 2, stars: 2, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4007', name: '1+铲球', type: 'tackle', value: 1, stars: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4008', name: '1+铲球', type: 'tackle', value: 1, stars: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
 
-  { id: '4007', name: '进攻加成+3', type: 'attack', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4008', name: '进攻加成+3', type: 'attack', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4009', name: '进攻加成+3', type: 'attack', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4010', name: '防守加成+3', type: 'defense', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4011', name: '防守加成+3', type: 'defense', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4012', name: '防守加成+3', type: 'defense', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4013', name: '控制+2', type: 'special', value: 2, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4014', name: '控制+2', type: 'special', value: 2, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4015', name: '控制+2', type: 'special', value: 2, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4016', name: '控制+2', type: 'special', value: 2, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4009', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4010', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4011', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4012', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4013', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4014', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4015', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4016', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4017', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4018', name: '3', type: 'special', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
 
-  { id: '4017', name: '进攻加成+4', type: 'attack', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4018', name: '进攻加成+4', type: 'attack', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4019', name: '防守加成+4', type: 'defense', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4020', name: '防守加成+4', type: 'defense', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4021', name: '控制+3', type: 'special', value: 3, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4019', name: '4', type: 'special', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4020', name: '4', type: 'special', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4021', name: '4', type: 'special', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4022', name: '4', type: 'special', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4023', name: '4', type: 'special', value: 4, stars: 4, unlocked: true, unlockCondition: 'Unlocked by default' },
 
-  { id: '4022', name: '进攻加成+5', type: 'attack', value: 5, stars: 5, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4023', name: '防守加成+5', type: 'defense', value: 5, stars: 5, unlocked: true, unlockCondition: 'Unlocked by default' },
-
-  { id: '4024', name: 'Corner Kick', type: 'setpiece', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4025', name: 'Free Kick', type: 'setpiece', value: 3, stars: 3, unlocked: true, unlockCondition: 'Unlocked by default' },
-  
-  { id: '4026', name: 'VAR Check', type: 'special', value: 0, stars: 5, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '4027', name: 'VAR Overrule', type: 'special', value: 0, stars: 5, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4024', name: '5', type: 'special', value: 5, stars: 5, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '4025', name: '5', type: 'special', value: 5, stars: 5, unlocked: true, unlockCondition: 'Unlocked by default' },
 ];
 
 export const penaltyCards: PenaltyCard[] = [
-  { id: '5001', name: '点球-入门', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '5002', name: '点球-入门', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '5003', name: '点球-入门', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '5004', name: '点球-入门', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '5005', name: '点球-入门', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
-  { id: '5006', name: '点球-进阶', points: 2, unlocked: true, unlockCondition: '人机对战胜利2次' },
-  { id: '5007', name: '点球-进阶', points: 2, unlocked: true, unlockCondition: '人机对战胜利2次' },
-  { id: '5008', name: '点球-进阶', points: 2, unlocked: true, unlockCondition: '人机对战胜利2次' },
-  { id: '5009', name: '点球-大师', points: 3, unlocked: true, unlockCondition: '人机对战胜利8次' },
-  { id: '5010', name: '点球-大师', points: 3, unlocked: true, unlockCondition: '人机对战胜利8次' },
+  { id: '5001', name: '点球-左上', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '5002', name: '点球-左下', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '5003', name: '点球-中间', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '5004', name: '点球-右上', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '5005', name: '点球-右下', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
 ];
+
+export const penaltyDefenseCards: PenaltyCard[] = [
+  { id: '6001', name: '点球防守-左上', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '6002', name: '点球防守-左下', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '6003', name: '点球防守-右上', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '6004', name: '点球防守-右下', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '6005', name: '点球防守-左侧', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+  { id: '6006', name: '点球防守-右侧', points: 1, unlocked: true, unlockCondition: 'Unlocked by default' },
+];
+
+// 扩展的防守卡覆盖范围映射
+export const penaltyDefenseCoverage = {
+  '6001': ['左上', '中间'], // 点球防守-左上（包含中间）
+  '6002': ['左下', '中间'], // 点球防守-左下（包含中间）
+  '6003': ['右上', '中间'], // 点球防守-右上（包含中间）
+  '6004': ['右下', '中间'], // 点球防守-右下（包含中间）
+  '6005': ['左上', '左下'], // 点球防守-左侧（只覆盖左上和左下，不带中间�?
+  '6006': ['右上', '右下'], // 点球防守-右侧（只覆盖右上和右下，不带中间�?
+};
 
 export function getImmediateEffectDescription(effect: ImmediateEffectType): string {
   switch (effect) {
@@ -174,18 +187,18 @@ export function getImmediateEffectDescription(effect: ImmediateEffectType): stri
 
 export function getIconDisplay(icon: TacticalIcon): { symbol: string; color: string; image: string } {
   switch (icon) {
-    case 'attack': return { symbol: '⚔', color: '#E53935', image: '/icons/attack_ball.svg' };
+    case 'attack': return { symbol: '⚽', color: '#E53935', image: '/icons/attack_ball.svg' };
     case 'defense': return { symbol: '🛡', color: '#1E88E5', image: '/icons/defense_shield.svg' };
-    case 'pass': return { symbol: '↔', color: '#43A047', image: '/icons/pass.svg' };
-    case 'press': return { symbol: '↑', color: '#FB8C00', image: '/icons/press.svg' };
+    case 'pass': return { symbol: '🔄', color: '#43A047', image: '/icons/pass.svg' };
+    case 'press': return { symbol: '⚡', color: '#FB8C00', image: '/icons/press.svg' };
     case 'breakthrough': return { symbol: '💨', color: '#9C27B0', image: '/icons/breakthrough.svg' };
     case 'breakthroughAll': return { symbol: '💥', color: '#E91E63', image: '/icons/breakthroughAll.svg' };
   }
 }
 
 export function canPlaceCardAtSlot(
-  card: PlayerCard,
-  fieldSlots: { zone: number; slots: { position: number; playerCard: PlayerCard | null }[] }[],
+  card: AthleteCard,
+  fieldSlots: { zone: number; slots: { position: number; athleteCard: AthleteCard | null; usedShotIcons?: number[]; shotMarkers?: number }[] }[],
   zone: number,
   startCol: number,
   isFirstTurn: boolean
@@ -203,5 +216,6 @@ export function getZoneName(zone: number): string {
     default: return 'Unknown';
   }
 }
+
 
 

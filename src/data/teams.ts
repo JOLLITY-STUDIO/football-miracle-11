@@ -1,30 +1,30 @@
-import type { PlayerCard } from './cards';
-import { basePlayerCards, starPlayerCards } from './cards';
+import type { athleteCard } from './cards';
+import { baseathleteCards, starathleteCards } from './cards';
 
 export interface Team {
   id: string;
   name: string;
-  basePlayers: PlayerCard[];
+  basePlayers: athleteCard[];
   isHome: boolean;
 }
 
 export interface DraftState {
   round: number;
-  availableStars: PlayerCard[];
-  playerDrafted: PlayerCard | null;
-  aiDrafted: PlayerCard | null;
+  availableStars: athleteCard[];
+  playerDrafted: athleteCard | null;
+  aiDrafted: athleteCard | null;
 }
 
 export interface TeamSelectionState {
   phase: 'star-draft' | 'squad-selection' | 'match';
-  allPlayerCards: PlayerCard[];
-  selectedStarters: PlayerCard[];
-  selectedSubstitutes: PlayerCard[];
+  allathleteCards: athleteCard[];
+  selectedStarters: athleteCard[];
+  selectedSubstitutes: athleteCard[];
   draftState: DraftState | null;
 }
 
-const homeTeamBasePlayers = basePlayerCards.filter(card => card.id.startsWith('H'));
-const awayTeamBasePlayers = basePlayerCards.filter(card => card.id.startsWith('A'));
+const homeTeamBasePlayers = baseathleteCards.filter(card => card.id.startsWith('H'));
+const awayTeamBasePlayers = baseathleteCards.filter(card => card.id.startsWith('A'));
 
 export const homeTeam: Team = {
   id: 'home',
@@ -40,8 +40,8 @@ export const awayTeam: Team = {
   isHome: false,
 };
 
-export function getStarCardsForDraft(): PlayerCard[] {
-  return [...starPlayerCards];
+export function getStarCardsForDraft(): athleteCard[] {
+  return [...starathleteCards];
 }
 
 export function shuffleArray<T>(array: T[]): T[] {
@@ -55,12 +55,13 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function drawStarsForDraftRound(availableStars: PlayerCard[], count: number): PlayerCard[] {
+export function drawStarsForDraftRound(availableStars: athleteCard[], count: number): athleteCard[] {
   const shuffled = shuffleArray(availableStars);
   return shuffled.slice(0, count);
 }
 
-export function removeDraftedStars(availableStars: PlayerCard[], drafted: PlayerCard[]): PlayerCard[] {
+export function removeDraftedStars(availableStars: athleteCard[], drafted: athleteCard[]): athleteCard[] {
   const draftedIds = new Set(drafted.map(card => card.id));
   return availableStars.filter(card => !draftedIds.has(card.id));
 }
+

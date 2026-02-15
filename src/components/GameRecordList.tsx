@@ -1,7 +1,7 @@
-Ôªøimport React from 'react';
+import React from 'react';
 import type { GameRecord } from '../game/gameRecorder';
 import { loadAllGameRecords, deleteGameRecord, clearAllGameRecords } from '../game/gameRecorder';
-import { playerCards, synergyCards } from '../data/cards';
+import { athleteCards, synergyCards } from '../data/cards';
 
 interface Props {
   onBack: () => void;
@@ -16,14 +16,14 @@ export const GameRecordList: React.FC<Props> = ({ onBack, onSelectRecord }) => {
   }, []);
 
   const handleDelete = (id: string) => {
-    if (confirm('Delete this recordÔºü')) {
+    if (confirm('Delete this record£ø')) {
       deleteGameRecord(id);
       setRecords(loadAllGameRecords());
     }
   };
 
   const handleClearAll = () => {
-    if (confirm('Delete all recordsÔºü')) {
+    if (confirm('Delete all records£ø')) {
       clearAllGameRecords();
       setRecords([]);
     }
@@ -56,7 +56,7 @@ export const GameRecordList: React.FC<Props> = ({ onBack, onSelectRecord }) => {
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-4">
           <button onClick={onBack} className="text-white hover:text-gray-200">
-            ‚Üê Back
+            °˚ Back
           </button>
           <h1 className="text-xl font-bold text-white">Match History</h1>
           {records.length > 0 && (
@@ -127,7 +127,7 @@ export const ReplayViewer: React.FC<ReplayViewerProps> = ({ record, onBack }) =>
 
   const formatAction = (action: typeof record.actions[0]) => {
     const actor = action.actor === 'player' ? 'You' : 'AI';
-    const cardById = (id: string) => playerCards.find(c => c.id === id)?.name || id;
+    const cardById = (id: string) => athleteCards.find(c => c.id === id)?.name || id;
     const synergyById = (id: string) => synergyCards.find(c => c.id === id)?.name || id;
 
     switch (action.type) {
@@ -135,7 +135,7 @@ export const ReplayViewer: React.FC<ReplayViewerProps> = ({ record, onBack }) =>
         return `${actor} ${cardById(action.details.cardId as string)} placed at ${action.details.zone}line`;
       case 'attack':
         const result = action.details.success ? 'Success' : 'Lose';
-        return `${actor}AttackedÔºå${result}ÔºÅ(Attack:${action.details.attackPower} vs Defense:${action.details.defensePower})`;
+        return `${actor}Attacked£¨${result}£°(Attack:${action.details.attackPower} vs Defense:${action.details.defensePower})`;
       case 'select_synergy':
         return `${actor} selected synergy card: ${synergyById(action.details.cardId as string)}`;
       case 'end_turn':
@@ -157,7 +157,7 @@ export const ReplayViewer: React.FC<ReplayViewerProps> = ({ record, onBack }) =>
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-4">
           <button onClick={onBack} className="text-white hover:text-gray-200">
-            ‚Üê Back to List
+            °˚ Back to List
           </button>
           <h1 className="text-xl font-bold text-white">Match Replay</h1>
           <div className="text-white text-sm">
@@ -228,6 +228,7 @@ export const ReplayViewer: React.FC<ReplayViewerProps> = ({ record, onBack }) =>
     </div>
   );
 };
+
 
 
 

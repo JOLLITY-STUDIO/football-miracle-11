@@ -8,7 +8,7 @@ import { BackgroundMusic } from './components/BackgroundMusic';
 import { OrientationWarning } from './components/OrientationWarning';
 import { DemoRouter } from './demos/DemoRouter';
 import type { GameRecord } from './game/gameRecorder';
-import type { PlayerCard } from './data/cards';
+import type { athleteCard } from './data/cards';
 
 type GameView = 'menu' | 'preGame' | 'game' | 'records' | 'replay' | 'cardGuide' | 'demos';
 type RenderMode = '2d' | '3d';
@@ -16,7 +16,7 @@ type RenderMode = '2d' | '3d';
 function App() {
   const [currentView, setCurrentView] = useState<GameView>('menu');
   const [selectedRecord, setSelectedRecord] = useState<GameRecord | null>(null);
-  const [playerTeam, setPlayerTeam] = useState<{ starters: PlayerCard[]; substitutes: PlayerCard[]; initialField?: any[] } | null>(null);
+  const [playerTeam, setPlayerTeam] = useState<{ starters: athleteCard[]; substitutes: athleteCard[]; initialField?: any[] } | null>(null);
   const [renderMode, setRenderMode] = useState<RenderMode>('3d');
 
   const handleQuickStart3D = () => {
@@ -25,7 +25,7 @@ function App() {
     setCurrentView('game');
   };
 
-  const handleTeamComplete3D = (starters: PlayerCard[], substitutes: PlayerCard[], initialField: any[]) => {
+  const handleTeamComplete3D = (starters: athleteCard[], substitutes: athleteCard[], initialField: any[]) => {
     setPlayerTeam({ starters, substitutes, initialField });
     setRenderMode('3d');
     setCurrentView('game');
@@ -91,3 +91,4 @@ function App() {
 }
 
 export default App;
+

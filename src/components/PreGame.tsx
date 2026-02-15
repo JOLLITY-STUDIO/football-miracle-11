@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 import type { Team } from '../data/teams';
 import { homeTeam, awayTeam } from '../data/teams';
 import { StarDraft } from './StarDraft';
 import { SquadSelection } from './SquadSelection';
 
 interface PreGameProps {
-  onComplete: (playerStarters: PlayerCard[], playerSubs: PlayerCard[], initialField: any[]) => void;
-  onComplete3D: (playerStarters: PlayerCard[], playerSubs: PlayerCard[], initialField: any[]) => void;
+  onComplete: (playerStarters: athleteCard[], playerSubs: athleteCard[], initialField: any[]) => void;
+  onComplete3D: (playerStarters: athleteCard[], playerSubs: athleteCard[], initialField: any[]) => void;
   onBack: () => void;
 }
 
@@ -16,20 +16,20 @@ type PreGamePhase = 'team-select' | 'star-draft' | 'squad-selection' | 'choose-r
 export const PreGame: React.FC<PreGameProps> = ({ onComplete, onComplete3D, onBack }) => {
   const [phase, setPhase] = useState<PreGamePhase>('team-select');
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [draftedStars, setDraftedStars] = useState<PlayerCard[]>([]);
-  const [finalSquad, setFinalSquad] = useState<{ starters: PlayerCard[]; substitutes: PlayerCard[]; field: any[] } | null>(null);
+  const [draftedStars, setDraftedStars] = useState<athleteCard[]>([]);
+  const [finalSquad, setFinalSquad] = useState<{ starters: athleteCard[]; substitutes: athleteCard[]; field: any[] } | null>(null);
 
   const handleTeamSelect = (team: Team) => {
     setSelectedTeam(team);
     setPhase('star-draft');
   };
 
-  const handleDraftComplete = (stars: PlayerCard[]) => {
+  const handleDraftComplete = (stars: athleteCard[]) => {
     setDraftedStars(stars);
     setPhase('squad-selection');
   };
 
-  const handleSquadComplete = (starters: PlayerCard[], substitutes: PlayerCard[], field: any[]) => {
+  const handleSquadComplete = (starters: athleteCard[], substitutes: athleteCard[], field: any[]) => {
     setFinalSquad({ starters, substitutes, field });
     setPhase('choose-renderer');
   };
@@ -112,3 +112,4 @@ export const PreGame: React.FC<PreGameProps> = ({ onComplete, onComplete3D, onBa
 
   return null;
 };
+

@@ -1,5 +1,4 @@
-// 资源服务器配置
-
+// 资源服务器配�?
 // 基础配置
 export const ASSETS_CONFIG = {
   // 资源基础 URL
@@ -30,22 +29,23 @@ export const ASSETS_CONFIG = {
   fonts: '/fonts',
 };
 
-// 辅助函数：获取完整 URL
+// 辅助函数：获取完�?URL
 export function getAssetURL(path: string): string {
   return `${ASSETS_CONFIG.baseURL}${path}`;
 }
 
-// 辅助函数：获取图片 URL
+// 辅助函数：获取图�?URL
 export function getImageURL(path: string): string {
   return getAssetURL(`/images${path}`);
 }
 
-// 辅助函数：获取音频 URL
+// 辅助函数：获取音�?URL
 export function getAudioURL(path: string): string {
   return getAssetURL(`/audio${path}`);
 }
 
-// 辅助函数：获取卡牌图片 URL
+// 辅助函数：获取卡牌图�?URL
 export function getCardImageURL(type: 'player' | 'synergy' | 'penalty', filename: string): string {
   return getAssetURL(`/images/cards/${type}/${filename}`);
 }
+

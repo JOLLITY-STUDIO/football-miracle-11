@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { playSound } from '../utils/audio';
 
 interface Props {
   text: string;
@@ -7,9 +8,24 @@ interface Props {
   show: boolean;
   onComplete?: () => void;
   durationMs?: number;
+  soundType?: 'whistle' | 'whistle_long' | 'cheer' | 'snap' | 'ding' | 'none';
 }
 
-const PhaseBanner: React.FC<Props> = ({ text, subtitle, show, onComplete, durationMs = 2000 }) => {
+const PhaseBanner: React.FC<Props> = ({ 
+  text, 
+  subtitle, 
+  show, 
+  onComplete, 
+  durationMs = 2000,
+  soundType = 'snap'
+}) => {
+  useEffect(() => {
+    // 横幅显示时播放音效
+    if (show && soundType && soundType !== 'none') {
+      playSound(soundType);
+    }
+  }, [show, soundType]);
+
   useEffect(() => {
     if (show && onComplete) {
       const timer = setTimeout(onComplete, durationMs);
@@ -65,3 +81,4 @@ const PhaseBanner: React.FC<Props> = ({ text, subtitle, show, onComplete, durati
 };
 
 export default PhaseBanner;
+

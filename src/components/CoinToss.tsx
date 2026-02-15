@@ -187,3 +187,4 @@ export const CoinToss: React.FC<Props> = ({ result, onComplete }) => {
     </motion.div>
   );
 };
+

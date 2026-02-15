@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 import type { PlayerActionType } from '../types/game';
 import GameField from './GameField';
 import { FieldVisuals } from './FieldVisuals';
@@ -8,14 +8,14 @@ import { getPitchWidth, getPitchHeight, FIELD_CONFIG } from '../config/fieldDime
 interface Props {
   playerField: any;
   aiField: any;
-  selectedCard: PlayerCard | null;
+  selectedCard: athleteCard | null;
   onSlotClick: (zone: number, startCol: number) => void;
   onAttackClick: (zone: number, startCol: number) => void;
   currentTurn: 'player' | 'ai';
   turnPhase: string;
   isFirstTurn: boolean;
-  lastPlacedCard: PlayerCard | null;
-  onCardMouseEnter: (card: PlayerCard, event?: React.MouseEvent) => void;
+  lastPlacedCard: athleteCard | null;
+  onCardMouseEnter: (card: athleteCard, event?: React.MouseEvent) => void;
   onCardMouseLeave: () => void;
   onInstantShotClick?: ((zone: number, slot: number) => void) | undefined;
   instantShotMode?: any;
@@ -107,3 +107,4 @@ export const CenterField: React.FC<Props> = ({
     </div>
   );
 };
+

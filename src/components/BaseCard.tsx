@@ -28,3 +28,4 @@ export const BaseCard: React.FC<Props> = ({ size = 'medium', children, className
     </div>
   );
 };
+

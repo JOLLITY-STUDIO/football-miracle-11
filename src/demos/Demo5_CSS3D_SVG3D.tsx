@@ -4,7 +4,7 @@ interface Demo5Props {
   onCellClick?: (zone: number, col: number) => void;
 }
 
-interface PlayerCard {
+interface athleteCard {
   id: string;
   name: string;
   imageUrl: string;
@@ -14,8 +14,8 @@ interface PlayerCard {
 export const Demo5_CSS3D_SVG3D: React.FC<Demo5Props> = ({ onCellClick }) => {
   const [viewSettings, setViewSettings] = useState({ pitch: 45, rotation: 0, zoom: 1 });
   const [hoveredCell, setHoveredCell] = useState<{ zone: number; col: number } | null>(null);
-  const [selectedCard, setSelectedCard] = useState<PlayerCard | null>(null);
-  const [placedCards, setPlacedCards] = useState<PlayerCard[]>([
+  const [selectedCard, setSelectedCard] = useState<athleteCard | null>(null);
+  const [placedCards, setPlacedCards] = useState<athleteCard[]>([
     { id: '1', name: 'Player 1', imageUrl: '/images/player1.png', position: { zone: 0, col: 0 } },
     { id: '2', name: 'Player 2', imageUrl: '/images/player2.png', position: { zone: 1, col: 2 } },
     { id: '3', name: 'Player 3', imageUrl: '/images/player3.png', position: { zone: 2, col: 4 } },
@@ -219,7 +219,7 @@ export const Demo5_CSS3D_SVG3D: React.FC<Demo5Props> = ({ onCellClick }) => {
         <p>Hovered: {hoveredCell ? `Zone ${hoveredCell.zone}, Col ${hoveredCell.col}` : 'None'}</p>
         <p>Selected: {selectedCard ? selectedCard.name : 'None'}</p>
         <p style={{ fontSize: '12px', color: '#9ca3af' }}>
-          点击网格单元放置球员，选择"选择新球员"后点击绿色网格放置
+          点击网格单元放置球员，选择"选择新球"后点击绿色网格放置
         </p>
       </div>
       
@@ -250,7 +250,7 @@ export const Demo5_CSS3D_SVG3D: React.FC<Demo5Props> = ({ onCellClick }) => {
             <li>CSS 3D提供灵活的视角控制</li>
             <li>SVG提供精确的点击检测</li>
             <li>可以在SVG中嵌入图片和文本</li>
-            <li>不需要Three.js的复杂性</li>
+            <li>不需要Three.js的复杂度</li>
             <li>性能优秀，浏览器原生优化</li>
           </ul>
         </div>
@@ -304,7 +304,7 @@ export const Demo5_CSS3D_SVG3D: React.FC<Demo5Props> = ({ onCellClick }) => {
             cursor: 'pointer'
           }}
         >
-          选择新球员
+          选择新球
         </button>
       </div>
     </div>

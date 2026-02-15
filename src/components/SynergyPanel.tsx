@@ -64,3 +64,4 @@ export const SynergyPanel: React.FC<Props> = ({
     </div>
   );
 };
+

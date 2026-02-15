@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { canPlaceCardAtSlot, getImmediateEffectDescription, getIconDisplay } from '../data/cards';
-import type { PlayerCard, SynergyCard } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import type { athleteCard, SynergyCard } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 import { SynergyCardComponent } from './SynergyCard';
 import { PenaltyModal } from './PenaltyModal';
 import { LeftPanel } from './LeftPanel';
@@ -19,6 +19,7 @@ import { MatchLog } from './MatchLog';
 import { DraftPhase } from './DraftPhase';
 import { TutorialGuide } from './TutorialGuide';
 import { ActionButtons } from './ActionButtons';
+import { AmbientControls } from './AmbientControls';
 import {
   gameReducer,
   createInitialState,
@@ -31,10 +32,11 @@ import {
 import { useGameAudio } from '../hooks/useGameAudio';
 import { useCameraView } from '../hooks/useCameraView';
 import { useGameState } from '../hooks/useGameState';
+import { startMatchAmbience, stopMatchAmbience, triggerCrowdReaction, playSound } from '../utils/audio';
 
 interface Props {
   onBack: () => void;
-  playerTeam: { starters: PlayerCard[]; substitutes: PlayerCard[]; initialField?: any[] } | null;
+  playerTeam: { starters: athleteCard[]; substitutes: athleteCard[]; initialField?: any[] } | null;
   renderMode?: '2d' | '3d';
 }
 
@@ -85,11 +87,11 @@ const {
     toggleCameraView 
   } = useCameraView(gameState.isHomeTeam);
 
-  const [lastPlacedCard, setLastPlacedCard] = useState<PlayerCard | null>(null);
-  const [hoveredCard, setHoveredCard] = useState<PlayerCard | null>(null);
+  const [lastPlacedCard, setLastPlacedCard] = useState<athleteCard | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<athleteCard | null>(null);
   const [hoveredCardPosition, setHoveredCardPosition] = useState({ x: 0, y: 0 });
   const [hoverSoundPlayedForId, setHoverSoundPlayedForId] = useState<string | null>(null);
-  const [aiJustPlacedCard, setAiJustPlacedCard] = useState<PlayerCard | null>(null);
+  const [aiJustPlacedCard, setAiJustPlacedCard] = useState<athleteCard | null>(null);
   const [showPhaseBanner, setShowPhaseBanner] = useState(false);
   const [phaseBannerText, setPhaseBannerText] = useState('');
   const [phaseBannerSubtitle, setPhaseBannerSubtitle] = useState('');
@@ -132,6 +134,7 @@ const {
   const [shownStoppageTime, setShownStoppageTime] = useState(false);
   const [showMatchLog, setShowMatchLog] = useState(false);
   const [showLeftControls, setShowLeftControls] = useState(true);
+  const [showAmbientControls, setShowAmbientControls] = useState(false);
   const [shootMode, setShootMode] = useState<boolean>(false);
   const [selectedShootPlayer, setSelectedShootPlayer] = useState<{zone: number, position: number} | null>(null);
   
@@ -144,8 +147,8 @@ const {
   // Calculate if there are any shootable players (players with attack icons and remaining shot markers)
   const hasShootablePlayers = gameState.playerField.some(zone => {
     return zone.slots.some(slot => {
-      if (!slot.playerCard) return false;
-      const attackIconCount = slot.playerCard.icons.filter((icon: string) => icon === 'attack').length;
+      if (!slot.athleteCard) return false;
+      const attackIconCount = slot.athleteCard.icons.filter((icon: string) => icon === 'attack').length;
       const usedShotMarkers = slot.shotMarkers || 0;
       return attackIconCount > usedShotMarkers;
     });
@@ -291,6 +294,7 @@ const {
             setPhaseBannerSubtitle('Make Substitutions and Prepare for 2nd Half');
             setShowPhaseBanner(true);
         }, 300);
+        // 半场时播放掌�?        triggerCrowdReaction('applause');
     }
     
     // Show banner for Stoppage Time
@@ -302,6 +306,7 @@ const {
             setShowPhaseBanner(true);
         }, 300);
         setShownStoppageTime(true);
+        // 补时阶段增加环境音强�?        triggerCrowdReaction('cheer');
     }
   }, [gameState.turnPhase, gameState.phase, lastPhase, gameState.isStoppageTime, shownStoppageTime, gameState.currentTurn]);
 
@@ -359,7 +364,7 @@ const {
     if (prevAIHandIds.length > currentAIHandIds.length) {
       const placedCardId = prevAIHandIds.find(id => !currentAIHandIds.includes(id));
       if (placedCardId) {
-        const aiFieldCards = gameState.aiField.flatMap(z => z.slots.map(s => s.playerCard).filter(Boolean));
+        const aiFieldCards = gameState.aiField.flatMap(z => z.slots.map(s => s.athleteCard).filter(Boolean));
         const placedCard = aiFieldCards.find(c => c?.id === placedCardId);
         if (placedCard) {
           setAiJustPlacedCard(placedCard);
@@ -376,8 +381,8 @@ const {
     const snapshot = {
       playerScore: gameState.playerScore,
       aiScore: gameState.aiScore,
-      playerField: gameState.playerField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, playerCardId: s.playerCard?.id || null })) })),
-      aiField: gameState.aiField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, playerCardId: s.playerCard?.id || null })) })),
+      playerField: gameState.playerField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, athleteCardId: s.athleteCard?.id || null })) })),
+      aiField: gameState.aiField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, athleteCardId: s.athleteCard?.id || null })) })),
       playerHand: gameState.playerHand.map(c => c.id),
       aiHand: gameState.aiHand.map(c => c.id),
       controlPosition: gameState.controlPosition,
@@ -411,7 +416,7 @@ const {
     const field = gameState.playerField;
     for (const zone of field) {
       for (const slot of zone.slots) {
-        if (slot.playerCard && slot.playerCard.icons.includes('attack')) {
+        if (slot.athleteCard && slot.athleteCard.icons.includes('attack')) {
           return true;
         }
       }
@@ -439,7 +444,7 @@ const {
     playSound('click');
   };
 
-const handleCardSelect = (card: PlayerCard) => {
+const handleCardSelect = (card: athleteCard) => {
   console.log('Card select called for:', card.name, 'ID:', card.id);
   console.log('Current turn:', gameState.currentTurn);
   console.log('Turn phase:', gameState.turnPhase);
@@ -470,7 +475,7 @@ const handleCardSelect = (card: PlayerCard) => {
     playSound('draw');
   };
 
-  const handleHoverEnterCard = (card: PlayerCard, event?: React.MouseEvent) => {
+  const handleHoverEnterCard = (card: athleteCard, event?: React.MouseEvent) => {
     setHoveredCard(card);
     if (event) {
       setHoveredCardPosition({ x: event.clientX, y: event.clientY });
@@ -543,6 +548,45 @@ const handleCardSelect = (card: PlayerCard) => {
     }
   }, [gameState.phase, gameState.isHomeTeam, playSound]);
 
+  // ============================================
+  // 环境音控制逻辑
+  // ============================================
+  useEffect(() => {
+    // 比赛开始时启动环境音
+    if (gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf') {
+      startMatchAmbience();
+    }
+    
+    // 比赛结束时停止环境音
+    if (gameState.phase === 'fullTime' || gameState.phase === 'penaltyShootout') {
+      stopMatchAmbience(3000);
+    }
+    
+    return () => {
+      // 清理函数：组件卸载时停止所有环境音
+      if (gameState.phase === 'fullTime' || gameState.phase === 'penaltyShootout') {
+        stopMatchAmbience(1000);
+      }
+    };
+  }, [gameState.phase]);
+
+  // 进球时触发观众欢呼
+  useEffect(() => {
+    if (gameState.pendingShot && gameState.turnPhase === 'end') {
+      const result = gameState.pendingShot.result;
+      if (result === 'goal' || result === 'magicNumber') {
+        triggerCrowdReaction('cheer');
+      } else if (result === 'saved') {
+        triggerCrowdReaction('applause');
+      } else if (result === 'missed') {
+        triggerCrowdReaction('ooh');
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState.pendingShot?.result, gameState.turnPhase]);
+
+  // ============================================
+  // 原有的射门结果音�?  // ============================================
   useEffect(() => {
     if (gameState.pendingShot && gameState.turnPhase === 'end') {
       const result = gameState.pendingShot.result;
@@ -554,7 +598,8 @@ const handleCardSelect = (card: PlayerCard) => {
         playSound('swosh');
       }
     }
-  }, [gameState.pendingShot, gameState.turnPhase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState.pendingShot?.result, gameState.turnPhase]);
 
   useEffect(() => {
     if (gameState.turnPhase === 'end' && !gameState.pendingPenalty) {
@@ -592,7 +637,7 @@ const handleCardSelect = (card: PlayerCard) => {
 
   const passCount = countIcons(gameState.playerField, 'pass');
   const pressCount = countIcons(gameState.playerField, 'press');
-  const canDoTeamAction = !gameState.skipTeamAction || gameState.playerField.some(z => z.slots.some(s => s.playerCard));
+  const canDoTeamAction = !gameState.skipTeamAction || gameState.playerField.some(z => z.slots.some(s => s.athleteCard));
 
   const handleVolumeChange = (newVolume: number) => {
     const newSettings = { ...audioSettings, volume: newVolume };
@@ -675,6 +720,7 @@ const handleCardSelect = (card: PlayerCard) => {
                   onSubstituteSelect={handleSubstituteSelect}
                   onToggleMatchLog={() => setShowMatchLog(!showMatchLog)}
                   onToggleLeftControls={() => setShowLeftControls(!showLeftControls)}
+                  onOpenAmbientControls={() => setShowAmbientControls(true)}
                 />
 
                 {/* Always show 2D CenterField for card display */}
@@ -856,8 +902,7 @@ const handleCardSelect = (card: PlayerCard) => {
                 onClick={() => setShowViewControls(false)} 
                 className="text-white/40 hover:text-white text-xs pointer-events-auto p-1"
               >
-                ✕
-              </button>
+                �?              </button>
             </div>
             
             <div className="space-y-4 cursor-default" onPointerDown={(e) => e.stopPropagation()}>
@@ -987,7 +1032,7 @@ const handleCardSelect = (card: PlayerCard) => {
                     className="relative origin-center w-48 h-28 shadow-xl"
                     style={{ zIndex: i }}
                   >
-                     <PlayerCardComponent 
+                     <AthleteCardComponent 
                         card={card} 
                         size="small" 
                         faceDown={false}
@@ -1008,8 +1053,8 @@ const handleCardSelect = (card: PlayerCard) => {
         <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none" data-testid="game-board">
 
 
-         {/* Bottom Center: Player Hand */}
-         <div className="absolute bottom-[-100px] left-1/2 -translate-x-1/2 w-[80%] h-48 pointer-events-auto flex justify-center items-end pb-4 perspective-1000">
+         {/* Bottom Right: Player Hand - Moved to Draw Area */}
+         <div className="absolute bottom-4 right-4 w-[400px] h-32 pointer-events-auto flex justify-center items-end pb-2 perspective-1000">
             <AnimatePresence>
               {gameState.playerHand.map((card, i) => (
                 <motion.div
@@ -1018,22 +1063,23 @@ const handleCardSelect = (card: PlayerCard) => {
                   initial={{ opacity: 0, y: 200, rotate: 0, scale: 0 }}
                   animate={setupStep >= 3 || gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf' ? { 
                     opacity: 1, 
-                    y: (gameState.selectedCard?.id === card.id ? -120 : -5) + Math.abs(i - (gameState.playerHand.length - 1) / 2) * 2, 
+                    y: gameState.selectedCard?.id === card.id ? -20 : 0, 
                     scale: gameState.selectedCard?.id === card.id ? 1.1 : 1,
-                    rotate: gameState.selectedCard?.id === card.id ? 0 : (i - (gameState.playerHand.length - 1) / 2) * 3, 
-                    x: (i - (gameState.playerHand.length - 1) / 2) * -70 
+                    rotate: gameState.selectedCard?.id === card.id ? 0 : (i - (gameState.playerHand.length - 1) / 2) * 4, 
+                    x: (i - (gameState.playerHand.length - 1) / 2) * -40 
                   } : { opacity: 0, y: 200, rotate: 0, scale: 0 }}
                   exit={{ opacity: 0, scale: 0.5, y: 50 }}
                   whileHover={{ 
-                    scale: 1.5, 
+                    scale: 1.3, 
                     rotate: 0, 
-                    zIndex: 100
+                    zIndex: 100,
+                    y: -30
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   className="relative origin-bottom cursor-pointer shadow-2xl"
                   style={{ zIndex: gameState.selectedCard?.id === card.id ? 100 : i }}
                 >
-                  <PlayerCardComponent
+                  <AthleteCardComponent
                     card={card}
                     onClick={() => handleCardSelect(card)}
                     selected={gameState.selectedCard?.id === card.id}
@@ -1042,6 +1088,7 @@ const handleCardSelect = (card: PlayerCard) => {
                 </motion.div>
               ))}
             </AnimatePresence>
+
          </div>
         </div>
       )}
@@ -1149,8 +1196,7 @@ const handleCardSelect = (card: PlayerCard) => {
                       }}
                       className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
                     >
-                      No actions available - Skip ➔
-                    </button>
+                      No actions available - Skip �?                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -1318,19 +1364,19 @@ const handleCardSelect = (card: PlayerCard) => {
                   <div className="text-[10px] text-white/30 uppercase tracking-[0.3em] mb-4 px-2 font-black border-l-2 border-blue-500/50 ml-2">Players On Field</div>
                   <div className="flex flex-wrap justify-center gap-x-6 gap-y-10 max-h-80 overflow-y-auto p-4 bg-black/20 rounded-2xl border border-white/5 custom-scrollbar">
                     {gameState.playerField.flatMap(zone => 
-                      zone.slots.filter(slot => slot.playerCard).map(slot => (
+                      zone.slots.filter(slot => slot.athleteCard).map(slot => (
                         <div key={`${zone.zone}-${slot.position}`} className="relative group flex flex-col items-center">
                           <motion.div 
                             whileHover={{ scale: 1.1, y: -5 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => handleSubstituteTarget(slot.playerCard!.id)}
+                            onClick={() => handleSubstituteTarget(slot.athleteCard!.id)}
                             className="cursor-pointer relative z-10"
                           >
                             <div className="absolute inset-0 bg-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
-                            <PlayerCardComponent card={slot.playerCard!} size="small" />
+                            <AthleteCardComponent card={slot.athleteCard!} size="small" />
                           </motion.div>
                           <div className="mt-3 text-[9px] font-black text-white/40 uppercase tracking-tighter bg-white/5 px-2 py-0.5 rounded-full border border-white/5 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-all">
-                            Zone {zone.zone} • Slot {slot.position}
+                            Zone {zone.zone} �?Slot {slot.position}
                           </div>
                         </div>
                       ))
@@ -1351,7 +1397,7 @@ const handleCardSelect = (card: PlayerCard) => {
                             className="cursor-pointer relative z-10"
                           >
                             <div className="absolute inset-0 bg-green-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
-                            <PlayerCardComponent card={card} size="small" />
+                            <AthleteCardComponent card={card} size="small" />
                           </motion.div>
                           <div className="mt-3 text-[9px] font-black text-white/40 uppercase tracking-tighter bg-white/5 px-2 py-0.5 rounded-full border border-white/5 group-hover:text-green-400 group-hover:border-green-500/30 transition-all">
                             In Hand
@@ -1383,7 +1429,7 @@ const handleCardSelect = (card: PlayerCard) => {
               className="bg-[#1a1a1a] p-8 rounded-2xl border border-yellow-500/50 max-w-md w-full shadow-[0_0_50px_rgba(234,179,8,0.2)]"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black text-xl">⚡</div>
+                <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-black text-xl">⚽</div>
                 <h3 className="text-2xl font-['Russo_One'] text-white uppercase tracking-tighter">Instant Shot!</h3>
               </div>
               <p className="text-gray-300 mb-6 leading-relaxed">
@@ -1479,6 +1525,15 @@ const handleCardSelect = (card: PlayerCard) => {
         subtitle={phaseBannerSubtitle}
         show={showPhaseBanner}
         durationMs={phaseBannerText === 'ACTION COMPLETE' ? 1000 : 2000}
+        soundType={
+          phaseBannerText === 'HALF TIME' ? 'whistle_long' :
+          phaseBannerText === 'FULL TIME' ? 'whistle_long' :
+          phaseBannerText === 'STOPPAGE TIME' ? 'whistle' :
+          phaseBannerText === 'Your Turn' ? 'ding' :
+          phaseBannerText === 'Opponent Turn' ? 'snap' :
+          phaseBannerText?.includes('Round') ? 'cheer' :
+          'snap'
+        }
         onComplete={() => {
           setShowPhaseBanner(false);
           if (gameState.phase === 'draft' && gameState.draftStep === 0) {
@@ -1557,6 +1612,12 @@ const handleCardSelect = (card: PlayerCard) => {
         )}
       </AnimatePresence>
 
+      {/* Ambient Controls Panel */}
+      <AmbientControls 
+        isOpen={showAmbientControls} 
+        onClose={() => setShowAmbientControls(false)} 
+      />
+
       {gameState.phase === 'squadSelection' && (
         <SquadSelect
           allPlayers={[...gameState.playerHand, ...gameState.playerBench]}
@@ -1593,7 +1654,7 @@ const handleCardSelect = (card: PlayerCard) => {
             <div className="relative">
               {/* Glow effect */}
                <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full" />
-               <PlayerCardComponent card={hoveredCard} size="large" faceDown={false} />
+               <AthleteCardComponent card={hoveredCard} size="large" faceDown={false} />
                
                {/* Status label */}
               {gameState.aiBench.some(c => c.id === hoveredCard.id) && (
@@ -1613,3 +1674,4 @@ const handleCardSelect = (card: PlayerCard) => {
     </div>
   )
 }
+

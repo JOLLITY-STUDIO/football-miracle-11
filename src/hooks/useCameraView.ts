@@ -57,3 +57,4 @@ export const useCameraView = (isHomeTeam: boolean) => {
     setViewSettings
   };
 };
+

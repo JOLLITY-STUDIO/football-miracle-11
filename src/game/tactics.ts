@@ -1,10 +1,10 @@
-import type { PlayerCard, TacticalIcon, IconWithPosition } from '../data/cards';
+import type { athleteCard, TacticalIcon, IconWithPosition } from '../data/cards';
 
 export interface TacticalSlot {
   id: string;
   zone: number;
   position: number;
-  playerCard: PlayerCard | null;
+  athleteCard: athleteCard | null;
 }
 
 export interface TacticalZone {
@@ -115,40 +115,40 @@ export function createTacticalBoard(): TacticalZone[] {
       id: 1,
       name: 'Attack Zone',
       slots: [
-        { id: '1-1', zone: 1, position: 1, playerCard: null },
-        { id: '1-2', zone: 1, position: 2, playerCard: null },
-        { id: '1-3', zone: 1, position: 3, playerCard: null },
-        { id: '1-4', zone: 1, position: 4, playerCard: null },
+        { id: '1-1', zone: 1, position: 1, athleteCard: null },
+        { id: '1-2', zone: 1, position: 2, athleteCard: null },
+        { id: '1-3', zone: 1, position: 3, athleteCard: null },
+        { id: '1-4', zone: 1, position: 4, athleteCard: null },
       ],
     },
     {
       id: 2,
       name: 'Midfield Zone',
       slots: [
-        { id: '2-1', zone: 2, position: 1, playerCard: null },
-        { id: '2-2', zone: 2, position: 2, playerCard: null },
-        { id: '2-3', zone: 2, position: 3, playerCard: null },
-        { id: '2-4', zone: 2, position: 4, playerCard: null },
+        { id: '2-1', zone: 2, position: 1, athleteCard: null },
+        { id: '2-2', zone: 2, position: 2, athleteCard: null },
+        { id: '2-3', zone: 2, position: 3, athleteCard: null },
+        { id: '2-4', zone: 2, position: 4, athleteCard: null },
       ],
     },
     {
       id: 3,
       name: 'Defense Zone',
       slots: [
-        { id: '3-1', zone: 3, position: 1, playerCard: null },
-        { id: '3-2', zone: 3, position: 2, playerCard: null },
-        { id: '3-3', zone: 3, position: 3, playerCard: null },
-        { id: '3-4', zone: 3, position: 4, playerCard: null },
+        { id: '3-1', zone: 3, position: 1, athleteCard: null },
+        { id: '3-2', zone: 3, position: 2, athleteCard: null },
+        { id: '3-3', zone: 3, position: 3, athleteCard: null },
+        { id: '3-4', zone: 3, position: 4, athleteCard: null },
       ],
     },
     {
       id: 4,
       name: 'Goal Zone',
       slots: [
-        { id: '4-1', zone: 4, position: 1, playerCard: null },
-        { id: '4-2', zone: 4, position: 2, playerCard: null },
-        { id: '4-3', zone: 4, position: 3, playerCard: null },
-        { id: '4-4', zone: 4, position: 4, playerCard: null },
+        { id: '4-1', zone: 4, position: 1, athleteCard: null },
+        { id: '4-2', zone: 4, position: 2, athleteCard: null },
+        { id: '4-3', zone: 4, position: 3, athleteCard: null },
+        { id: '4-4', zone: 4, position: 4, athleteCard: null },
       ],
     },
   ];
@@ -223,9 +223,9 @@ export function calculateTacticalConnections(
 
   for (const zone of zones) {
     for (const slot of zone.slots) {
-      if (!slot.playerCard) continue;
+      if (!slot.athleteCard) continue;
 
-      const card = slot.playerCard;
+      const card = slot.athleteCard;
       
       for (const iconWithPos of card.iconPositions) {
         const matchingPos = MATCHING_POSITIONS[iconWithPos.position];
@@ -234,12 +234,12 @@ export function calculateTacticalConnections(
         const adjacentSlots = getAdjacentSlots(zones, slot);
         
         for (const adjSlot of adjacentSlots) {
-          if (!adjSlot.playerCard) continue;
+          if (!adjSlot.athleteCard) continue;
 
           const pairKey = [slot.id, adjSlot.id, iconWithPos.type].sort().join('-');
           if (processedPairs.has(pairKey)) continue;
 
-          const hasMatchingIcon = adjSlot.playerCard.iconPositions.some(
+          const hasMatchingIcon = adjSlot.athleteCard.iconPositions.some(
             pos => pos.position === matchingPos && pos.type === iconWithPos.type
           );
 
@@ -274,9 +274,9 @@ export function calculateTacticalEffects(
 
   for (const zone of zones) {
     for (const slot of zone.slots) {
-      if (slot.playerCard?.completeIcon) {
-        const current = effects.get(slot.playerCard.completeIcon) || 0;
-        effects.set(slot.playerCard.completeIcon, current + 1);
+      if (slot.athleteCard?.completeIcon) {
+        const current = effects.get(slot.athleteCard.completeIcon) || 0;
+        effects.set(slot.athleteCard.completeIcon, current + 1);
       }
     }
   }
@@ -302,3 +302,4 @@ export function calculatePassBonus(zones: TacticalZone[]): number {
   const effects = calculateTacticalEffects(zones);
   return effects.get('pass') || 0;
 }
+

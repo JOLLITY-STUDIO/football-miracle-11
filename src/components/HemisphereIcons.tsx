@@ -14,7 +14,7 @@ const getIconEmoji = (icon: TacticalIcon): string => {
     case 'attack': return '⚔️';
     case 'defense': return '🛡️';
     case 'pass': return '👟';
-    case 'press': return '⚡';
+    case 'press': return '⬆️';
     case 'breakthrough': return '💨';
     case 'breakthroughAll': return '💥';
   }
@@ -76,7 +76,7 @@ export const HemisphereIcons: React.FC<Props> = ({
         style={{ width: size, height: size * 0.8 }}
         viewBox={`${-size/2} ${-size*0.1} ${size} ${size*0.8}`}
       >
-        {/* 连接线 */}
+        {/* 连接�?*/}
         {showConnectionLines && icons.length > 1 && (
           <g>
             {icons.map((icon, idx) => {
@@ -140,3 +140,4 @@ export const HemisphereIcons: React.FC<Props> = ({
 };
 
 export default HemisphereIcons;
+

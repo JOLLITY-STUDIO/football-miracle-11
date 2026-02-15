@@ -1,4 +1,4 @@
-import type { PlayerCard, SynergyCard } from '../data/cards';
+import type { athleteCard, SynergyCard } from '../data/cards';
 import type { FieldZone, ShotAttempt, DuelPhase } from '../types/game';
 import type { PlayerActionType, GamePhase, TurnPhase } from '../types/game';
 import { calculateAttackPower, calculateDefensePower, getControlState, getMaxSynergyCardsForAttack, countIcons } from '../utils/gameUtils';
@@ -14,7 +14,7 @@ import { performImmediateEffect } from '../utils/immediateEffects';
 import { performPenalty } from '../utils/penalty';
 import { performEndTurn } from '../utils/endTurn';
 import { aiTurn, processAiActionStep } from '../utils/ai';
-import { starPlayerCards, basePlayerCards } from '../data/cards';
+import { starathleteCards, baseathleteCards } from '../data/cards';
 import { getSynergyDeckFixed } from '../data/synergyConfig';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps';
 
@@ -27,17 +27,17 @@ export interface GameState {
   aiScore: number;
   playerSubstitutionsLeft: number;
   aiSubstitutionsLeft: number;
-  playerHand: PlayerCard[];
-  playerBench: PlayerCard[];
+  playerHand: athleteCard[];
+  playerBench: athleteCard[];
   playerSynergyHand: SynergyCard[];
   playerField: FieldZone[];
   aiField: FieldZone[];
-  aiHand: PlayerCard[];
-  aiBench: PlayerCard[];
+  aiHand: athleteCard[];
+  aiBench: athleteCard[];
   aiSynergyHand: SynergyCard[];
   synergyDeck: SynergyCard[];
   synergyDiscard: SynergyCard[];
-  selectedCard: PlayerCard | null;
+  selectedCard: athleteCard | null;
   isHomeTeam: boolean;
   selectedSynergyCards: SynergyCard[];
   currentAction: PlayerActionType;
@@ -50,14 +50,14 @@ export interface GameState {
   pendingShot: ShotAttempt | null;
   draftRound: number;
   draftStep: number;
-  availableDraftCards: PlayerCard[];
-  discardedDraftCards: PlayerCard[];
-  starCardDeck: PlayerCard[];
+  availableDraftCards: athleteCard[];
+  discardedDraftCards: athleteCard[];
+  starCardDeck: athleteCard[];
   pendingPenalty: boolean;
-  pendingImmediateEffect: { card: PlayerCard; zone: number; slot: number } | null;
-  synergyChoice: { cards: SynergyCard[]; sourceCard: PlayerCard } | null;
-  substitutionMode: { incomingCard: PlayerCard } | null;
-  instantShotMode: { card: PlayerCard; zone: number; slot: number } | null;
+  pendingImmediateEffect: { card: athleteCard; zone: number; slot: number } | null;
+  synergyChoice: { cards: SynergyCard[]; sourceCard: athleteCard } | null;
+  substitutionMode: { incomingCard: athleteCard } | null;
+  instantShotMode: { card: athleteCard; zone: number; slot: number } | null;
   playerActiveSynergy: SynergyCard[];
   aiActiveSynergy: SynergyCard[];
   isDealing: boolean;
@@ -73,7 +73,7 @@ export interface GameState {
   defenderSelectedSynergyCards: SynergyCard[];
   selectedShotIcon: number | null;
   draftTurn: 'player' | 'ai';
-  aiDraftHand: PlayerCard[];
+  aiDraftHand: athleteCard[];
 }
 
 export interface MatchLogEntry {
@@ -93,8 +93,8 @@ export interface MatchLogEntry {
 }
 
 export const createInitialState = (
-  playerStarters: PlayerCard[] = [], 
-  playerSubstitutes: PlayerCard[] = [],
+  playerStarters: athleteCard[] = [], 
+  playerSubstitutes: athleteCard[] = [],
   initialPlayerField: FieldZone[] | null = null
 ): GameState => {
   const initialState: GameState = {
@@ -110,24 +110,24 @@ export const createInitialState = (
     playerBench: [],
     playerSynergyHand: [],
     playerField: initialPlayerField || [
-      { zone: 0, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 1, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 2, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 3, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 4, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 5, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 6, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 7, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) }
+      { zone: 0, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 1, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 2, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 3, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 4, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 5, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 6, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 7, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) }
     ],
     aiField: [
-      { zone: 0, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 1, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 2, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 3, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 4, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 5, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 6, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) },
-      { zone: 7, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, playerCard: null, usedShotIcons: [], shotMarkers: 0 })) }
+      { zone: 0, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 1, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 2, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 3, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 4, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 5, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 6, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
+      { zone: 7, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) }
     ],
     aiHand: [],
     aiBench: [],
@@ -184,16 +184,16 @@ export type GameAction =
   | { type: 'PICK_DRAFT_CARD'; cardIndex: number }
   | { type: 'AI_DRAFT_PICK' }
   | { type: 'DISCARD_DRAFT_CARD' }
-  | { type: 'FINISH_SQUAD_SELECT'; starters: PlayerCard[]; subs: PlayerCard[] }
+  | { type: 'FINISH_SQUAD_SELECT'; starters: athleteCard[]; subs: athleteCard[] }
   | { type: 'TEAM_ACTION'; action: 'pass' | 'press' }
-  | { type: 'PLACE_CARD'; card: PlayerCard; zone: number; slot: number }
+  | { type: 'PLACE_CARD'; card: athleteCard; zone: number; slot: number }
   | { type: 'NEXT_TUTORIAL_STEP' }
   | { type: 'SKIP_TUTORIAL' }
   | { type: 'COMPLETE_TUTORIAL' }
-  | { type: 'USE_SYNERGY'; synergyCard: SynergyCard; targetCard: PlayerCard }
-  | { type: 'PERFORM_SHOT'; card: PlayerCard; slot: number; zone: number; synergyCards?: SynergyCard[] }
-  | { type: 'PERFORM_SUBSTITUTION'; incomingCard: PlayerCard; outgoingCard: PlayerCard; zone: number; slot: number }
-  | { type: 'PERFORM_IMMEDIATE_EFFECT'; card: PlayerCard; zone: number; slot: number }
+  | { type: 'USE_SYNERGY'; synergyCard: SynergyCard; targetCard: athleteCard }
+  | { type: 'PERFORM_SHOT'; card: athleteCard; slot: number; zone: number; synergyCards?: SynergyCard[] }
+  | { type: 'PERFORM_SUBSTITUTION'; incomingCard: athleteCard; outgoingCard: athleteCard; zone: number; slot: number }
+  | { type: 'PERFORM_IMMEDIATE_EFFECT'; card: athleteCard; zone: number; slot: number }
   | { type: 'CANCEL_INSTANT_SHOT' }
   | { type: 'CANCEL_IMMEDIATE_EFFECT' }
   | { type: 'PERFORM_PENALTY'; zone: number; slot: number }
@@ -202,7 +202,7 @@ export type GameAction =
   | { type: 'SET_DEALING'; isDealing: boolean }
   | { type: 'ADVANCE_DUEL' }
   | { type: 'FINISH_SETUP' }
-  | { type: 'SELECT_PLAYER_CARD'; card: PlayerCard | null }
+  | { type: 'SELECT_PLAYER_CARD'; card: athleteCard | null }
   | { type: 'SELECT_SYNERGY_CARD'; card: SynergyCard }
   | { type: 'SELECT_SYNERGY_CARD'; card: SynergyCard }
   | { type: 'SYNERGY_CHOICE_SELECT'; index: number }
@@ -217,7 +217,7 @@ export type GameAction =
   | { type: 'SELECT_DEFENDER_SYNERGY_CARD'; cardIndex: number }
   | { type: 'CONFIRM_DEFENDER_SYNERGY' }
   | { type: 'AI_DEFENDER_SYNERGY_PICK' }
-  | { type: 'START_SUBSTITUTION'; card: PlayerCard }
+  | { type: 'START_SUBSTITUTION'; card: athleteCard }
   | { type: 'PENALTY_COMPLETE'; playerPoints: number; aiPoints: number };
 
 export const isHalfTime = (state: GameState): boolean => {
@@ -339,7 +339,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         type: 'system',
         message: `Rock Paper Scissors: Player is ${action.isHomeTeam ? 'Home' : 'Away'}`
       });
-      // 进入 draft 阶段后立即开始选秀轮次
+      // 杩涘叆 draft 闃舵鍚庣珛鍗冲紑濮嬮€夌杞
       if (newState.phase === 'draft') {
         newState = startDraftRound(newState);
       }
@@ -368,9 +368,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'FINISH_SQUAD_SELECT': {
-      // 根据主客场为AI选择基础球员
-      const aiBaseCards = basePlayerCards.filter(card => {
-        // 玩家是主队时，AI是客队，反之亦然
+      // 鏍规嵁涓诲鍦轰负AI閫夋嫨鍩虹鐞冨憳
+      const aiBaseCards = baseathleteCards.filter(card => {
+        // 鐜╁鏄富闃熸椂锛孉I鏄闃燂紝鍙嶄箣浜︾劧
         if (!state.isHomeTeam) {
           return card.id.startsWith('H');
         } else {
@@ -378,7 +378,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         }
       });
       
-      // 合并AI在选秀中选择的明星卡和基础球员
+      // 合并AI在选择中选择的明星卡和基础球员
       const allAiCards = [...state.aiDraftHand, ...aiBaseCards];
       
       // 为AI选择首发和替补
@@ -390,8 +390,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         ...state, 
         phase: 'firstHalf' as GamePhase, 
         turnPhase: 'playerAction' as TurnPhase, 
-        turnCount: state.isHomeTeam ? 1 : 2, // 主队从第1回合开始，客队从第2回合开始
-        isFirstTurn: true,
+        turnCount: state.isHomeTeam ? 1 : 2, // 涓婚槦浠庣1鍥炲悎寮€濮嬶紝瀹㈤槦浠庣2鍥炲悎寮€濮?        isFirstTurn: true,
         skipTeamAction: true,
         isFirstMatchTurn: true,
         currentAction: 'none' as PlayerActionType,
@@ -428,7 +427,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       }
     
     case 'PLACE_CARD': {
-      // 检查是否可以放置卡牌 - 更宽松的条件
+      // 妫€鏌ユ槸鍚﹀彲浠ユ斁缃崱鐗?- 鏇村鏉剧殑鏉′欢
       const canPlace = state.turnPhase === 'playerAction' || 
                       state.turnPhase === 'teamAction' || 
                       (state.isFirstTurn && state.turnPhase === 'start');
@@ -440,8 +439,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       const slotPosition = Math.floor(action.slot / 2) + 1;
       let newState = placeCard(state, action.card, action.zone, action.slot);
       
-      if (!newState) return state; // 如果 placeCard 返回 null，说明放置失败
-
+      if (!newState) return state; // 濡傛灉 placeCard 杩斿洖 null锛岃鏄庢斁缃け璐?
       const actor = state.currentTurn === 'player' ? 'You' : 'AI';
       newState.currentAction = 'organizeAttack';
       newState.matchLogs = addLog(newState, {
@@ -456,7 +454,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         newState.message = 'Organize your attack or end turn';
       }
       
-      // 如果当前是teamAction阶段，放置卡牌后自动切换到playerAction阶段
+      // 濡傛灉褰撳墠鏄痶eamAction闃舵锛屾斁缃崱鐗屽悗鑷姩鍒囨崲鍒皃layerAction闃舵
       if (state.turnPhase === 'teamAction') {
         newState.turnPhase = 'playerAction';
       }
@@ -552,7 +550,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           type: 'system',
           message: 'Setup complete - Match ready to begin'
         }),
-        showTutorial: true // 启动教程
+        showTutorial: true // 鍚姩鏁欑▼
       };
     
     case 'AI_DRAFT_PICK': {
@@ -666,7 +664,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         newState.substitutionMode = null;
         newState.matchLogs = addLog(newState, {
           type: 'action',
-          message: `Substitution: ${outgoingCard.name} → ${incomingCard.name}`
+          message: `Substitution: ${outgoingCard.name} 鈫?${incomingCard.name}`
         });
         return newState;
       }

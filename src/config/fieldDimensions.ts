@@ -77,3 +77,4 @@ export const getCellDimensions = (desiredWidth?: number, desiredHeight?: number)
     height: FIELD_CONFIG.BASE_CELL_HEIGHT
   };
 };
+

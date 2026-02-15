@@ -218,7 +218,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                 animate={{ scale: 1, opacity: 1 }}
                 className="mb-4"
               >
-                {playerChoice ? <img src={getChoiceEmoji(playerChoice)} alt={getChoiceName(playerChoice)} className="w-24 h-24" /> : <span className="text-8xl">❓</span>}
+                {playerChoice ? <img src={getChoiceEmoji(playerChoice)} alt={getChoiceName(playerChoice)} className="w-24 h-24" /> : <span className="text-8xl">👊</span>}
               </motion.div>
               <div className="text-gray-400">{playerChoice ? getChoiceName(playerChoice) : ''}</div>
             </motion.div>
@@ -267,7 +267,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                 transition={{ type: 'spring', stiffness: 100 }}
                 className="mb-4"
               >
-                {playerChoice ? <img src={getChoiceEmoji(playerChoice)} alt={getChoiceName(playerChoice)} className="w-24 h-24" /> : <span className="text-8xl">❓</span>}
+                {playerChoice ? <img src={getChoiceEmoji(playerChoice)} alt={getChoiceName(playerChoice)} className="w-24 h-24" /> : <span className="text-8xl">👊</span>}
               </motion.div>
               <div className="text-gray-400">{playerChoice ? getChoiceName(playerChoice) : ''}</div>
             </motion.div>
@@ -302,7 +302,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
             {/* Player Area (Bottom) */}
             <motion.div>
               <div className="text-2xl text-white mb-4">YOU</div>
-              <div className="mb-4">{playerChoice ? <img src={getChoiceEmoji(playerChoice)} alt={getChoiceName(playerChoice)} className="w-24 h-24" /> : <span className="text-8xl">❓</span>}</div>
+              <div className="mb-4">{playerChoice ? <img src={getChoiceEmoji(playerChoice)} alt={getChoiceName(playerChoice)} className="w-24 h-24" /> : <span className="text-8xl">👊</span>}</div>
               <div className="text-gray-400">{playerChoice ? getChoiceName(playerChoice) : ''}</div>
             </motion.div>
             
@@ -421,3 +421,4 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
     </motion.div>
   );
 };
+

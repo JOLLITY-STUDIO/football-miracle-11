@@ -1,12 +1,12 @@
 import React from 'react';
-import type { PlayerCard } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import type { AthleteCard } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 
 interface Props {
-  bench: PlayerCard[];
-  selectedCard?: PlayerCard;
+  bench: AthleteCard[];
+  selectedCard?: AthleteCard;
   substitutionsLeft: number;
-  onSelect: (card: PlayerCard) => void;
+  onSelect: (card: AthleteCard) => void;
   onCancel: () => void;
   onStartSecondHalf: () => void;
   phase: string;
@@ -38,7 +38,7 @@ export const SubstitutionPanel: React.FC<Props> = ({
               className={`cursor-pointer transition-transform ${selectedCard?.id === card.id ? 'scale-110' : 'hover:scale-105'}`}
               onClick={() => onSelect(card)}
             >
-              <PlayerCardComponent
+              <AthleteCardComponent
                 card={card}
                 size="small"
                 selected={selectedCard?.id === card.id}
@@ -69,3 +69,4 @@ export const SubstitutionPanel: React.FC<Props> = ({
     </div>
   );
 };
+

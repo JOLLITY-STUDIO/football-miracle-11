@@ -14,7 +14,7 @@ const getEffectInfo = (effect: ImmediateEffectType) => {
       return {
         icon: '🎯',
         label: '控制+1',
-        description: '移动1张卡牌',
+        description: '移动1张卡片',
         color: '#8b5cf6',
         bgColor: 'rgba(139, 92, 246, 0.2)'
       };
@@ -22,13 +22,13 @@ const getEffectInfo = (effect: ImmediateEffectType) => {
       return {
         icon: '🎯',
         label: '控制+2',
-        description: '移动2张卡牌',
+        description: '移动2张卡片',
         color: '#8b5cf6',
         bgColor: 'rgba(139, 92, 246, 0.3)'
       };
     case 'draw_synergy_1':
       return {
-        icon: '✨',
+        icon: '🎴',
         label: '抽卡+1',
         description: '抽1张协同卡',
         color: '#f59e0b',
@@ -52,7 +52,7 @@ const getEffectInfo = (effect: ImmediateEffectType) => {
       };
     case 'instant_shot':
       return {
-        icon: '⚡',
+        icon: '⚽',
         label: '射门',
         description: '立即射门',
         color: '#ef4444',
@@ -93,8 +93,7 @@ export const SkillEffectBadge: React.FC<Props> = ({
           sizeClasses[size].container
         )}
         style={{
-          backgroundColor: '#ffffff', // 统一为纯白底色
-          borderColor: info.color
+          backgroundColor: '#ffffff', // 统一为纯白底�?          borderColor: info.color
         }}
         title={info.description}
       >
@@ -115,3 +114,4 @@ export const SkillEffectBadge: React.FC<Props> = ({
 import clsx from 'clsx';
 
 export default SkillEffectBadge;
+

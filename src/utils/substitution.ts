@@ -1,10 +1,10 @@
 import type { GameState } from '../game/gameLogic';
-import type { PlayerCard } from '../types/game';
+import type { athleteCard } from '../types/game';
 
 export const performSubstitution = (
   state: GameState, 
-  incomingCard: PlayerCard, 
-  outgoingCard: PlayerCard, 
+  incomingCard: athleteCard, 
+  outgoingCard: athleteCard, 
   zone: number, 
   slot: number
 ): GameState => {

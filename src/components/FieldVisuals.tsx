@@ -146,7 +146,7 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
             className="text-white text-sm mb-8"
             onClick={(e) => e.stopPropagation()}
           >
-            Click on a player with âš½ icon to shoot
+            Click on a player with âš?icon to shoot
           </div>
           <button
             onClick={onCloseShootMode}
@@ -159,3 +159,4 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
     </div>
   );
 };
+

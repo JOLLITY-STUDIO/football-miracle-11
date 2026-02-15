@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 import type { Team } from '../data/teams';
 import type { FieldZone } from '../types/game';
 
 interface SquadSelectionProps {
   team: Team;
-  draftedStars: PlayerCard[];
-  onComplete: (starters: PlayerCard[], substitutes: PlayerCard[], initialField: FieldZone[]) => void;
+  draftedStars: athleteCard[];
+  onComplete: (starters: athleteCard[], substitutes: athleteCard[], initialField: FieldZone[]) => void;
 }
 
 // Helper function to get valid zones based on player type
@@ -15,16 +15,14 @@ const getValidZones = (type: string): number[] => {
     case 'fw':
       return [2, 3, 4, 5]; // 前锋可放置在2-5区域
     case 'mf':
-      return [1, 2, 5, 6]; // 中场只能放置在1、2、5、6行
-    case 'df':
-      return [0, 1, 6, 7]; // 后卫只能放置在0、1、6、7行
-    default:
+      return [1, 2, 5, 6]; // 中场只能放置�?�?�?�?�?    case 'df':
+      return [0, 1, 6, 7]; // 后卫只能放置�?�?�?�?�?    default:
       return [];
   }
 };
 
 const FormationView: React.FC<{
-  starters: PlayerCard[];
+  starters: athleteCard[];
   onBack: () => void;
   onConfirm: (field: FieldZone[]) => void;
 }> = ({ starters, onBack, onConfirm }) => {
@@ -34,7 +32,7 @@ const FormationView: React.FC<{
   const zones = [1, 2, 3, 4];
   const slots = [1, 2, 3, 4];
 
-  const handleCardClick = (card: PlayerCard) => {
+  const handleCardClick = (card: athleteCard) => {
     // If card is already placed, remove it
     if (placedCards.has(card.id)) {
       const newPlaced = new Map(placedCards);
@@ -71,10 +69,10 @@ const FormationView: React.FC<{
   const handleConfirm = () => {
     // Convert placedCards map to FieldZone[]
     const field: FieldZone[] = [
-      { zone: 1, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 2, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 3, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
-      { zone: 4, slots: [{ position: 1, playerCard: null, shotMarkers: 0 }, { position: 2, playerCard: null, shotMarkers: 0 }, { position: 3, playerCard: null, shotMarkers: 0 }, { position: 4, playerCard: null, shotMarkers: 0 }] },
+      { zone: 1, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
+      { zone: 2, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
+      { zone: 3, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
+      { zone: 4, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
     ];
 
     placedCards.forEach((pos, cardId) => {
@@ -83,7 +81,7 @@ const FormationView: React.FC<{
         const zoneIdx = pos.zone - 1;
         const slotIdx = pos.slot - 1;
         if (field[zoneIdx] && field[zoneIdx].slots[slotIdx]) {
-          field[zoneIdx].slots[slotIdx].playerCard = card;
+          field[zoneIdx].slots[slotIdx].athleteCard = card;
         }
       }
     });
@@ -210,10 +208,10 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
 }) => {
   const [step, setStep] = useState<'select' | 'formation'>('select');
   const allPlayers = [...team.basePlayers, ...draftedStars];
-  const [selectedStarters, setSelectedStarters] = useState<PlayerCard[]>([]);
-  const [selectedSubstitutes, setSelectedSubstitutes] = useState<PlayerCard[]>([]);
+  const [selectedStarters, setSelectedStarters] = useState<athleteCard[]>([]);
+  const [selectedSubstitutes, setSelectedSubstitutes] = useState<athleteCard[]>([]);
 
-  const handleTogglePlayer = (player: PlayerCard) => {
+  const handleTogglePlayer = (player: athleteCard) => {
     const isStarter = selectedStarters.some(p => p.id === player.id);
     const isSubstitute = selectedSubstitutes.some(p => p.id === player.id);
 
@@ -230,14 +228,14 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
     }
   };
 
-  const handleSetAsStarter = (player: PlayerCard) => {
+  const handleSetAsStarter = (player: athleteCard) => {
     if (selectedStarters.length < 10) {
       setSelectedSubstitutes(prev => prev.filter(p => p.id !== player.id));
       setSelectedStarters(prev => [...prev, player]);
     }
   };
 
-  const handleSetAsSubstitute = (player: PlayerCard) => {
+  const handleSetAsSubstitute = (player: athleteCard) => {
     if (selectedSubstitutes.length < 3) {
       setSelectedStarters(prev => prev.filter(p => p.id !== player.id));
       setSelectedSubstitutes(prev => [...prev, player]);
@@ -246,7 +244,7 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
 
   const canComplete = selectedStarters.length === 10 && selectedSubstitutes.length === 3;
 
-  const getSelectionStatus = (player: PlayerCard): 'starter' | 'substitute' | 'none' => {
+  const getSelectionStatus = (player: athleteCard): 'starter' | 'substitute' | 'none' => {
     if (selectedStarters.some(p => p.id === player.id)) return 'starter';
     if (selectedSubstitutes.some(p => p.id === player.id)) return 'substitute';
     return 'none';
@@ -363,3 +361,4 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
     </div>
   );
 };
+

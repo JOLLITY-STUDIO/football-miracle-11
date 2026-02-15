@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlayerCard } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import type { AthleteCard } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 import { playSound } from '../utils/audio';
 
 interface Props {
-  cards: PlayerCard[];
+  cards: AthleteCard[];
   round: number;
   isPlayerTurn: boolean;
   onSelect: (index: number) => void;
@@ -26,7 +26,7 @@ const StarCardDraft: React.FC<Props> = ({
   draftStep = 1
 }) => {
   const [isShuffling, setIsShuffling] = useState(true);
-  const [shuffledCards, setShuffledCards] = useState<PlayerCard[]>([]);
+  const [shuffledCards, setShuffledCards] = useState<AthleteCard[]>([]);
   const [showDiscard, setShowDiscard] = useState(false);
   const [lastAiSelectedIndex, setLastAiSelectedIndex] = useState<number | null>(null);
 
@@ -51,7 +51,7 @@ const StarCardDraft: React.FC<Props> = ({
   useEffect(() => {
     if (!isShuffling) {
       setShuffledCards(cards);
-      // 当卡片数量变化时，清除AI选中标识，避免索引错位
+      // 当卡片数量变化时，清除AI选中标识，避免索引错乱
       if (cards.length < 3) {
         setLastAiSelectedIndex(null);
       }
@@ -169,7 +169,7 @@ const StarCardDraft: React.FC<Props> = ({
                   )}
                   
                   <div className={`relative z-10 transition-all duration-300 ${isDiscarded ? 'grayscale brightness-50' : ''}`}>
-                    <PlayerCardComponent
+                    <AthleteCardComponent
                       card={card}
                       size="large"
                     />
@@ -231,3 +231,4 @@ const StarCardDraft: React.FC<Props> = ({
 };
 
 export default StarCardDraft;
+

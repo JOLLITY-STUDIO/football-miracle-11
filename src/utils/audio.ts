@@ -66,3 +66,117 @@ export const audioManager = new AudioManager();
 export const playSound = (type: SoundType) => {
   audioManager.play(type);
 };
+
+// Ambient sound types
+export type AmbientType = 'crowd' | 'stadium' | 'rain' | 'wind';
+
+// Ambient sound manager
+class AmbientManager {
+  private ambients: Record<AmbientType, Howl | null> = {
+    crowd: null,
+    stadium: null,
+    rain: null,
+    wind: null
+  };
+  private playing: Set<AmbientType> = new Set();
+  private enabled: boolean = true;
+  private volume: number = 0.3;
+
+  constructor() {
+    const base = import.meta.env.BASE_URL;
+    
+    // Initialize ambient sounds (using existing sounds as placeholders)
+    this.ambients = {
+      crowd: new Howl({ 
+        src: [`${base}audio/cheer_new.wav`], 
+        volume: this.volume, 
+        loop: true,
+        onloaderror: (id, err) => console.debug('Ambient load error:', err) 
+      }),
+      stadium: new Howl({ 
+        src: [`${base}audio/whistle_new.wav`], 
+        volume: this.volume * 0.5, 
+        loop: true,
+        onloaderror: (id, err) => console.debug('Ambient load error:', err) 
+      }),
+      rain: null, // Placeholder - no rain sound available
+      wind: null  // Placeholder - no wind sound available
+    };
+  }
+
+  play(type: AmbientType) {
+    if (!this.enabled) return;
+    const ambient = this.ambients[type];
+    if (ambient && !this.playing.has(type)) {
+      ambient.play();
+      this.playing.add(type);
+    }
+  }
+
+  stop(type: AmbientType) {
+    const ambient = this.ambients[type];
+    if (ambient) {
+      ambient.stop();
+      this.playing.delete(type);
+    }
+  }
+
+  stopAll() {
+    Object.keys(this.ambients).forEach(type => {
+      this.stop(type as AmbientType);
+    });
+  }
+
+  setVolume(volume: number) {
+    this.volume = volume;
+    Object.values(this.ambients).forEach(ambient => {
+      if (ambient) {
+        ambient.volume(volume);
+      }
+    });
+  }
+
+  toggle(enabled: boolean) {
+    this.enabled = enabled;
+    if (!enabled) {
+      this.stopAll();
+    }
+  }
+
+  isPlaying(type: AmbientType): boolean {
+    return this.playing.has(type);
+  }
+}
+
+const ambientManager = new AmbientManager();
+
+// Export ambient functions
+export const playAmbient = (type: AmbientType) => {
+  ambientManager.play(type);
+};
+
+export const stopAmbient = (type: AmbientType) => {
+  ambientManager.stop(type);
+};
+
+export const startMatchAmbience = () => {
+  ambientManager.play('crowd');
+  ambientManager.play('stadium');
+};
+
+export const stopMatchAmbience = () => {
+  ambientManager.stopAll();
+};
+
+export const triggerCrowdReaction = () => {
+  // Play a short crowd cheer
+  playSound('cheer');
+};
+
+export const setAmbientVolume = (volume: number) => {
+  ambientManager.setVolume(volume);
+};
+
+export const toggleAmbient = (enabled: boolean) => {
+  ambientManager.toggle(enabled);
+};

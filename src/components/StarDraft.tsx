@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 import type { Team } from '../data/teams';
 import { getStarCardsForDraft, shuffleArray } from '../data/teams';
 
 interface StarDraftProps {
   team: Team;
-  onDraftComplete: (draftedStars: PlayerCard[]) => void;
+  onDraftComplete: (draftedStars: athleteCard[]) => void;
 }
 
 export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) => {
   const [round, setRound] = useState(1);
-  const [availableStars, setAvailableStars] = useState<PlayerCard[]>([]);
-  const [currentOptions, setCurrentOptions] = useState<PlayerCard[]>([]);
-  const [playerDrafted, setPlayerDrafted] = useState<PlayerCard[]>([]);
-  const [aiDrafted, setAiDrafted] = useState<PlayerCard[]>([]);
+  const [availableStars, setAvailableStars] = useState<athleteCard[]>([]);
+  const [currentOptions, setCurrentOptions] = useState<athleteCard[]>([]);
+  const [playerDrafted, setPlayerDrafted] = useState<athleteCard[]>([]);
+  const [aiDrafted, setAiDrafted] = useState<athleteCard[]>([]);
   const [isAiTurn, setIsAiTurn] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
@@ -24,7 +24,7 @@ export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) =
     setCurrentOptions(options);
   }, []);
 
-  const handlePlayerPick = (card: PlayerCard) => {
+  const handlePlayerPick = (card: athleteCard) => {
     const newPlayerDrafted = [...playerDrafted, card];
     setPlayerDrafted(newPlayerDrafted);
     
@@ -125,7 +125,7 @@ export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) =
                 className="draft-option star-card"
                 onClick={() => handlePlayerPick(card)}
               >
-                <div className="card-badge">‚≠ê STAR</div>
+                <div className="card-badge">‚≠?STAR</div>
                 <div className="card-name">{card.realName}</div>
                 <div className="card-position">{card.positionLabel}</div>
                 <div className="card-type">{card.type}</div>
@@ -159,3 +159,4 @@ export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) =
     </div>
   );
 };
+

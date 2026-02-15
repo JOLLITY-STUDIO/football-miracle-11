@@ -58,8 +58,7 @@ export const ShotIconSelector: React.FC<ShotIconSelectorProps> = ({
               "text-2xl",
               icon.isUsed ? "text-gray-500" : "text-blue-600"
             )}>
-              ⚽
-            </div>
+              �?            </div>
 
             {/* Used Indicator */}
             {icon.isUsed && (

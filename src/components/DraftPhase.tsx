@@ -26,8 +26,7 @@ export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) =
       const pickTimer = setTimeout(() => {
         dispatch({ type: 'AI_DRAFT_PICK' });
         playSound('draw');
-        // 保留AI选中标识一段时间，避免立即清除导致玩家看不到标记
-        const clearTimer = setTimeout(() => setAiSelectedIndex(null), 800);
+        // 保留AI选中标识一段时间，避免立即清除导致玩家看不到标�?        const clearTimer = setTimeout(() => setAiSelectedIndex(null), 800);
         return () => clearTimeout(clearTimer);
       }, 1800);
 
@@ -76,3 +75,4 @@ export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) =
     </div>
   );
 };
+

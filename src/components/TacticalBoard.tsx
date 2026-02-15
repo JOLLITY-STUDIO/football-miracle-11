@@ -1,11 +1,11 @@
 import React from 'react';
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 import type { TacticalZone, TacticalSlot, TacticalConnection } from '../game/tactics';
 
 interface TacticalBoardProps {
   zones: TacticalZone[];
   connections: TacticalConnection[];
-  selectedCard: PlayerCard | null;
+  selectedCard: athleteCard | null;
   onSlotClick: (slot: TacticalSlot) => void;
   isPlayerBoard: boolean;
 }
@@ -27,7 +27,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
   isPlayerBoard,
 }) => {
   const renderSlot = (slot: TacticalSlot) => {
-    const hasCard = slot.playerCard !== null;
+    const hasCard = slot.athleteCard !== null;
     const isHighlighted = selectedCard !== null && !hasCard;
 
     return (
@@ -36,13 +36,13 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
         className={`tactical-slot ${hasCard ? 'occupied' : ''} ${isHighlighted ? 'highlighted' : ''}`}
         onClick={() => onSlotClick(slot)}
       >
-        {hasCard && slot.playerCard && (
+        {hasCard && slot.athleteCard && (
           <div className="slot-card">
-            {slot.playerCard.isStar && <div className="star-indicator">⭐</div>}
-            <div className="card-name">{slot.playerCard.realName}</div>
-            <div className="card-position">{slot.playerCard.positionLabel}</div>
+            {slot.athleteCard.isStar && <div className="star-indicator">⭐</div>}
+            <div className="card-name">{slot.athleteCard.realName}</div>
+            <div className="card-position">{slot.athleteCard.positionLabel}</div>
             <div className="card-icons">
-              {slot.playerCard.iconPositions.map((icon, idx) => (
+              {slot.athleteCard.iconPositions.map((icon, idx) => (
                 <div
                   key={idx}
                   className="icon-dot"
@@ -112,3 +112,4 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     </div>
   );
 };
+

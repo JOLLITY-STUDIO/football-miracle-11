@@ -1,7 +1,7 @@
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 import type { FieldZone } from '../types/game';
 
-export const calculateAttackPower = (card: PlayerCard): number => {
+export const calculateAttackPower = (card: athleteCard): number => {
   let power = card.power || 0;
   
   if (card.skills?.includes('shot')) {
@@ -15,7 +15,7 @@ export const calculateAttackPower = (card: PlayerCard): number => {
   return power;
 };
 
-export const calculateDefensePower = (card: PlayerCard): number => {
+export const calculateDefensePower = (card: athleteCard): number => {
   let power = card.power || 0;
   
   if (card.skills?.includes('defense')) {
@@ -33,8 +33,8 @@ export const countIcons = (field: FieldZone[], iconType: string): number => {
   let count = 0;
   field.forEach(zone => {
     zone.slots.forEach(slot => {
-      if (slot.playerCard) {
-        count += slot.playerCard.icons.filter(i => i === iconType).length;
+      if (slot.athleteCard) {
+        count += slot.athleteCard.icons.filter(i => i === iconType).length;
       }
     });
   });

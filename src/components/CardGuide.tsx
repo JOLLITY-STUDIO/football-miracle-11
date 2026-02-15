@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { playerCards, synergyCards, penaltyCards } from '../data/cards';
-import { PlayerCardComponent } from './PlayerCard';
+import { athleteCards, synergyCards, penaltyCards } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
 import { SynergyCardComponent } from './SynergyCard';
 
 interface Props {
@@ -12,8 +12,8 @@ type TabType = 'overview' | 'cards' | 'icons' | 'effects' | 'rules' | 'manual_cn
 export const CardGuide: React.FC<Props> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
-  const baseCards = playerCards.filter(c => !c.isStar);
-  const starCards = playerCards.filter(c => c.isStar);
+  const baseCards = athleteCards.filter(c => !c.isStar);
+  const starCards = athleteCards.filter(c => c.isStar);
 
   const attackCards = synergyCards.filter(c => c.type === 'attack');
   const defenseCards = synergyCards.filter(c => c.type === 'defense');
@@ -23,7 +23,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
   const tabs = [
     { id: 'overview' as TabType, label: 'Overview', icon: '📖' },
     { id: 'cards' as TabType, label: 'Card Collection', icon: '🎴' },
-    { id: 'icons' as TabType, label: 'Tactical Icons', icon: '⚡' },
+    { id: 'icons' as TabType, label: 'Tactical Icons', icon: '⚽' },
     { id: 'effects' as TabType, label: 'Immediate Effects', icon: '✨' },
     { id: 'rules' as TabType, label: 'Game Rules', icon: '📋' },
     { id: 'manual_cn' as TabType, label: 'Rulebook (CN)', icon: '🇨🇳' },
@@ -44,7 +44,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
             onClick={onBack}
             className="px-4 py-2 bg-stone-700 hover:bg-stone-600 rounded-lg transition-colors"
           >
-            ← Back to Menu
+            �?Back to Menu
           </button>
         </div>
 
@@ -78,7 +78,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
               <h2 className="text-2xl font-bold text-yellow-400 mb-4">📊 Card Stats</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-stone-700/50 rounded-lg p-4 text-center">
-                  <div className="text-4xl font-bold text-green-400">{playerCards.length}</div>
+                  <div className="text-4xl font-bold text-green-400">{athleteCards.length}</div>
                   <div className="text-stone-400">Player Cards</div>
                 </div>
                 <div className="bg-stone-700/50 rounded-lg p-4 text-center">
@@ -99,15 +99,15 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
             <section className="bg-stone-800/50 rounded-xl p-6">
               <h2 className="text-2xl font-bold text-yellow-400 mb-4">🎯 Game Objective</h2>
               <div className="text-stone-300 space-y-2">
-                <p>• Score more goals than your opponent by shooting</p>
-                <p>• Place players strategically to create synergy effects</p>
-                <p>• Use synergy cards to enhance attack and defense</p>
-                <p>• Control the field, seize attack opportunities</p>
+                <p>�?Score more goals than your opponent by shooting</p>
+                <p>�?Place players strategically to create synergy effects</p>
+                <p>�?Use synergy cards to enhance attack and defense</p>
+                <p>�?Control the field, seize attack opportunities</p>
               </div>
             </section>
 
             <section className="bg-stone-800/50 rounded-xl p-6">
-              <h2 className="text-2xl font-bold text-yellow-400 mb-4">⚡ Quick Start</h2>
+              <h2 className="text-2xl font-bold text-yellow-400 mb-4">�?Quick Start</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center font-bold text-stone-900">1</div>
@@ -145,16 +145,16 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
         {activeTab === 'cards' && (
           <div className="space-y-8">
             <section className="bg-stone-800/50 rounded-xl p-6">
-              <h2 className="text-2xl font-bold text-green-400 mb-4">⚽ Player Cards</h2>
+              <h2 className="text-2xl font-bold text-green-400 mb-4">�?Player Cards</h2>
               
               <div className="mb-6 bg-stone-700/50 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-yellow-300 mb-2">Card Description</h3>
                 <ul className="text-sm text-stone-300 space-y-1">
-                  <li>• <span className="text-red-400">Forwards</span>: Main scorers, place on Front and Second lines</li>
-                  <li>• <span className="text-green-400">Midfielders</span>: Playmakers, place on Second and Third lines</li>
-                  <li>• <span className="text-blue-400">Defenders</span>: Main defenders, place on Third and Last lines</li>
-                  <li>• Each card takes 2 slots, 6 half-icons to combine with neighbors</li>
-                  <li>• Some players have Immediate Effects that trigger when placed</li>
+                  <li>�?<span className="text-red-400">Forwards</span>: Main scorers, place on Front and Second lines</li>
+                  <li>�?<span className="text-green-400">Midfielders</span>: Playmakers, place on Second and Third lines</li>
+                  <li>�?<span className="text-blue-400">Defenders</span>: Main defenders, place on Third and Last lines</li>
+                  <li>�?Each card takes 2 slots, 6 half-icons to combine with neighbors</li>
+                  <li>�?Some players have Immediate Effects that trigger when placed</li>
                 </ul>
               </div>
 
@@ -163,7 +163,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                   {baseCards.map((card, i) => (
                     <div key={card.id} className="flex flex-col items-center">
-                      <PlayerCardComponent card={card} />
+                      <AthleteCardComponent card={card} />
                       <span className="text-xs text-stone-400 mt-1">#{i + 1}</span>
                     </div>
                   ))}
@@ -175,7 +175,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                   {starCards.map((card, i) => (
                     <div key={card.id} className="flex flex-col items-center">
-                      <PlayerCardComponent card={card} />
+                      <AthleteCardComponent card={card} />
                       <span className="text-xs text-yellow-400 mt-1">#{i + 1}</span>
                     </div>
                   ))}
@@ -189,11 +189,11 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
               <div className="mb-6 bg-stone-700/50 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-yellow-300 mb-2">Card Description</h3>
                 <ul className="text-sm text-stone-300 space-y-1">
-                  <li>• <span className="text-red-400">Attack Cards</span>: Increase attack power</li>
-                  <li>• <span className="text-blue-400">Defense Cards</span>: Increase defense power</li>
-                  <li>• <span className="text-yellow-400">Control Cards</span>: Move control marker</li>
-                  <li>• <span className="text-purple-400">Tackle Cards</span>: Cancel attack, win penalty (defense only)</li>
-                  <li>• Higher stars = bigger bonuses</li>
+                  <li>�?<span className="text-red-400">Attack Cards</span>: Increase attack power</li>
+                  <li>�?<span className="text-blue-400">Defense Cards</span>: Increase defense power</li>
+                  <li>�?<span className="text-yellow-400">Control Cards</span>: Move control marker</li>
+                  <li>�?<span className="text-purple-400">Tackle Cards</span>: Cancel attack, win penalty (defense only)</li>
+                  <li>�?Higher stars = bigger bonuses</li>
                 </ul>
               </div>
 
@@ -252,8 +252,8 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
               <div className="mb-4 bg-stone-700/50 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-yellow-300 mb-2">Card Description</h3>
                 <ul className="text-sm text-stone-300 space-y-1">
-                  <li>• Penalty cards determine if a penalty is scored</li>
-                  <li>• Higher points = higher success rate</li>
+                  <li>�?Penalty cards determine if a penalty is scored</li>
+                  <li>�?Higher points = higher success rate</li>
                 </ul>
               </div>
 
@@ -420,10 +420,10 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
               <div className="mt-6 bg-stone-700/50 rounded-lg p-4">
                 <h2 className="text-2xl font-bold text-yellow-400 mb-4"> Tips</h2>
                 <div className="text-stone-300 space-y-2">
-                  <p>• Immediate Effects can be triggered or skipped</p>
-                  <p>• Use "Steal Synergy" to disrupt opponent</p>
-                  <p>• "Instant Shot" is effective when opponent defense is solid</p>
-                  <p>• "Control +2" quickly changes offense/defense status</p>
+                  <p>�?Immediate Effects can be triggered or skipped</p>
+                  <p>�?Use "Steal Synergy" to disrupt opponent</p>
+                  <p>�?"Instant Shot" is effective when opponent defense is solid</p>
+                  <p>�?"Control +2" quickly changes offense/defense status</p>
                 </div>
               </div>
             </section>
@@ -456,7 +456,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                     </div>
                     <div className="bg-stone-700/30 rounded-lg p-4">
                       <h4 className="font-bold text-green-400 mb-1">2. 阵容设置</h4>
-                      <p className="text-sm">每队13名球员（含3名明星），挑选10名首发，3名替补。</p>
+                      <p className="text-sm">每队13名球员（3名明星），挑选10名首发，3名替补。</p>
                     </div>
                   </div>
                 </div>
@@ -464,14 +464,14 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                 {/* 5. Game Flow */}
                 <div>
                   <h3 className="text-xl font-bold text-white mb-3">三、游戏流程</h3>
-                  <p className="mb-4 text-sm">游戏分上下半场。每回合包含两个阶段：<span className="text-yellow-400 font-bold">球队行动</span> → <span className="text-yellow-400 font-bold">球员行动</span>。</p>
+                  <p className="mb-4 text-sm">游戏分上下半场。每回合包含两个阶段：<span className="text-yellow-400 font-bold">球队行动</span> 和 <span className="text-yellow-400 font-bold">球员行动</span>。</p>
                   
                   <div className="space-y-4">
                     <div className="border-l-4 border-blue-500 pl-4 bg-stone-700/20 p-2 rounded-r">
                       <h4 className="font-bold text-blue-400 mb-2">阶段1：球队行动 (Team Action)</h4>
                       <p className="text-sm mb-2">计算场上完整的图标，选择一项执行：</p>
                       <ul className="list-disc list-inside text-sm space-y-1">
-                        <li><span className="text-white font-bold">传球 (➕)</span>：抽取协同卡（数量 = 场上 ➕ 图标数，手牌上限5张）。</li>
+                        <li><span className="text-white font-bold">传球 (🔄)</span>：抽取协同卡（数量 = 场上 🔄 图标数，手牌上限5张）。</li>
                         <li><span className="text-white font-bold">压迫 (⬆️)</span>：移动控制标记（步数 = 场上 ⬆️ 图标数）。</li>
                       </ul>
                     </div>
@@ -486,7 +486,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                           <span className="text-xs text-stone-400">打出一张球员卡到场上。</span>
                           <ul className="list-decimal list-inside text-xs mt-1 text-stone-400 pl-2">
                             <li>放置卡牌：必须符合位置线要求（前锋/中场/后卫）。</li>
-                            <li>即时效果：若卡牌有 ⚡ 符号，立即结算一次效果。</li>
+                            <li>即时效果：若卡牌有 ✨ 符号，立即结算一次效果。</li>
                             <li>尝试射门：若卡牌有 ⚽ 图标，可立即尝试射门。</li>
                           </ul>
                         </div>
@@ -506,25 +506,25 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                   <div className="bg-stone-900/50 p-4 rounded-lg border border-stone-600">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h4 className="font-bold text-red-400 mb-1">进攻方 (Attack)</h4>
-                        <p className="text-sm">总攻击力 = 基础攻击(⚽) + 协同卡加成(⭐)</p>
-                        <p className="text-xs text-stone-500 mt-1">*最多使用3张协同卡（受控制状态限制）</p>
+                        <h4 className="font-bold text-red-400 mb-1">进攻力 (Attack)</h4>
+                        <p className="text-sm">总攻击力 = 基础攻击(⚽) + 协同卡加成。</p>
+                        <p className="text-xs text-stone-500 mt-1">*最多使用5张协同卡（受控制状态限制）</p>
                       </div>
                       <div>
-                        <h4 className="font-bold text-blue-400 mb-1">防守方 (Defense)</h4>
-                        <p className="text-sm">总防御力 = 基础防御(🛡️) + 协同卡加成(⭐)</p>
-                        <p className="text-xs text-stone-500 mt-1">*最多使用2张协同卡</p>
+                        <h4 className="font-bold text-blue-400 mb-1">防守力 (Defense)</h4>
+                        <p className="text-sm">总防御力 = 基础防御(🛡) + 协同卡加成。</p>
+                        <p className="text-xs text-stone-500 mt-1">*最多使用5张协同卡</p>
                       </div>
                     </div>
                     
                     <div className="mt-4 pt-4 border-t border-stone-700">
                       <h4 className="font-bold text-yellow-400 mb-2 text-center">进球判定公式</h4>
                       <div className="text-center bg-black/30 p-2 rounded text-sm font-mono">
-                        (攻击力 &gt; 防御力) AND (攻击力 ≤ 11) = ⚽ 进球！
+                        (攻击力 &gt; 防守力) AND (攻击力 = 11) = 必定进球
                       </div>
                       <div className="mt-2 text-xs text-center text-stone-400">
                         <span className="text-purple-400 font-bold">Magic Number 11</span>: 必定进球！<br/>
-                        <span className="text-red-400 font-bold">12+</span>: 出界球 (Miss)
+                        <span className="text-red-400 font-bold">12+</span>: 出界 (Miss)
                       </div>
                     </div>
                   </div>
@@ -602,14 +602,13 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
         {activeTab === 'expansions' && (
           <div className="space-y-6">
             <section className="bg-stone-800/50 rounded-xl p-6">
-              <h2 className="text-2xl font-bold text-yellow-400 mb-6">📦 扩展与周边 (Expansions & Extras)</h2>
+              <h2 className="text-2xl font-bold text-yellow-400 mb-6">📦 扩展与周�?(Expansions & Extras)</h2>
               
               {/* GK Expansion */}
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-green-400 mb-2">🧤 守门员扩展 (Goalkeeper Expansion)</h3>
+                <h3 className="text-xl font-bold text-green-400 mb-2">🧤 守门员扩�?(Goalkeeper Expansion)</h3>
                 <p className="text-stone-300 mb-4 text-sm">
-                  本作额外赠送3张守门员扩充卡。守门员技能整局游戏只能发动一次，可在危急时刻进行精彩扑救，帮助玩家反败为胜。
-                </p>
+                  本作额外赠�?张守门员扩充卡。守门员技能整局游戏只能发动一次，可在危急时刻进行精彩扑救，帮助玩家反败为胜�?                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {gkExpansionImages.map((src, index) => (
                     <div key={index} className="flex flex-col items-center bg-stone-900/50 p-2 rounded-lg">
@@ -627,29 +626,25 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Playmat */}
                 <div className="bg-stone-700/30 p-4 rounded-lg">
-                  <h3 className="text-lg font-bold text-blue-400 mb-2">🗺️ 绸缎牌垫 (Playmat)</h3>
+                  <h3 className="text-lg font-bold text-blue-400 mb-2">🗺�?绸缎牌垫 (Playmat)</h3>
                   <p className="text-sm text-stone-300">
-                    为有需求的玩家提供更高性价比的选择。它将3块拼接版图整合为一块，使用更方便，且可额外收纳到游戏盒子中。
-                  </p>
+                    为有需求的玩家提供更高性价比的选择。它�?块拼接版图整合为一块，使用更方便，且可额外收纳到游戏盒子中�?                  </p>
                 </div>
 
                 {/* Sleeves */}
                 <div className="bg-stone-700/30 p-4 rounded-lg">
                   <h3 className="text-lg font-bold text-purple-400 mb-2">🃏 牌套信息 (Sleeves)</h3>
                   <p className="text-sm text-stone-300">
-                    游戏内卡牌尺寸为 <span className="text-white font-bold">66x43mm</span>，玩家可根据自身需求自行购买合适牌套。
-                  </p>
+                    游戏内卡牌尺寸为 <span className="text-white font-bold">66x43mm</span>，玩家可根据自身需求自行购买合适牌套�?                  </p>
                 </div>
 
                 {/* Tournament */}
                 <div className="bg-stone-700/30 p-4 rounded-lg md:col-span-2">
-                  <h3 className="text-lg font-bold text-yellow-400 mb-2">🏆 盒拍杯梦幻十一人大赛 (Tournament)</h3>
+                  <h3 className="text-lg font-bold text-yellow-400 mb-2">🏆 盒拍杯梦幻十一人大�?(Tournament)</h3>
                   <p className="text-sm text-stone-300 mb-2">
-                    2025年将举办官方赛事。比赛分为小组赛和淘汰赛。每个小组前两名出线进入淘汰赛，最终分出冠、亚、季军。
-                  </p>
+                    2025年将举办官方赛事。比赛分为小组赛和淘汰赛。每个小组前两名出线进入淘汰赛，最终分出冠、亚、季军�?                  </p>
                   <p className="text-xs text-stone-500">
-                    *参与众筹的玩家会随游戏额外获得一张参赛门票，可免除报名费。
-                  </p>
+                    *参与众筹的玩家会随游戏额外获得一张参赛门票，可免除报名费�?                  </p>
                 </div>
               </div>
 
@@ -660,3 +655,4 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
     </div>
   );
 };
+

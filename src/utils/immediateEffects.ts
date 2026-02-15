@@ -1,7 +1,7 @@
 import type { GameState } from '../game/gameLogic';
-import type { PlayerCard } from '../types/game';
+import type { athleteCard } from '../types/game';
 
-export const performImmediateEffect = (state: GameState, card: PlayerCard, zone: number, slot: number): GameState => {
+export const performImmediateEffect = (state: GameState, card: athleteCard, zone: number, slot: number): GameState => {
   // Mock implementation for immediate effects
   // In a real implementation, this would handle various immediate effects
   // like drawing cards, discarding opponent cards, etc.

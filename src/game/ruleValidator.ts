@@ -1,4 +1,4 @@
-import type { PlayerCard, SynergyCard } from '../data/cards';
+import type { AthleteCard, SynergyCard } from '../data/cards';
 
 export interface ValidationResult {
   valid: boolean;
@@ -8,7 +8,7 @@ export interface ValidationResult {
 
 export interface FieldState {
   zone: number;
-  slots: { position: number; playerCard: PlayerCard | null; shotMarkers?: number }[];
+  slots: { position: number; athleteCard: AthleteCard | null; shotMarkers?: number }[];
 }
 
 export interface GameStateForRules {
@@ -25,7 +25,7 @@ export interface GameStateForRules {
 
 export class RuleValidator {
   static canPlaceCard(
-    card: PlayerCard,
+    card: AthleteCard,
     fieldSlots: FieldState[],
     zone: number,
     startCol: number,
@@ -66,11 +66,11 @@ export class RuleValidator {
       return { valid: false, reason: 'Slot not found' };
     }
     
-    if (slot1.playerCard || slot2.playerCard) {
+    if (slot1.athleteCard || slot2.athleteCard) {
       return { valid: false, reason: 'Slot already occupied' };
     }
     
-    const hasAnyCard = fieldSlots.some(z => z.slots.some(s => s.playerCard));
+    const hasAnyCard = fieldSlots.some(z => z.slots.some(s => s.athleteCard));
     
     // 场上没有其他卡时，前锋不能放在3、4行
     if (!hasAnyCard && card.type === 'fw' && (zone === 3 || zone === 4)) {
@@ -87,10 +87,10 @@ export class RuleValidator {
       const zone2 = fieldSlots.find(z => z.zone === 2);
       
       const hasAdjacentInZone1 = zone1?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       const hasBehindInZone2 = zone2?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       
       if (!hasAdjacentInZone1 && !hasBehindInZone2) {
@@ -105,13 +105,13 @@ export class RuleValidator {
       const zone4 = fieldSlots.find(z => z.zone === 4);
       
       const hasAdjacentInZone3 = zone3?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       const hasBehindInZone2 = zone2?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       const hasAheadInZone4 = zone4?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       
       if (!hasAdjacentInZone3 && !hasBehindInZone2 && !hasAheadInZone4) {
@@ -126,13 +126,13 @@ export class RuleValidator {
       const zone5 = fieldSlots.find(z => z.zone === 5);
       
       const hasAdjacentInZone4 = zone4?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       const hasBehindInZone3 = zone3?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       const hasAheadInZone5 = zone5?.slots.some(s => 
-        s.playerCard && Math.abs(s.position - startCol) <= 1
+        s.athleteCard && Math.abs(s.position - startCol) <= 1
       );
       
       if (!hasAdjacentInZone4 && !hasBehindInZone3 && !hasAheadInZone5) {
@@ -144,7 +144,7 @@ export class RuleValidator {
   }
 
   static canShoot(
-    attacker: PlayerCard,
+    attacker: AthleteCard,
     attackerZone: number,
     attackerSlot: number,
     gameState: GameStateForRules,
@@ -158,11 +158,11 @@ export class RuleValidator {
     const attackerZoneData = attackerField.find(z => z.zone === attackerZone);
     const attackerSlotData = attackerZoneData?.slots.find(s => s.position === attackerSlot);
     
-    if (!attackerSlotData || !attackerSlotData.playerCard) {
+    if (!attackerSlotData || !attackerSlotData.athleteCard) {
       return { valid: false, reason: 'Attacker not found on field' };
     }
     
-    if (attackerSlotData.playerCard.id !== attacker.id) {
+    if (attackerSlotData.athleteCard.id !== attacker.id) {
       return { valid: false, reason: 'Card mismatch' };
     }
     
@@ -208,15 +208,15 @@ export class RuleValidator {
     field: FieldState[],
     gameState: GameStateForRules,
     isPlayer: boolean
-  ): { zone: number; slot: number; card: PlayerCard }[] {
-    const attackers: { zone: number; slot: number; card: PlayerCard }[] = [];
+  ): { zone: number; slot: number; card: AthleteCard }[] {
+    const attackers: { zone: number; slot: number; card: AthleteCard }[] = [];
     
     field.forEach(z => {
       z.slots.forEach(s => {
-        if (s.playerCard) {
-          const result = this.canShoot(s.playerCard, z.zone, s.position, gameState, isPlayer);
+        if (s.athleteCard) {
+          const result = this.canShoot(s.athleteCard, z.zone, s.position, gameState, isPlayer);
           if (result.valid) {
-            attackers.push({ zone: z.zone, slot: s.position, card: s.playerCard });
+            attackers.push({ zone: z.zone, slot: s.position, card: s.athleteCard });
           }
         }
       });
@@ -226,11 +226,11 @@ export class RuleValidator {
   }
 
   static getValidPlacements(
-    cards: PlayerCard[],
+    cards: AthleteCard[],
     field: FieldState[],
     isFirstTurn: boolean
-  ): { card: PlayerCard; zone: number; startCol: number }[] {
-    const placements: { card: PlayerCard; zone: number; startCol: number }[] = [];
+  ): { card: AthleteCard; zone: number; startCol: number }[] {
+    const placements: { card: AthleteCard; zone: number; startCol: number }[] = [];
     
     cards.forEach(card => {
       field.forEach(z => {

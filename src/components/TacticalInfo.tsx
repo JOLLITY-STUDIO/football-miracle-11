@@ -49,7 +49,7 @@ export const TacticalInfo: React.FC<TacticalInfoProps> = ({ playerField, aiField
 
         <div className="icon-bars-container">
           {renderIconBar('⚔️ Attack', playerAttackCount, aiAttackCount, '#ff6b6b')}
-          {renderIconBar('🛡️ Defense', playerDefenseCount, aiDefenseCount, '#4ecdc4')}
+          {renderIconBar('🛡�?Defense', playerDefenseCount, aiDefenseCount, '#4ecdc4')}
           {renderIconBar('➡️ Pass', playerPassCount, aiPassCount, '#ffd93d')}
           {renderIconBar('⬆️ Press', playerPressCount, aiPressCount, '#6c5ce7')}
           {renderIconBar('💨 Breakthrough', playerBreakthroughCount, aiBreakthroughCount, '#00cec9')}
@@ -84,3 +84,4 @@ export const TacticalInfo: React.FC<TacticalInfoProps> = ({ playerField, aiField
     </div>
   );
 };
+

@@ -1,9 +1,9 @@
 import type { GameState } from '../game/gameLogic';
-import type { PlayerCard } from '../data/cards';
+import type { athleteCard } from '../data/cards';
 
 export const placeCard = (
   state: GameState, 
-  card: PlayerCard, 
+  card: athleteCard, 
   zone: number, 
   slot: number
 ): GameState => {
@@ -25,7 +25,7 @@ export const placeCard = (
   if (targetZoneIndex !== -1) {
     const targetZone = targetField[targetZoneIndex];
     console.log('Target zone:', targetZone.zone);
-    console.log('Target zone slots:', targetZone.slots.map((s: any) => ({ pos: s.position, card: s.playerCard?.name || null })));
+    console.log('Target zone slots:', targetZone.slots.map((s: any) => ({ pos: s.position, card: s.athleteCard?.name || null })));
     
     // Check if slot is within bounds (0-7 for 8-column field)
     if (slot < 0 || slot > 7) {
@@ -55,13 +55,15 @@ export const placeCard = (
     const slot1 = targetZone.slots[slot1Index];
     const slot2 = targetZone.slots[slot2Index];
     
-    console.log('Slot1:', { pos: slot1.position, hasCard: !!slot1.playerCard });
-    console.log('Slot2:', { pos: slot2.position, hasCard: !!slot2.playerCard });
+    console.log('Slot1:', { pos: slot1.position, hasCard: !!slot1.athleteCard || !!slot1.athleteCard });
+    console.log('Slot2:', { pos: slot2.position, hasCard: !!slot2.athleteCard || !!slot2.athleteCard });
     
-    if (!slot1.playerCard && !slot2.playerCard) {
+    if (!slot1.athleteCard && !slot1.athleteCard && !slot2.athleteCard && !slot2.athleteCard) {
       // Place card in both slots
-      targetZone.slots[slot1Index].playerCard = card;
-      targetZone.slots[slot2Index].playerCard = card;
+      targetZone.slots[slot1Index].athleteCard = card;
+      targetZone.slots[slot1Index].athleteCard = card;
+      targetZone.slots[slot2Index].athleteCard = card;
+      targetZone.slots[slot2Index].athleteCard = card;
       console.log('Card placed successfully in slots', slot, 'and', slot + 1);
       
       // Remove card from hand
@@ -85,7 +87,7 @@ export const placeCard = (
       
       console.log('New state player field:', newState.playerField.map((z: any) => ({
         zone: z.zone,
-        cards: z.slots.filter((s: any) => s.playerCard).map((s: any) => ({ pos: s.position, card: s.playerCard?.name }))
+        cards: z.slots.filter((s: any) => s.athleteCard || s.athleteCard).map((s: any) => ({ pos: s.position, card: s.athleteCard?.name || s.athleteCard?.name }))
       })));
       
       return newState;

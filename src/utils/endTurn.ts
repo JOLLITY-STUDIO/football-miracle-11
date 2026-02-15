@@ -13,7 +13,7 @@ export const performEndTurn = (state: GameState): GameState => {
     ...state,
     currentTurn: newTurn,
     turnCount: newTurnCount,
-    turnPhase: state.isFirstTurn ? 'playerAction' : 'teamAction',
+    turnPhase: 'teamAction',
     isFirstTurn: false,
     skipTeamAction: state.isFirstTurn ? true : false,
     isFirstMatchTurn: false
@@ -47,8 +47,8 @@ export const performEndTurn = (state: GameState): GameState => {
   
   // Set AI action step if it's AI turn
   if (newTurn === 'ai') {
-    // Skip team action on first turn for AI as well
-    newState.aiActionStep = state.isFirstTurn ? 'placeCard' : 'teamAction';
+    // Always start with team action for AI
+    newState.aiActionStep = 'teamAction';
     newState.message = 'AI is thinking...';
   } else {
     newState.message = 'Your turn!';
