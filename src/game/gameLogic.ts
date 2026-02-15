@@ -17,6 +17,7 @@ import { aiTurn, processAiActionStep } from '../utils/ai';
 import { starathleteCards, baseathleteCards } from '../data/cards';
 import { getSynergyDeckFixed } from '../data/synergyConfig';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps';
+import { TurnPhaseService } from './turnPhaseService';
 
 export interface GameState {
   phase: GamePhase;
@@ -413,7 +414,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'TEAM_ACTION':
-      if (state.turnPhase !== 'teamAction') return state;
+      if (!TurnPhaseService.canPerformTeamAction(state.turnPhase)) return state;
       {
         let newState = performTeamAction(state, action.action);
         const actor = state.currentTurn === 'player' ? 'You' : 'AI';
@@ -427,19 +428,14 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       }
     
     case 'PLACE_CARD': {
-      // 妫€鏌ユ槸鍚﹀彲浠ユ斁缃崱鐗?- 鏇村鏉剧殑鏉′欢
-      const canPlace = state.turnPhase === 'playerAction' || 
-                      state.turnPhase === 'teamAction' || 
-                      (state.isFirstTurn && state.turnPhase === 'start');
-
-      if (!canPlace) return state;
+      if (!TurnPhaseService.canPlaceCard(state.turnPhase)) return state;
       
       if (state.currentAction && state.currentAction !== 'none') return state;
       
       const slotPosition = Math.floor(action.slot / 2) + 1;
       let newState = placeCard(state, action.card, action.zone, action.slot);
       
-      if (!newState) return state; // 濡傛灉 placeCard 杩斿洖 null锛岃鏄庢斁缃け璐?
+      if (!newState) return state;
       const actor = state.currentTurn === 'player' ? 'You' : 'AI';
       newState.currentAction = 'organizeAttack';
       newState.matchLogs = addLog(newState, {
