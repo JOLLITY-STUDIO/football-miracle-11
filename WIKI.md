@@ -390,7 +390,7 @@ npm run sync-bugs
 
 ## 📜 许可证
 
-本项目采用 [MIT License](../blob/main/LICENSE)。
+本项目版权所有。
 
 ## 🙏 致谢
 
