@@ -9,7 +9,6 @@ interface Props {
   setupStep: number;
   phase: GamePhase;
   onCardSelect: (card: athleteCard) => void;
-  isAI?: boolean;
 }
 
 export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
@@ -18,7 +17,6 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   setupStep,
   phase,
   onCardSelect,
-  isAI = false,
 }) => {
   const settings = {
     rows: 1,
@@ -35,7 +33,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
     const { cols, arcAngle, arcHeight, startAngle } = settings;
     
     // 计算该卡片在弧形上的角度
-    const anglePerCard = arcAngle / (cols - 1);
+    const anglePerCard = cols > 1 ? arcAngle / (cols - 1) : 0;
     const currentAngle = startAngle + (col * anglePerCard);
     
     // 计算半径
@@ -52,24 +50,17 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
     // cos(0) = 1（中间调整最大，最低），cos(±90) = 0（两边调整最小，最高）
     const baseY = -Math.cos(radian) * radius + radius;
     const heightAdjustment = Math.cos(radian) * 80;
-    
-    // 调整y值，根据是否为AI模式
-    let y = baseY - heightAdjustment + 43;
-    if (isAI) {
-      y = -(baseY - heightAdjustment + 43); // 负值放置在顶部
-    }
+    // 调整y值，使卡片整体下移一半卡牌高度（43px）
+    const y = baseY - heightAdjustment + 43;
     
     // 计算旋转角度，保持弧形的倾斜效果
-    let rotation = currentAngle;
-    if (isAI) {
-      rotation = 180 + currentAngle; // 180度翻转AI卡片
-    }
+    const rotation = currentAngle;
     
     return { x, y, rotation };
   };
   
   return (
-    <div id={isAI ? "ai-athlete-card-group" : "athlete-card-group"} className={`absolute ${isAI ? 'top-[0%]' : 'bottom-[0%]'} left-0 right-0 pointer-events-auto z-100`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+    <div id="athlete-card-group" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 pointer-events-auto z-100" style={{ width: '100%', maxWidth: '1200px', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', height: '200px' }}>
       <AnimatePresence>
         {cards.map((card, i) => {
           const { x, y, rotation } = calculateCardPosition(i);

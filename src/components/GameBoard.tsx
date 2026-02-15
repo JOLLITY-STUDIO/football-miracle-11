@@ -1009,17 +1009,42 @@ const handleCardSelect = (card: athleteCard) => {
         <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
 
 
-         {/* Top Center: Opponent Hand */}
-         <AthleteCardGroup
-           cards={gameState.aiHand}
-           selectedCard={null}
-           setupStep={setupStep}
-           phase={gameState.phase}
-           onCardSelect={() => {}}
-           isAI={true}
-         />
-         <div className="absolute top-[-40px] left-0 right-0 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold">
-             OPP HAND: {gameState.aiHand.length}
+         {/* Top Center: Opponent Hand (Fanned - Horizontal) */}
+         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[80%] h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50">
+            <AnimatePresence>
+                {gameState.aiHand.map((card, i) => (
+                  <motion.div
+                    key={card.id}
+                    initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                    animate={setupStep >= 3 ? { 
+                      opacity: 1, 
+                      y: 5 - Math.abs(i - (gameState.aiHand.length - 1) / 2) * 2, 
+                      scale: 1,
+                      rotate: 180 - (i - (gameState.aiHand.length - 1) / 2) * 5, 
+                      x: (i - (gameState.aiHand.length - 1) / 2) * -85 
+                    } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                    exit={{ opacity: 0, scale: 0.5, y: -50 }}
+                    whileHover={{ 
+                      scale: 1.5, 
+                      rotate: 0, 
+                      zIndex: 100
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="relative origin-center w-48 h-28 shadow-xl"
+                    style={{ zIndex: i }}
+                  >
+                     <AthleteCardComponent 
+                        card={card} 
+                        size="small" 
+                        faceDown={false}
+                        variant="away"
+                     />
+                  </motion.div>
+                ))}
+            </AnimatePresence>
+             <div className="absolute top-20 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold w-full">
+                 OPP HAND: {gameState.aiHand.length}
+             </div>
          </div>
         </div>
       )}
