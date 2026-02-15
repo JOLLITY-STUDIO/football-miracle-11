@@ -346,26 +346,21 @@ const GameField: React.FC<GameFieldProps> = ({
                         }}
                       >
                          <motion.div
-                           initial={setupStep < 4 ? { 
-                             opacity: 0, 
-                             scale: 0.2, 
-                             y: isAi ? -500 : 500,
-                             rotateY: 180,
-                             z: 500
-                           } : { opacity: 1, scale: 1, y: 0, rotateY: 0, z: 0 }}
-                           animate={setupStep >= 3 ? { 
-                             opacity: 1, 
-                             scale: 1, 
-                             y: 0,
-                             rotateY: 0,
-                             z: 0
-                           } : { 
-                             opacity: 0, 
-                             scale: 0.2, 
-                             y: isAi ? -500 : 500,
-                             rotateY: 180,
-                             z: 500
-                           }}
+initial={{ 
+                              opacity: 0, 
+                              scale: 0.2, 
+                              y: isAi ? -500 : 500,
+                              rotateY: 180,
+                              z: 500
+                            }}
+                          animate={{ 
+                            opacity: 1, 
+                            scale: 1, 
+                            y: 0,
+                            rotateY: 0,
+                            z: 0
+                          }}
+                          exit={{ opacity: 0 }}
                            transition={{ 
                              type: "spring", 
                              stiffness: 80, 
@@ -456,7 +451,10 @@ const GameField: React.FC<GameFieldProps> = ({
                   const startCol = colIdx === 7 ? 6 : colIdx;
                   // Only show preview at the correct position (for col 7, show at col 6; for others, show at their own position)
                   const shouldShowPreview = !card && !isAi && selectedCard && hoveredZone === zone.zone && hoveredSlot === startCol && startCol === colIdx;
-                  if (shouldShowPreview) {
+                  
+                  // Always show preview during setup phase
+                  const isSetupPhase = setupStep >= 3;
+                  if (shouldShowPreview || isSetupPhase) {
                     return (
                       <div
                         key={`preview-${zone.zone}-${colIdx}`}
@@ -471,13 +469,15 @@ const GameField: React.FC<GameFieldProps> = ({
                           zIndex: 15
                         }}
                       >
-                        <PlayerCardComponent
-                          card={selectedCard}
-                          size="large"
-                          faceDown={false}
-                          disabled={true}
-                          usedShotIcons={[]}
-                        />
+                        {selectedCard && (
+                          <PlayerCardComponent
+                            card={selectedCard}
+                            size="large"
+                            faceDown={false}
+                            disabled={true}
+                            usedShotIcons={[]}
+                          />
+                        )}
                       </div>
                     );
                   }

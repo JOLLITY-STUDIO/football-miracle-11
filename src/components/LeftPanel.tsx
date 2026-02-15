@@ -320,7 +320,7 @@ export const LeftPanel: React.FC<Props> = ({
           </div>
 
           {/* Main Momentum Rail */}
-          <div className="relative flex gap-1 p-1 bg-black/40 rounded-lg border border-white/10 shadow-inner h-[280px]">
+          <div className="relative flex gap-1 p-1 bg-black/40 rounded-lg border border-white/10 shadow-inner h-[280px] overflow-hidden">
             {/* Left labels */}
             <div className="flex flex-col w-5 h-full rounded overflow-hidden">
               <div className="flex-[1] bg-red-600/80 border-b border-white/5 flex items-center justify-center">
@@ -347,12 +347,13 @@ export const LeftPanel: React.FC<Props> = ({
               <motion.div 
                 className="absolute left-0 right-0 h-[9.09%] z-20 flex items-center justify-center"
                 initial={{ top: '50%', y: '-50%', opacity: 0 }}
-                animate={setupStep >= 2 ? { 
-                  top: `${(controlPosition / 10) * 100}%`,
+                animate={{ 
+                  top: `${controlPosition}%`,
                   y: '-50%',
                   opacity: 1,
-                } : { top: '50%', y: '-50%', opacity: 0 }}
+                }}
                 transition={{ type: "spring", stiffness: 150, damping: 15 }}
+                exit={{ opacity: 0 }}
               >
                 <div className="w-8 h-8 rounded-full bg-stone-100 border-2 border-stone-800 shadow-[0_3px_10px_rgba(0,0,0,0.6)] flex items-center justify-center">
                   <div className="w-6 h-6 rounded-full border border-stone-300 flex items-center justify-center bg-stone-200">

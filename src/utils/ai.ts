@@ -21,7 +21,7 @@ export const aiTurn = (state: GameState): GameState => {
           
           if (slot1 && slot2 && !slot1.playerCard && !slot2.playerCard) {
             // Place the card
-            newState = placeCard(newState, cardToPlace, zone, slot, true);
+            newState = placeCard(newState, cardToPlace, zone, slot);
             newState.message = `AI placed ${cardToPlace.name}`;
             break;
           }
@@ -68,7 +68,7 @@ export const processAiActionStep = (state: GameState): GameState => {
               const slot2 = targetZone.slots.find(s => s.position === slot + 1);
               
               if (slot1 && slot2 && !slot1.playerCard && !slot2.playerCard) {
-                newState = placeCard(newState, cardToPlace, zone, slot, true);
+                newState = placeCard(newState, cardToPlace, zone, slot);
                 newState.message = `AI placed ${cardToPlace.name}`;
                 break;
               }

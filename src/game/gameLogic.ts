@@ -437,7 +437,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (state.currentAction && state.currentAction !== 'none') return state;
       
       const slotPosition = Math.floor(action.slot / 2) + 1;
-      let newState = placeCard(state, action.card, action.zone, action.slot, true);
+      let newState = placeCard(state, action.card, action.zone, action.slot);
       
       if (!newState) return state; // 如果 placeCard 返回 null，说明放置失败
 

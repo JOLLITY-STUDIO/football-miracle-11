@@ -119,6 +119,11 @@ const {
       }, 500);
       return () => clearTimeout(timer);
     }
+    
+    // Force setup completion if phase is not setup but setup hasn't started
+    if (gameState.phase !== 'setup' && setupStep < 4) {
+      setSetupStep(4);
+    }
   }, [gameState.phase, setupStep, dispatch]);
 
   const [lastTurn, setLastTurn] = useState<string>('player');

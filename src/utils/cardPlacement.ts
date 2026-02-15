@@ -5,8 +5,7 @@ export const placeCard = (
   state: GameState, 
   card: PlayerCard, 
   zone: number, 
-  slot: number,
-  isFirstTurn: boolean = false
+  slot: number
 ): GameState => {
   console.log('=== placeCard called ===');
   console.log('Card:', card.name, 'ID:', card.id);
@@ -19,14 +18,14 @@ export const placeCard = (
   const newAiField = JSON.parse(JSON.stringify(state.aiField));
   
   const targetField = state.currentTurn === 'player' ? newPlayerField : newAiField;
-  const targetZoneIndex = targetField.findIndex(z => z.zone === zone);
+  const targetZoneIndex = targetField.findIndex((z: any) => z.zone === zone);
   
   console.log('Target zone index:', targetZoneIndex);
   
   if (targetZoneIndex !== -1) {
     const targetZone = targetField[targetZoneIndex];
     console.log('Target zone:', targetZone.zone);
-    console.log('Target zone slots:', targetZone.slots.map(s => ({ pos: s.position, card: s.playerCard?.name || null })));
+    console.log('Target zone slots:', targetZone.slots.map((s: any) => ({ pos: s.position, card: s.playerCard?.name || null })));
     
     // Check if slot is within bounds (0-7 for 8-column field)
     if (slot < 0 || slot > 7) {
@@ -42,16 +41,20 @@ export const placeCard = (
     }
     
     // Check if slots are empty
-    const slot1 = targetZone.slots.find(s => s.position === slot);
-    const slot2 = targetZone.slots.find(s => s.position === slot + 1);
+    const slot1 = targetZone.slots.find((s: any) => s.position === slot);
+    const slot2 = targetZone.slots.find((s: any) => s.position === slot + 1);
     
     console.log('Slot1:', slot1 ? { pos: slot1.position, hasCard: !!slot1.playerCard } : 'not found');
     console.log('Slot2:', slot2 ? { pos: slot2.position, hasCard: !!slot2.playerCard } : 'not found');
     
-    if (slot1 && slot2 && !slot1.playerCard && !slot2.playerCard) {
+    // 检查插槽是否为null，如果为null则初始化为空对象
+                  const safeSlot1 = slot1 || { position: slot, playerCard: null, usedShotIcons: [], shotMarkers: 0 };
+                  const safeSlot2 = slot2 || { position: slot + 1, playerCard: null, usedShotIcons: [], shotMarkers: 0 };
+                  
+                  if (!safeSlot1.playerCard && !safeSlot2.playerCard) {
       // Place card in both slots
-      slot1.playerCard = card;
-      slot2.playerCard = card;
+safeSlot1.playerCard = card;
+                  safeSlot2.playerCard = card;
       console.log('Card placed successfully in slots', slot, 'and', slot + 1);
       
       // Remove card from hand
@@ -73,9 +76,9 @@ export const placeCard = (
         message: `${card.name} placed on field`
       };
       
-      console.log('New state player field:', newState.playerField.map(z => ({
+      console.log('New state player field:', newState.playerField.map((z: any) => ({
         zone: z.zone,
-        cards: z.slots.filter(s => s.playerCard).map(s => ({ pos: s.position, card: s.playerCard?.name }))
+        cards: z.slots.filter((s: any) => s.playerCard).map((s: any) => ({ pos: s.position, card: s.playerCard?.name }))
       })));
       
       return newState;

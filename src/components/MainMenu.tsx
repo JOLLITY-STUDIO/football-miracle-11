@@ -125,13 +125,13 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
       >
         <motion.button
           onClick={onStartGame3D}
-          className="group relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:via-pink-500 hover:to-indigo-500 text-white text-lg py-4 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-purple-500/50"
+          className="group relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:via-pink-500 hover:to-indigo-600 text-white text-lg py-4 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-purple-500/50"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-          🎲 Quick Start (3D)
-          <span className="block text-xs mt-1 opacity-70">Three.js · True 3D Interaction</span>
+          🎲 Quick Start
+          <span className="block text-xs mt-1 opacity-70">Start a new game</span>
         </motion.button>
 
         <motion.button

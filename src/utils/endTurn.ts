@@ -13,9 +13,9 @@ export const performEndTurn = (state: GameState): GameState => {
     ...state,
     currentTurn: newTurn,
     turnCount: newTurnCount,
-    turnPhase: 'teamAction',
+    turnPhase: state.isFirstTurn ? 'playerAction' : 'teamAction',
     isFirstTurn: false,
-    skipTeamAction: false,
+    skipTeamAction: state.isFirstTurn ? true : false,
     isFirstMatchTurn: false
   };
   
