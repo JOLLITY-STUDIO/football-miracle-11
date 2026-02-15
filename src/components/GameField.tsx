@@ -157,7 +157,9 @@ const GameField: React.FC<GameFieldProps> = ({
           zIndex: isAi ? 101 : 100, // AI field has higher z-index
           pointerEvents: 'auto',
           position: 'absolute',
-          top: isAi ? 0 : `${ROWS * CELL_HEIGHT}px` // Position AI half at top, player half at bottom
+          top: isAi ? 0 : `${ROWS * CELL_HEIGHT}px`,
+          left: '50%',
+          transform: 'translateX(-50%)' // Center horizontally
         }}
       >
         {/* SVG 3D Rendering */}

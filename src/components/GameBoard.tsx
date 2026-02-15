@@ -19,6 +19,7 @@ import { MatchLog } from './MatchLog';
 import { DraftPhase } from './DraftPhase';
 import { TutorialGuide } from './TutorialGuide';
 import { ActionButtons } from './ActionButtons';
+import { AthleteCardGroup } from './AthleteCardGroup';
 import { AmbientControls } from './AmbientControls';
 import {
   gameReducer,
@@ -1053,43 +1054,14 @@ const handleCardSelect = (card: athleteCard) => {
         <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none" data-testid="game-board">
 
 
-         {/* Bottom Right: Player Hand - Moved to Draw Area */}
-         <div className="absolute bottom-4 right-4 w-[400px] h-32 pointer-events-auto flex justify-center items-end pb-2 perspective-1000">
-            <AnimatePresence>
-              {gameState.playerHand.map((card, i) => (
-                <motion.div
-                  key={card.id}
-                  data-testid="hand-card"
-                  initial={{ opacity: 0, y: 200, rotate: 0, scale: 0 }}
-                  animate={setupStep >= 3 || gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf' ? { 
-                    opacity: 1, 
-                    y: gameState.selectedCard?.id === card.id ? -20 : 0, 
-                    scale: gameState.selectedCard?.id === card.id ? 1.1 : 1,
-                    rotate: gameState.selectedCard?.id === card.id ? 0 : (i - (gameState.playerHand.length - 1) / 2) * 4, 
-                    x: (i - (gameState.playerHand.length - 1) / 2) * -40 
-                  } : { opacity: 0, y: 200, rotate: 0, scale: 0 }}
-                  exit={{ opacity: 0, scale: 0.5, y: 50 }}
-                  whileHover={{ 
-                    scale: 1.3, 
-                    rotate: 0, 
-                    zIndex: 100,
-                    y: -30
-                  }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  className="relative origin-bottom cursor-pointer shadow-2xl"
-                  style={{ zIndex: gameState.selectedCard?.id === card.id ? 100 : i }}
-                >
-                  <AthleteCardComponent
-                    card={card}
-                    onClick={() => handleCardSelect(card)}
-                    selected={gameState.selectedCard?.id === card.id}
-                    size="small" 
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-         </div>
+         {/* Bottom Center: Player Hand */}
+         <AthleteCardGroup
+           cards={gameState.playerHand}
+           selectedCard={gameState.selectedCard}
+           setupStep={setupStep}
+           phase={gameState.phase}
+           onCardSelect={handleCardSelect}
+         />
         </div>
       )}
 
