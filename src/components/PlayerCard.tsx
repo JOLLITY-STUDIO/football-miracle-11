@@ -22,9 +22,9 @@ interface Props {
 
 const getRoleName = (type: string) => {
   switch (type) {
-    case 'forward': return 'STRIKER';
-    case 'midfielder': return 'PLAYMAKER';
-    case 'defender': return 'DEFENDER';
+    case 'forward': return 'FW';
+    case 'midfielder': return 'MF';
+    case 'defender': return 'DF';
     default: return 'PLAYER';
   }
 };
