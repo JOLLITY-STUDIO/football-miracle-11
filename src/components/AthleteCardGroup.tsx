@@ -28,9 +28,9 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
       {/* Visual arc for debugging */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="-250 -200 500 200">
         <path 
-          d={`M ${-Math.sin(Math.PI * maxAngle / 180) * radius} ${Math.cos(Math.PI * maxAngle / 180) * radius} A ${radius} ${radius} 0 0 1 ${Math.sin(Math.PI * maxAngle / 180) * radius} ${Math.cos(Math.PI * maxAngle / 180) * radius}`} 
-          stroke="rgba(255, 255, 255, 0.3)" 
-          strokeWidth="2" 
+          d={`M ${-Math.sin(Math.PI * maxAngle / 180) * radius} ${-Math.cos(Math.PI * maxAngle / 180) * radius} A ${radius} ${radius} 0 0 1 ${Math.sin(Math.PI * maxAngle / 180) * radius} ${-Math.cos(Math.PI * maxAngle / 180) * radius}`} 
+          stroke="rgba(255, 255, 255, 0.8)" 
+          strokeWidth="3" 
           fill="none"
         />
       </svg>
