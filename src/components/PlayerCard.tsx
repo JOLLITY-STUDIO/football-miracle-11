@@ -210,10 +210,11 @@ export const PlayerCardComponent: React.FC<Props> = ({
         initial={false}
         animate={{ 
           rotateY: faceDown ? 180 : 0,
+          rotate: 0,
           scale: selected ? 1.05 : 1,
           y: selected ? -5 : 0
         }}
-        whileHover={!disabled && !faceDown ? { y: -3, scale: 1.02 } : {}}
+        whileHover={!disabled && !faceDown && variant !== 'away' ? { y: -3, scale: 1.02 } : {}}
         className={clsx(
           "relative preserve-3d cursor-pointer transition-shadow rounded-lg overflow-hidden",
           selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-20 shadow-lg",

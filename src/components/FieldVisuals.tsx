@@ -25,7 +25,7 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
   const CENTER_CIRCLE_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.2; // 20% of smallest dimension
   const PENALTY_ARC_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.15; // 15% of smallest dimension
   const CORNER_SIZE = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.05; // 5% of smallest dimension
-  const PENALTY_SPOT_POSITION = PENALTY_AREA_HEIGHT * 0.6;
+  const PENALTY_SPOT_POSITION = GOAL_AREA_HEIGHT + (PENALTY_AREA_HEIGHT * 0.5);
 
   return (
     <div 
@@ -83,7 +83,7 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
         <div className="absolute top-[${PENALTY_SPOT_POSITION}px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
         {/* Penalty Arc */}
         <div 
-          className="absolute top-[${PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-b-[4px] border-white/80 rounded-b-full bg-transparent"
+          className="absolute top-[${GOAL_AREA_HEIGHT + PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-b-[4px] border-white/80 rounded-b-full bg-transparent"
           style={{ 
             width: `${PENALTY_ARC_RADIUS * 2}px`, 
             height: `${PENALTY_ARC_RADIUS}px`, 
@@ -109,7 +109,7 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
         <div className="absolute bottom-[${PENALTY_SPOT_POSITION}px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
         {/* Penalty Arc */}
         <div 
-          className="absolute bottom-[${PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-t-[4px] border-white/80 rounded-t-full bg-transparent"
+          className="absolute bottom-[${GOAL_AREA_HEIGHT + PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-t-[4px] border-white/80 rounded-t-full bg-transparent"
           style={{ 
             width: `${PENALTY_ARC_RADIUS * 2}px`, 
             height: `${PENALTY_ARC_RADIUS}px`, 

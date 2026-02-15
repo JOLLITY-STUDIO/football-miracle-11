@@ -335,6 +335,7 @@ const GameField: React.FC<GameFieldProps> = ({
                               card={card} 
                               size="large"
                               faceDown={false}
+                              variant={isAi ? "away" : "home"}
                               disabled={isAi}
                               usedShotIcons={slot.usedShotIcons || []}
                               onMouseEnter={() => onCardMouseEnter?.(card)}
