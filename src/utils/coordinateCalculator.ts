@@ -62,12 +62,10 @@ export const calculateCellCenter = (context: FieldContext, row: number, col: num
 export const calculateCellPosition = (context: FieldContext, row: number, col: number): Coordinates => {
   const { isAi, cellWidth, cellHeight } = context;
   
-  // Reverse column positions for AI to create vertical mirror image
-  const adjustedCol = isAi ? context.cols - 1 - col : col;
-  
   // Calculate absolute positions
   // Cards start at the clicked column and span 2 columns
-  const x = adjustedCol * cellWidth;
+  // AI and player use the same column positioning
+  const x = col * cellWidth;
   const y = row * cellHeight;
   
   return { x, y };
