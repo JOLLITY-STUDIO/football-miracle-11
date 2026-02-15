@@ -25,7 +25,7 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
   const CENTER_CIRCLE_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.2; // 20% of smallest dimension
   const PENALTY_ARC_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.15; // 15% of smallest dimension
   const CORNER_SIZE = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.05; // 5% of smallest dimension
-  const PENALTY_SPOT_POSITION = PENALTY_AREA_HEIGHT * 0.5; // 50% of penalty area height (center)
+  const PENALTY_SPOT_POSITION = PENALTY_AREA_HEIGHT * 0.6;
 
   return (
     <div 

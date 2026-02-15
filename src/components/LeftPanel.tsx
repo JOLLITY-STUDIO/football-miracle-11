@@ -173,9 +173,6 @@ export const LeftPanel: React.FC<Props> = ({
           })}
         </div>
 
-        {/* Center Divider/Label */}
-        <div className="h-px w-8 bg-white/10 my-4" />
-
         {/* Player Bench (Bottom) */}
         <div className="flex-1 w-full flex flex-col gap-6 items-center justify-end">
           {[0, 1, 2].map((idx) => {
