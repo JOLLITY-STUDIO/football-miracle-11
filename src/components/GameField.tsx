@@ -288,13 +288,13 @@ const GameField: React.FC<GameFieldProps> = ({
         </svg>
 
         {/* Render Cards and other HTML elements */}
-        <div 
-          className="relative w-full h-full"
-          style={{
-            pointerEvents: 'auto',
-            zIndex: 15
-          }}
-        >
+      <div 
+        className="relative w-full h-full"
+        style={{
+          pointerEvents: 'auto',
+          zIndex: 5 // Lower z-index to ensure cards are visible above this container
+        }}
+      >
           {fieldData.map((zone, zIdx) => {
             // 只渲染各自半场的区域
             // AI 只渲染 zones 0-3
@@ -314,9 +314,11 @@ const GameField: React.FC<GameFieldProps> = ({
                   const slot = zone.slots.find(s => s.position === colIdx);
                   const card = slot?.playerCard;
 
-                  // Calculate cell position (absolute positioning within 4-row half)
+                  // Calculate cell position (absolute positioning within 8-row field)
+                  // AI 卡片渲染在球场上方（行 0-3）
+                  // 玩家卡片渲染在球场下方（行 4-7）
                   const cellX = colIdx * CELL_WIDTH;
-                  const cellY = row * CELL_HEIGHT;
+                  const cellY = isAi ? row * CELL_HEIGHT : (row + 4) * CELL_HEIGHT;
 
                   // Render Card if it exists and we are at start of card (check if previous column has same card)
                   const prevSlot = zone.slots.find(s => s.position === colIdx - 1);
@@ -335,7 +337,7 @@ const GameField: React.FC<GameFieldProps> = ({
                           transform: isAi ? 'rotateX(-20deg) rotate(180deg) translateZ(1px)' : 'rotateX(-20deg) translateZ(1px)',
                           transformOrigin: 'center center',
                           filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
-                          zIndex: 20
+                          zIndex: 200 // Higher z-index to ensure cards are visible
                         }}
                       >
                          <motion.div
