@@ -9,7 +9,7 @@
  * - 'teamAction': Team action phase (pass, press)
  * - 'playerAction': Player action phase (place cards, shoot)
  * - 'shooting': Shooting phase (duel resolution)
- * - 'endTurn': End turn phase
+ * - 'end': End turn phase
  * 
  * Key responsibilities:
  * - Manage turn phase transitions
@@ -19,11 +19,7 @@
  */
 
 import type { GameState } from './gameLogic';
-
-/**
- * Turn phase types
- */
-export type TurnPhase = 'start' | 'teamAction' | 'playerAction' | 'shooting' | 'endTurn';
+import type { TurnPhase } from '../types/game';
 
 /**
  * Turn phase configuration
@@ -61,7 +57,7 @@ export const TURN_PHASE_CONFIG = {
     allowShooting: false,
     autoTransition: null,
   },
-  endTurn: {
+  end: {
     name: 'End Turn',
     description: 'End turn phase',
     allowPlaceCard: false,
