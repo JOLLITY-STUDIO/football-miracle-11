@@ -1,16 +1,19 @@
 // Field dimensions configuration
 // All components should use these values for consistency
+// Card size: 132x86px (small), each card occupies 2 cells
+// Cell size: half card = 66x86px
 export const FIELD_CONFIG = {
   // Grid configuration
   COLS: 8,
-  ROWS: 8, // Changed from 4 to 8 rows
+  ROWS: 8, // 8 rows total (4 per half)
   
-  // Cell aspect ratio (width:height)
-  CELL_ASPECT_RATIO: 0.76, // 99/130 ≈ 0.76
-  
-  // Base cell dimensions (used for calculations)
+  // Cell dimensions - each cell is half a card
+  // Card: 132x86px, so cell: 99x130px (scaled up for better visibility)
   BASE_CELL_WIDTH: 99,
   BASE_CELL_HEIGHT: 130,
+  
+  // Cell aspect ratio (width/height)
+  CELL_ASPECT_RATIO: 99 / 130, // Approximately 0.762
   
   // Border thickness
   BORDER_THICKNESS: 6,

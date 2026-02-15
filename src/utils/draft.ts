@@ -9,16 +9,29 @@ export const startDraftRound = (state: GameState): GameState => {
     .sort(() => Math.random() - 0.5);
   const draftCards = shuffledStars.slice(0, 3);
   
-  // 赢了猜拳的一方先选择
-  // isHomeTeam = true 表示玩家赢了猜拳，应该先选
-  // isHomeTeam = false 表示AI赢了猜拳，应该先选
-  const firstSelector = state.isHomeTeam ? 'player' : 'ai';
+  // 选秀顺序交替：第1轮客队先选，第2轮主队先选，第3轮客队先选
+  // draftRound: 1, 2, 3
+  // 奇数轮(1,3): 客队先选
+  // 偶数轮(2): 主队先选
+  const isAwayFirst = state.draftRound % 2 === 1; // 奇数轮客队先选
+  
+  // 确定谁先选
+  // isHomeTeam = true: 玩家是主队，AI是客队
+  // isHomeTeam = false: 玩家是客队，AI是主队
+  let firstSelector: 'player' | 'ai';
+  if (state.isHomeTeam) {
+    // 玩家是主队
+    firstSelector = isAwayFirst ? 'ai' : 'player';
+  } else {
+    // 玩家是客队
+    firstSelector = isAwayFirst ? 'player' : 'ai';
+  }
   
   return {
     ...state,
     availableDraftCards: draftCards,
-    draftStep: firstSelector === 'ai' ? 2 : 1, // 1: 玩家选择, 2: AI选择, 3: 弃卡, 4: 下一轮
-    message: `Draft round started - ${firstSelector === 'player' ? 'You won! Choose first!' : 'AI won! AI is choosing first...'}`
+    draftStep: firstSelector === 'ai' ? 2 : 1, // 1: 玩家选择, 2: AI选择, 3: 弃卡
+    message: `Draft Round ${state.draftRound} - ${firstSelector === 'player' ? 'Your turn to choose first!' : 'AI is choosing first...'}`
   };
 };
 
@@ -158,12 +171,24 @@ export const discardDraftCard = (state: GameState): GameState => {
     .sort(() => Math.random() - 0.5);
   const nextDraftCards = shuffledStars.slice(0, 3) as PlayerCard[];
   
+  // 选秀顺序交替：第1轮客队先选，第2轮主队先选，第3轮客队先选
+  const nextIsAwayFirst = nextRound % 2 === 1; // 奇数轮客队先选
+  
+  let nextFirstSelector: 'player' | 'ai';
+  if (state.isHomeTeam) {
+    // 玩家是主队
+    nextFirstSelector = nextIsAwayFirst ? 'ai' : 'player';
+  } else {
+    // 玩家是客队
+    nextFirstSelector = nextIsAwayFirst ? 'player' : 'ai';
+  }
+  
   return {
     ...state,
     availableDraftCards: nextDraftCards,
     discardedDraftCards: newDiscardedDraftCards,
     draftRound: nextRound,
-    draftStep: 1, // 玩家选择阶段
-    message: `Round ${nextRound} started! Choose your player.`
+    draftStep: nextFirstSelector === 'ai' ? 2 : 1, // 1: 玩家选择, 2: AI选择
+    message: `Round ${nextRound} started! ${nextFirstSelector === 'player' ? 'Your turn to choose first!' : 'AI is choosing first...'}`
   };
 };

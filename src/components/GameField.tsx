@@ -5,36 +5,7 @@ import type { PlayerCard } from '../data/cards';
 import { PlayerCardComponent } from './PlayerCard';
 import { motion } from 'framer-motion';
 import { FIELD_CONFIG } from '../config/fieldDimensions';
-
-const getIconDisplay = (type: 'attack' | 'defense' | 'pass' | 'speed') => {
-  switch (type) {
-    case 'attack':
-      return {
-        image: '/images/icons/attack.svg',
-        color: 'text-red-500'
-      };
-    case 'defense':
-      return {
-        image: '/images/icons/shield.svg',
-        color: 'text-blue-500'
-      };
-    case 'pass':
-      return {
-        image: '/images/icons/target.svg',
-        color: 'text-green-500'
-      };
-    case 'speed':
-      return {
-        image: '/images/icons/speed.svg',
-        color: 'text-yellow-500'
-      };
-    default:
-      return {
-        image: '/images/icons/speed.svg',
-        color: 'text-gray-500'
-      };
-  }
-};
+import FieldIcons from './FieldIcons';
 
 interface GameFieldProps {
   playerField: FieldZone[];
@@ -61,6 +32,20 @@ interface GameFieldProps {
   instantShotMode?: any;
   rotation?: number;
 }
+
+// Helper function to get valid zones based on player type
+const getValidZones = (type: string): number[] => {
+  switch (type) {
+    case 'fw':
+      return [2, 3, 4, 5]; // 前锋可放置在2-5区域
+    case 'mf':
+      return [1, 2, 5, 6]; // 中场只能放置在1、2、5、6行
+    case 'df':
+      return [0, 1, 6, 7]; // 后卫只能放置在0、1、6、7行
+    default:
+      return [];
+  }
+};
 
 const GameField: React.FC<GameFieldProps> = ({
   playerField,
@@ -97,8 +82,14 @@ const GameField: React.FC<GameFieldProps> = ({
     targetPosition: number,
     isFirstTurn: boolean
   ) => {
-    // Check if zone is allowed for this card
-    if (!card.zones.includes(targetZone)) {
+    // Check if zone is in player's half (zones 4-7)
+    if (targetZone < 4 || targetZone > 7) {
+      return false;
+    }
+
+    // Check if zone is allowed for this card based on player type
+    const validZones = getValidZones(card.type);
+    if (!validZones.includes(targetZone)) {
       return false;
     }
 
@@ -126,6 +117,17 @@ const GameField: React.FC<GameFieldProps> = ({
       if (!nextSlot || nextSlot.playerCard) {
         return false;
       }
+    }
+
+    // Check if there are any other cards on the field
+    const hasAnyCard = field.some(z => z.slots.some(s => s.playerCard));
+
+    // Check if forward cannot be placed in certain zones when no other cards are on field
+    // For player field (zones 4-7), zone 4 corresponds to zone 4 in the validZones
+    // When no other cards on field, forward cannot be placed in zones 3 or 4
+    // So for player, forward cannot be placed in zone 4 when no other cards are on field
+    if (!hasAnyCard && card.type === 'fw' && targetZone === 4) {
+      return false;
     }
 
     return true;
@@ -156,7 +158,7 @@ const GameField: React.FC<GameFieldProps> = ({
       >
         {/* SVG 3D渲染 */}
         <svg
-          viewBox="-396 -260 792 520"
+          viewBox={`-${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2} -${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 4} ${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH} ${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2}`}
           style={{
             position: 'absolute',
             top: 0,
@@ -165,7 +167,7 @@ const GameField: React.FC<GameFieldProps> = ({
             height: '100%',
             transformStyle: 'preserve-3d',
             pointerEvents: 'auto',
-            zIndex: 200
+            zIndex: 500
           }}
         >
           {/* Zones & Slots */}
@@ -184,10 +186,11 @@ const GameField: React.FC<GameFieldProps> = ({
             return (
               <React.Fragment key={`zone-${zone.zone}`}>
                 {Array.from({ length: COLS }).map((_, colIdx) => {
-                  const isZoneHighlight = !isAi && selectedCard && selectedCard.zones.includes(zone.zone) && zone.zone >= 4; // Only highlight player's half (zones 4-7)
+                  const validZones = selectedCard ? getValidZones(selectedCard.type) : [];
+                  const isZoneHighlight = !isAi && selectedCard && validZones.includes(zone.zone) && zone.zone >= 4; // Only highlight player's half (zones 4-7)
                   
                   const startColForValidation = colIdx === 7 ? 6 : colIdx;
-                  const isValidPlacement = selectedCard && !isAi && 
+                  const isValidPlacement = selectedCard && !isAi && canPlaceCards &&
                     canPlaceCardAtSlot(selectedCard, playerField, zone.zone, startColForValidation, isFirstTurn);
                   
                   // Find card in this slot
@@ -240,44 +243,7 @@ const GameField: React.FC<GameFieldProps> = ({
                         }}
                       />
                       
-                      {/* Slot Marker Icon (if empty) */}
-                      {!card && (
-                        <>
-                          {/* Fixed Tactical Icons on Field */}
-                          {((row === 0 || row === 3) && colIdx > 0 && colIdx < 7) && (
-                            <foreignObject
-                              x={x - 20}
-                              y={y - 20}
-                              width={40}
-                              height={40}
-                              style={{ pointerEvents: 'none' }}
-                            >
-                              <div
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  opacity: 0.1 // 降低透明度，使其更淡
-                                }}
-                              >
-                                <img
-                                  src={getIconDisplay(row === 0 ? 'attack' : 'defense').image}
-                                  alt={row === 0 ? 'attack' : 'defense'}
-                                  style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    objectFit: 'contain',
-                                    filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.3))',
-                                    opacity: 0.7 // 降低图标本身的透明度
-                                  }}
-                                />
-                              </div>
-                            </foreignObject>
-                          )}
-                        </>
-                      )}
+
                     </g>
                   );
                 })}
@@ -286,12 +252,15 @@ const GameField: React.FC<GameFieldProps> = ({
           })}
         </svg>
 
+        {/* Field Icons */}
+        <FieldIcons isRotated={isRotated} playerField={playerField} aiField={aiField} />
+        
         {/* Render Cards and other HTML elements */}
       <div 
         className="relative w-full h-full"
         style={{
           pointerEvents: 'auto',
-          zIndex: 5 // Lower z-index to ensure cards are visible above this container
+          zIndex: 250 // Higher z-index to ensure cards are visible above SVG
         }}
       >
           {fieldData.map((zone, zIdx) => {
@@ -333,7 +302,7 @@ const GameField: React.FC<GameFieldProps> = ({
                     return (
                       <div 
                         key={`${isAi ? 'ai' : 'p'}-card-${zone.zone}-${colIdx}`}
-                        className={clsx("absolute left-0 top-0 w-[200%] h-full pointer-events-auto transform-style-3d backface-hidden flex items-center justify-center")}
+                        className={clsx("absolute left-0 top-0 pointer-events-none transform-style-3d backface-hidden flex items-center justify-center")}
                         style={{
                           left: `${cellX}px`,
                           top: `${cellY}px`,
@@ -346,26 +315,19 @@ const GameField: React.FC<GameFieldProps> = ({
                         }}
                       >
                          <motion.div
-initial={{ 
-                              opacity: 0, 
-                              scale: 0.2, 
-                              y: isAi ? -500 : 500,
-                              rotateY: 180,
-                              z: 500
-                            }}
-                          animate={{ 
-                            opacity: 1, 
-                            scale: 1, 
-                            y: 0,
-                            rotateY: 0,
-                            z: 0
-                          }}
-                          exit={{ opacity: 0 }}
+                           initial={false}
+                           animate={{ 
+                             opacity: 1, 
+                             scale: 1, 
+                             y: 0,
+                             rotateY: 0,
+                             z: 0
+                           }}
+                           exit={{ opacity: 0 }}
                            transition={{ 
                              type: "spring", 
                              stiffness: 80, 
-                             damping: 15,
-                             delay: setupStep === 3 ? (row * 0.2 + colIdx * 0.1) : 0 
+                             damping: 15
                            }}
                            className="w-full h-full relative"
                          >
@@ -452,9 +414,8 @@ initial={{
                   // Only show preview at the correct position (for col 7, show at col 6; for others, show at their own position)
                   const shouldShowPreview = !card && !isAi && selectedCard && hoveredZone === zone.zone && hoveredSlot === startCol && startCol === colIdx;
                   
-                  // Always show preview during setup phase
-                  const isSetupPhase = setupStep >= 3;
-                  if (shouldShowPreview || isSetupPhase) {
+                  // Only show preview when hovering over valid placement position
+                  if (shouldShowPreview) {
                     return (
                       <div
                         key={`preview-${zone.zone}-${colIdx}`}
@@ -502,7 +463,7 @@ initial={{
         <svg
           width="100%"
           height="100%"
-          viewBox="-396 -520 792 1040"
+          viewBox={`-${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2} -${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2} ${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH} ${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT}`}
         >
           {/* Horizontal Grid Lines */}
           {Array.from({ length: FIELD_CONFIG.ROWS + 1 }).map((_, rowIdx) => {
@@ -540,7 +501,7 @@ initial={{
       </div>
 
       {/* Single 8-row grid container - Render both AI and Player fields */}
-      <div className="flex-1 min-h-0 relative flex items-center justify-center" style={{ position: 'relative', width: '792px', height: '1040px' }}>
+      <div className="flex-1 min-h-0 relative flex items-center justify-center" style={{ position: 'relative', width: `${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH}px`, height: `${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT}px` }}>
         {/* Render AI field (top half) */}
         {renderGrid(true)}
         {/* Render Player field (bottom half) */}

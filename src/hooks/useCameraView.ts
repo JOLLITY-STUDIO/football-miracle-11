@@ -22,7 +22,7 @@ export const useCameraView = (isHomeTeam: boolean) => {
     const updateScale = () => {
       const vh = window.innerHeight;
       const vw = window.innerWidth;
-      const baseScale = Math.min(vw / 1920, vh / 1080) * 0.95;
+      const baseScale = Math.min(vw / 1920, vh / 1080) * 1.1;
       setAutoScale(baseScale);
     };
     updateScale();

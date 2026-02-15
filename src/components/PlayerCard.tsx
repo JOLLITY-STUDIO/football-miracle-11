@@ -102,11 +102,12 @@ export const PlayerCardComponent: React.FC<Props> = ({
   const cardBg = getCardBgColor(card.type);
   const themeColor = getThemeColor(card.type);
 
+  // 统一使用 BaseCard 的尺寸定义
   const cardSize = {
-    tiny: { width: '100px', height: '60px' },
-    small: { width: '140px', height: '84px' },
-    medium: { width: '180px', height: '108px' },
-    large: { width: '220px', height: '132px' }
+    tiny: { width: '99px', height: '65px' },    // 1.5x
+    small: { width: '132px', height: '86px' },  // 2x
+    medium: { width: '165px', height: '108px' }, // 2.5x
+    large: { width: '198px', height: '130px' }   // 3x - 匹配场地格子 198x130
   };
 
   const textStrokeStyle: React.CSSProperties = {
@@ -283,7 +284,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
               
               {/* 角色/类型 */}
               <div className="text-xs font-black tracking-widest leading-none" style={textStrokeStyle}>
-                {getRoleName(card.type)}
+                {card.name}
               </div>
 
               {/* 球员名字 */}

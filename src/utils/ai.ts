@@ -1,5 +1,21 @@
 import type { GameState } from '../game/gameLogic';
 import { placeCard } from './cardPlacement';
+import { performEndTurn } from './endTurn';
+import { RuleValidator } from '../game/ruleValidator';
+
+// Helper function to get valid zones based on player type
+const getValidZones = (type: string): number[] => {
+  switch (type) {
+    case 'fw':
+      return [2, 3, 4, 5]; // 前锋可放置在2-5区域
+    case 'mf':
+      return [1, 2, 5, 6]; // 中场只能放置在1、2、5、6行
+    case 'df':
+      return [0, 1, 6, 7]; // 后卫只能放置在0、1、6、7行
+    default:
+      return [];
+  }
+};
 
 export const aiTurn = (state: GameState): GameState => {
   // Basic AI implementation
@@ -11,24 +27,29 @@ export const aiTurn = (state: GameState): GameState => {
     const cardToPlace = newState.aiHand[0];
     
     // Find a valid position to place the card
-    for (let zone of cardToPlace.zones) {
-      for (let slot = 0; slot <= 6; slot++) {
-        // Check if slot is empty
-        const targetZone = newState.aiField.find(z => z.zone === zone);
-        if (targetZone) {
-          const slot1 = targetZone.slots.find(s => s.position === slot);
-          const slot2 = targetZone.slots.find(s => s.position === slot + 1);
+    if (cardToPlace) {
+      const validZones = getValidZones(cardToPlace.type);
+      for (let zone of validZones) {
+        for (let slot = 0; slot <= 6; slot++) {
+          // 使用 RuleValidator 验证放置位置（包含第一回合前锋相邻验证）
+          const validationResult = RuleValidator.canPlaceCard(
+            cardToPlace,
+            newState.aiField,
+            zone,
+            slot,
+            newState.isFirstTurn
+          );
           
-          if (slot1 && slot2 && !slot1.playerCard && !slot2.playerCard) {
+          if (validationResult.valid) {
             // Place the card
             newState = placeCard(newState, cardToPlace, zone, slot);
             newState.message = `AI placed ${cardToPlace.name}`;
             break;
           }
         }
-      }
-      if (newState.aiHand.length < state.aiHand.length) {
-        break;
+        if (newState.aiHand.length < state.aiHand.length) {
+          break;
+        }
       }
     }
   }
@@ -52,30 +73,36 @@ export const processAiActionStep = (state: GameState): GameState => {
     case 'teamAction':
       // AI 战术阶段 - 模拟思考
       newState.message = 'AI is planning...';
-      newState.aiActionStep = 'playerAction';
+      newState.aiActionStep = 'placeCard';
       break;
       
-    case 'playerAction':
+    case 'placeCard':
       // AI 行动阶段 - 放置卡片
       if (newState.aiHand.length > 0) {
         const cardToPlace = newState.aiHand[0];
         
-        for (let zone of cardToPlace.zones) {
-          for (let slot = 0; slot <= 6; slot++) {
-            const targetZone = newState.aiField.find(z => z.zone === zone);
-            if (targetZone) {
-              const slot1 = targetZone.slots.find(s => s.position === slot);
-              const slot2 = targetZone.slots.find(s => s.position === slot + 1);
+        if (cardToPlace) {
+          const validZones = getValidZones(cardToPlace.type);
+          for (let zone of validZones) {
+            for (let slot = 0; slot <= 6; slot++) {
+              // 使用 RuleValidator 验证放置位置（包含第一回合前锋相邻验证）
+              const validationResult = RuleValidator.canPlaceCard(
+                cardToPlace,
+                newState.aiField,
+                zone,
+                slot,
+                newState.isFirstTurn
+              );
               
-              if (slot1 && slot2 && !slot1.playerCard && !slot2.playerCard) {
+              if (validationResult.valid) {
                 newState = placeCard(newState, cardToPlace, zone, slot);
                 newState.message = `AI placed ${cardToPlace.name}`;
                 break;
               }
             }
-          }
-          if (newState.aiHand.length < state.aiHand.length) {
-            break;
+            if (newState.aiHand.length < state.aiHand.length) {
+              break;
+            }
           }
         }
       }
@@ -83,11 +110,8 @@ export const processAiActionStep = (state: GameState): GameState => {
       break;
       
     case 'endTurn':
-      // AI 回合结束
-      newState.currentTurn = 'player';
-      newState.turnPhase = 'teamAction';
-      newState.message = 'Your turn!';
-      newState.aiActionStep = 'none';
+      // AI 回合结束 - 使用 performEndTurn 处理回合切换逻辑（包含第一回合跳过team action）
+      newState = performEndTurn(newState);
       break;
   }
   

@@ -20,6 +20,12 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
   const PENALTY_AREA_HEIGHT = FIELD_CONFIG.PENALTY_AREA_ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT; // 1 * 130 = 130px
   const GOAL_AREA_WIDTH = FIELD_CONFIG.GOAL_AREA_COLS * FIELD_CONFIG.BASE_CELL_WIDTH; // 2 * 99 = 198px
   const GOAL_AREA_HEIGHT = FIELD_CONFIG.GOAL_AREA_ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT; // 0.5 * 130 = 65px
+  
+  // Relative dimensions for field elements
+  const CENTER_CIRCLE_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.3; // 30% of smallest dimension
+  const PENALTY_ARC_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.25; // 25% of smallest dimension
+  const CORNER_SIZE = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.05; // 5% of smallest dimension
+  const PENALTY_SPOT_POSITION = PENALTY_AREA_HEIGHT * 0.75; // 75% of penalty area height (closer to goal)
 
   return (
     <div 
@@ -56,7 +62,7 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
       <div className="absolute top-1/2 left-0 right-0 h-1 bg-white/80 pointer-events-none shadow-[0_0_15px_rgba(255,255,255,0.3)] z-30" />
       <div 
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-[4px] border-white/80 rounded-full pointer-events-none shadow-[0_0_20px_rgba(255,255,255,0.3)] z-30"
-        style={{ width: '300px', height: '300px' }} 
+        style={{ width: `${CENTER_CIRCLE_RADIUS * 2}px`, height: `${CENTER_CIRCLE_RADIUS * 2}px` }} 
       />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/90 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.6)] z-30" />
       
@@ -74,11 +80,16 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
           style={{ width: `${PENALTY_AREA_WIDTH}px`, height: `${PENALTY_AREA_HEIGHT}px` }}
         />
         {/* Penalty Spot */}
-        <div className="absolute top-[70px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+        <div className="absolute top-[${PENALTY_SPOT_POSITION}px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
         {/* Penalty Arc */}
         <div 
-          className="absolute top-[130px] left-1/2 -translate-x-1/2 w-[160px] h-[60px] border-b-[4px] border-white/80 rounded-b-full bg-transparent"
-          style={{ clipPath: 'inset(0 0 -100% 0)' }}
+          className="absolute top-[${PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-b-[4px] border-white/80 rounded-b-full bg-transparent"
+          style={{ 
+            width: `${PENALTY_ARC_RADIUS * 2}px`, 
+            height: `${PENALTY_ARC_RADIUS}px`, 
+            borderRadius: `${PENALTY_ARC_RADIUS}px ${PENALTY_ARC_RADIUS}px 0 0`,
+            clipPath: 'inset(0 0 -100% 0)'
+          }}
         />
       </div>
 
@@ -95,18 +106,23 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
           style={{ width: `${PENALTY_AREA_WIDTH}px`, height: `${PENALTY_AREA_HEIGHT}px` }}
         />
         {/* Penalty Spot */}
-        <div className="absolute bottom-[70px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+        <div className="absolute bottom-[${PENALTY_SPOT_POSITION}px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
         {/* Penalty Arc */}
         <div 
-          className="absolute bottom-[130px] left-1/2 -translate-x-1/2 w-[160px] h-[60px] border-t-[4px] border-white/80 rounded-t-full bg-transparent"
+          className="absolute bottom-[${PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-t-[4px] border-white/80 rounded-t-full bg-transparent"
+          style={{ 
+            width: `${PENALTY_ARC_RADIUS * 2}px`, 
+            height: `${PENALTY_ARC_RADIUS}px`, 
+            borderRadius: `0 0 ${PENALTY_ARC_RADIUS}px ${PENALTY_ARC_RADIUS}px`
+          }}
         />
       </div>
       
       {/* Corners */}
-      <div className="absolute top-0 left-0 w-12 h-12 border-r-[4px] border-b-[4px] border-white/70 rounded-br-full pointer-events-none z-30" />
-      <div className="absolute top-0 right-0 w-12 h-12 border-l-[4px] border-b-[4px] border-white/70 rounded-bl-full pointer-events-none z-30" />
-      <div className="absolute bottom-0 left-0 w-12 h-12 border-r-[4px] border-t-[4px] border-white/70 rounded-tr-full pointer-events-none z-30" />
-      <div className="absolute bottom-0 right-0 w-12 h-12 border-l-[4px] border-t-[4px] border-white/70 rounded-tl-full pointer-events-none z-30" />
+      <div className="absolute top-0 left-0 border-r-[4px] border-b-[4px] border-white/70 rounded-br-full pointer-events-none z-30" style={{ width: `${CORNER_SIZE}px`, height: `${CORNER_SIZE}px` }} />
+      <div className="absolute top-0 right-0 border-l-[4px] border-b-[4px] border-white/70 rounded-bl-full pointer-events-none z-30" style={{ width: `${CORNER_SIZE}px`, height: `${CORNER_SIZE}px` }} />
+      <div className="absolute bottom-0 left-0 border-r-[4px] border-t-[4px] border-white/70 rounded-tr-full pointer-events-none z-30" style={{ width: `${CORNER_SIZE}px`, height: `${CORNER_SIZE}px` }} />
+      <div className="absolute bottom-0 right-0 border-l-[4px] border-t-[4px] border-white/70 rounded-tl-full pointer-events-none z-30" style={{ width: `${CORNER_SIZE}px`, height: `${CORNER_SIZE}px` }} />
       
       {/* Ambient Lighting */}
       <div className="absolute inset-0 pointer-events-none">
