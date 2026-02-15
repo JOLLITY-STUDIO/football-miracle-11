@@ -79,30 +79,6 @@ export const ActionButtons: React.FC<Props> = ({
       )}
       {turnPhase === 'playerAction' && (
         <>
-          {canShoot && (
-            <svg
-              width="120"
-              height="40"
-              viewBox="0 0 120 40"
-              className="cursor-pointer group"
-              onClick={onShoot}
-            >
-              <defs>
-                <linearGradient id="shootButtonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#dc2626" />
-                  <stop offset="100%" stopColor="#b91c1c" />
-                </linearGradient>
-              </defs>
-              {/* Button Background */}
-              <rect x="0" y="0" width="120" height="40" rx="8" ry="8" fill="url(#shootButtonGradient)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-              {/* Button Shadow */}
-              <rect x="0" y="0" width="120" height="40" rx="8" ry="8" fill="none" stroke="rgba(220, 38, 38, 0.3)" strokeWidth="2" filter="blur(2px)" />
-              {/* Shoot Icon */}
-              <text x="20" y="25" textAnchor="middle" fill="white" fontSize="14" fontFamily="sans-serif">⚽</text>
-              {/* Button Text */}
-              <text x="70" y="25" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="sans-serif">射门</text>
-            </svg>
-          )}
         </>
       )}
     </div>
