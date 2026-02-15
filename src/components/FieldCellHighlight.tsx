@@ -60,18 +60,22 @@ export const FieldCellHighlight: React.FC<FieldCellHighlightProps> = ({
   const y = row * CELL_HEIGHT;
 
   // Determine fill color based on state
-  // Only show highlight for valid placement positions
+  // Show different colors for different states during testing
   const fillColor = isHighlightVisible
     ? 'rgba(255, 215, 0, 0.6)' // Golden yellow for valid placement
-    : 'transparent';
+    : (isZoneValid
+        ? 'rgba(239, 68, 68, 0.4)' // Red for valid zone but not valid placement
+        : 'transparent');
 
   // Determine stroke color based on state
   const strokeColor = isHighlightVisible
     ? 'rgba(255, 215, 0, 0.8)' // Golden stroke for valid placement
-    : 'transparent';
+    : (isZoneValid
+        ? 'rgba(239, 68, 68, 0.6)' // Red stroke for valid zone
+        : 'transparent');
 
   // Determine stroke width based on state
-  const strokeWidth = isHighlightVisible ? '2' : '1';
+  const strokeWidth = isHighlightVisible ? '2' : (isZoneValid ? '1' : '1');
 
   // Determine cursor style
   const cursorStyle = !isAi && canDoPlacement ? 'pointer' : 'default';
