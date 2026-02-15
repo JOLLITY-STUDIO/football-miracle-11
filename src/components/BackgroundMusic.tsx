@@ -292,7 +292,7 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
                 onClick={playNextTrack}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-[10px]"
             >
-                ‚è?            </button>
+                ÔøΩ?            </button>
           </div>
           <div className="px-2">
             <input 
@@ -359,7 +359,8 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
             className="w-6 h-6 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-[10px] text-stone-400 hover:text-white transition-colors"
             title="Next Track (Random)"
         >
-            ‚è?        </button>
+            ‚è≠Ô∏è
+        </button>
       </div>
     </div>
   );
