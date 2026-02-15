@@ -1,0 +1,25 @@
+<view class="container">
+  <view class="header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <text class="title">足球奇迹11</text>
+  </view>
+  
+  <view class="content">
+    <text class="motto">{{motto}}</text>
+    <text class="description">体验足球策略卡牌对战</text>
+  </view>
+
+  <view class="buttons">
+    <button class="start-btn" bindtap="startGame">开始游戏</button>
+  </view>
+
+  <view class="user-info" wx:if="{{hasUserInfo}}">
+    <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+    <text class="nickname">{{userInfo.nickName}}</text>
+  </view>
+
+  <view class="user-info" wx:else>
+    <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile"> 获取头像昵称 </button>
+    <button wx:elif="{{canIUse}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
+  </view>
+</view>

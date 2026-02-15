@@ -1,0 +1,174 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 20rpx;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20rpx;
+}
+
+.subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #a0aec0;
+}
+
+.selection-info {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30rpx;
+}
+
+.info-box {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30rpx;
+  border-radius: 20rpx;
+  text-align: center;
+  min-width: 200rpx;
+}
+
+.info-label {
+  display: block;
+  font-size: 24rpx;
+  color: #a0aec0;
+  margin-bottom: 10rpx;
+}
+
+.info-value {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.cards-list {
+  flex: 1;
+  margin-bottom: 30rpx;
+}
+
+.card-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  border-radius: 15rpx;
+  padding: 25rpx;
+  margin-bottom: 20rpx;
+  border: 2rpx solid #4a5568;
+  transition: all 0.3s;
+}
+
+.card-item.selected {
+  border-color: #ffd700;
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+.card-left {
+  flex: 1;
+}
+
+.card-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 10rpx;
+}
+
+.card-real-name {
+  display: block;
+  font-size: 24rpx;
+  color: #a0aec0;
+}
+
+.card-stats {
+  display: flex;
+  gap: 20rpx;
+  margin: 0 30rpx;
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15rpx;
+  border-radius: 10rpx;
+  min-width: 80rpx;
+}
+
+.mini-stat.attack {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.mini-stat.defense {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.mini-stat-label {
+  font-size: 20rpx;
+  color: #a0aec0;
+  margin-bottom: 5rpx;
+}
+
+.mini-stat-value {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.mini-stat.attack .mini-stat-value {
+  color: #ef4444;
+}
+
+.mini-stat.defense .mini-stat-value {
+  color: #3b82f6;
+}
+
+.card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80rpx;
+}
+
+.position {
+  font-size: 28rpx;
+  color: #ffd700;
+  font-weight: bold;
+  margin-bottom: 5rpx;
+}
+
+.star {
+  font-size: 24rpx;
+  color: #ffd700;
+}
+
+.footer {
+  padding: 20rpx 0;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a2e;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  padding: 25rpx;
+  border: none;
+}
+
+.confirm-btn[disabled] {
+  background: #4a5568;
+  color: #a0aec0;
+}

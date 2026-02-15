@@ -4,11 +4,7 @@ import type { FieldZone } from '../types/game';
 import type { PlayerCard } from '../data/cards';
 import { PlayerCardComponent } from './PlayerCard';
 import { motion } from 'framer-motion';
-
-export const COLS = 8;
-export const ROWS = 4;
-export const CELL_WIDTH = 99;
-export const CELL_HEIGHT = 130;
+import { FIELD_CONFIG } from '../config/fieldDimensions';
 
 const getIconDisplay = (type: 'attack' | 'defense' | 'pass' | 'speed') => {
   switch (type) {
@@ -48,6 +44,8 @@ interface GameFieldProps {
   onAttackClick: (zone: number, position: number) => void;
   onCardMouseEnter?: (card: PlayerCard) => void;
   onCardMouseLeave?: () => void;
+  shootMode?: boolean;
+  selectedShootPlayer?: {zone: number, position: number} | null;
   canPlaceCards?: boolean;
   isFirstTurn: boolean;
   setupStep: number;
@@ -80,6 +78,8 @@ const GameField: React.FC<GameFieldProps> = ({
   hoveredSlot = null,
   handleCellMouseEnter = () => {},
   handleCellMouseLeave = () => {},
+  shootMode = false,
+  selectedShootPlayer = null,
   currentTurn,
   turnPhase,
   lastPlacedCard,
@@ -112,13 +112,16 @@ const GameField: React.FC<GameFieldProps> = ({
       return false;
     }
 
-    // Special check for first turn: only allow placement in first 6 columns
-    if (isFirstTurn && targetPosition >= 6) {
+    // Special check for first turn: only allow placement in first 7 columns
+    // Cards span 2 columns, so max start position is 6 (occupies columns 6 and 7)
+    // This ensures cards are placed within the first 7 columns (0-6)
+    if (isFirstTurn && targetPosition > 6) {
       return false;
     }
 
     // For cards that span 2 columns, check if the next slot is also empty
-    if (true) { // Assume all cards span 2 columns for now
+    // Only check if the next slot exists (for column 6, check column 7)
+    if (targetPosition < 7) {
       const nextSlot = zone.slots.find(s => s.position === targetPosition + 1);
       if (!nextSlot || nextSlot.playerCard) {
         return false;
@@ -131,6 +134,10 @@ const GameField: React.FC<GameFieldProps> = ({
   // Helper to render grid cells
   const renderGrid = (isAi: boolean) => {
     const fieldData = isAi ? aiField : playerField;
+    const CELL_WIDTH = FIELD_CONFIG.BASE_CELL_WIDTH;
+    const CELL_HEIGHT = FIELD_CONFIG.BASE_CELL_HEIGHT;
+    const COLS = FIELD_CONFIG.COLS;
+    const ROWS = FIELD_CONFIG.ROWS;
 
     return (
       <div 
@@ -147,7 +154,7 @@ const GameField: React.FC<GameFieldProps> = ({
       >
         {/* SVG 3D渲染 */}
         <svg
-          viewBox={`-${COLS * CELL_WIDTH / 2} -${ROWS * CELL_HEIGHT / 2} ${COLS * CELL_WIDTH} ${ROWS * CELL_HEIGHT}`}
+          viewBox="-396 -520 792 1040"
           style={{
             position: 'absolute',
             top: 0,
@@ -155,31 +162,44 @@ const GameField: React.FC<GameFieldProps> = ({
             width: '100%',
             height: '100%',
             transformStyle: 'preserve-3d',
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            zIndex: 200
           }}
         >
           {/* Zones & Slots */}
           {fieldData.map((zone, zIdx) => {
-            const row = zIdx; // 0 to 3
+            // 只渲染各自半场的区域
+            // AI 只渲染 zones 0-3
+            // 玩家只渲染 zones 4-7
+            if (isAi && zone.zone >= 4) return null;
+            if (!isAi && zone.zone < 4) return null;
+            
+            // 计算正确的行位置
+            // AI 卡片渲染在球场上方（行 0-3）
+            // 玩家卡片渲染在球场下方（行 4-7）
+            const row = isAi ? zone.zone : zone.zone - 4;
             
             return (
               <React.Fragment key={`zone-${zone.zone}`}>
                 {Array.from({ length: COLS }).map((_, colIdx) => {
-                  const isZoneHighlight = selectedCard && selectedCard.zones.includes(zone.zone);
+                  const isZoneHighlight = !isAi && selectedCard && selectedCard.zones.includes(zone.zone) && zone.zone >= 4; // Only highlight player's half (zones 4-7)
                   
-                  // For the last column (7), use startCol=6 to check placement
-                  const startCol = colIdx === 7 ? 6 : colIdx;
+                  const startColForValidation = colIdx === 7 ? 6 : colIdx;
                   const isValidPlacement = selectedCard && !isAi && 
-                    canPlaceCardAtSlot(selectedCard, playerField, zone.zone, startCol, isFirstTurn);
+                    canPlaceCardAtSlot(selectedCard, playerField, zone.zone, startColForValidation, isFirstTurn) && 
+                    zone.zone >= 4; // Only allow placement in player's half (zones 4-7)
                   
                   // Find card in this slot
-                  const slot = zone.slots.find(s => s.position === startCol);
+                  const slot = zone.slots.find(s => s.position === colIdx);
                   const card = slot?.playerCard;
 
                   // Calculate cell position (centered coordinate system)
                   const x = -COLS * CELL_WIDTH / 2 + colIdx * CELL_WIDTH + CELL_WIDTH / 2;
                   const y = -ROWS * CELL_HEIGHT / 2 + row * CELL_HEIGHT + CELL_HEIGHT / 2;
-
+                  
+                  // Show highlight for all valid placement positions
+                  const isHighlightVisible = !isAi && isValidPlacement;
+                  
                   return (
                     <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
                       {/* Cell Background */}
@@ -188,31 +208,33 @@ const GameField: React.FC<GameFieldProps> = ({
                         y={y - CELL_HEIGHT / 2}
                         width={CELL_WIDTH}
                         height={CELL_HEIGHT}
-                        fill={!isAi && isValidPlacement 
-                          ? 'rgba(34, 197, 94, 0.6)' // More vibrant green
+                        fill={isHighlightVisible 
+                          ? 'rgba(255, 215, 0, 0.6)' // Golden yellow for valid placement
                           : (!isAi && selectedCard && !isValidPlacement && isZoneHighlight 
                               ? 'rgba(239, 68, 68, 0.5)' 
-                              : ((row + colIdx) % 2 === 0 ? 'rgba(46, 125, 50, 0.4)' : 'rgba(27, 94, 32, 0.4)'))}
-                        stroke='rgba(255,255,255,0.15)'
-                        strokeWidth='1'
+                              : 'transparent')}
+                        stroke={isHighlightVisible 
+                          ? 'rgba(255, 215, 0, 0.8)' // Golden stroke for valid placement
+                          : 'transparent'}
+                        strokeWidth={isHighlightVisible ? '2' : '1'}
                         rx="8"
                         ry="8"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!isAi) {
-                            // Use the adjusted startCol (6 for last column)
-                            console.log('SVG Click at zone:', zone.zone, 'col:', colIdx, 'startCol:', startCol);
-                            onSlotClick(zone.zone, startCol);
+                          if (!isAi && isValidPlacement) {
+                            // Use startColForValidation for actual placement
+                            console.log('SVG Click at zone:', zone.zone, 'col:', colIdx, 'using startCol:', startColForValidation);
+                            onSlotClick(zone.zone, startColForValidation);
                           }
                         }}
                         onMouseEnter={() => {
                           if (!isAi && isValidPlacement) {
-                            handleCellMouseEnter(zone.zone, startCol);
+                            handleCellMouseEnter(zone.zone, startColForValidation);
                           }
                         }}
                         onMouseLeave={handleCellMouseLeave}
                         style={{ 
-                          cursor: !isAi ? 'pointer' : 'default',
+                          cursor: !isAi && isValidPlacement ? 'pointer' : 'default',
                           pointerEvents: 'auto'
                         }}
                       />
@@ -220,16 +242,6 @@ const GameField: React.FC<GameFieldProps> = ({
                       {/* Slot Marker Icon (if empty) */}
                       {!card && (
                         <>
-                          <text
-                            x={x}
-                            y={y + 5}
-                            textAnchor="middle"
-                            fill="rgba(255,255,255,0.1)"
-                            fontSize="24"
-                            fontWeight="bold"
-                          >
-                            +
-                          </text>
                           {/* Fixed Tactical Icons on Field */}
                           {((row === 0 || row === 3) && colIdx > 0 && colIdx < 7) && (
                             <foreignObject
@@ -277,12 +289,21 @@ const GameField: React.FC<GameFieldProps> = ({
         <div 
           className="relative w-full h-full"
           style={{
-            pointerEvents: 'none',
+            pointerEvents: 'auto',
             zIndex: 15
           }}
         >
           {fieldData.map((zone, zIdx) => {
-            const row = zIdx; // 0 to 3
+            // 只渲染各自半场的区域
+            // AI 只渲染 zones 0-3
+            // 玩家只渲染 zones 4-7
+            if (isAi && zone.zone >= 4) return null;
+            if (!isAi && zone.zone < 4) return null;
+            
+            // 计算正确的行位置
+            // AI 卡片渲染在球场上方（行 0-3）
+            // 玩家卡片渲染在球场下方（行 4-7）
+            const row = isAi ? zone.zone : zone.zone - 4;
             
             return (
               <React.Fragment key={`${isAi ? 'ai' : 'p'}-cards-${zone.zone}`}>
@@ -340,7 +361,7 @@ const GameField: React.FC<GameFieldProps> = ({
                              type: "spring", 
                              stiffness: 80, 
                              damping: 15,
-                             delay: setupStep === 3 ? (zIdx * 0.2 + colIdx * 0.1) : 0 
+                             delay: setupStep === 3 ? (row * 0.2 + colIdx * 0.1) : 0 
                            }}
                            className="w-full h-full relative"
                          >
@@ -382,13 +403,13 @@ const GameField: React.FC<GameFieldProps> = ({
                             )}
                             
                             {/* Attack Button Overlay */}
-                            {!isAi && canPlaceCards && card.icons.includes('attack') && (
+                            {!isAi && card.icons.includes('attack') && (shootMode || (canPlaceCards)) && (
                               <svg
                                 data-testid="shoot-button"
                                 width="80"
                                 height="32"
                                 viewBox="0 0 80 32"
-                                className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-30 cursor-pointer animate-bounce"
+                                className={`absolute -bottom-4 left-1/2 -translate-x-1/2 z-30 cursor-pointer ${shootMode ? 'animate-pulse' : 'animate-bounce'}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onAttackClick(zone.zone, colIdx);
@@ -396,14 +417,14 @@ const GameField: React.FC<GameFieldProps> = ({
                               >
                                 <defs>
                                   <linearGradient id={`attackButtonGradient-${zone.zone}-${colIdx}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#dc2626" />
-                                    <stop offset="100%" stopColor="#b91c1c" />
+                                    <stop offset="0%" stopColor={shootMode ? "#f59e0b" : "#dc2626"} />
+                                    <stop offset="100%" stopColor={shootMode ? "#d97706" : "#b91c1c"} />
                                   </linearGradient>
                                 </defs>
                                 {/* Button Background */}
-                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill={`url(#attackButtonGradient-${zone.zone}-${colIdx})`} stroke="white" strokeWidth="2" />
+                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill={`url(#attackButtonGradient-${zone.zone}-${colIdx})`} stroke="white" strokeWidth={shootMode ? 3 : 2} />
                                 {/* Button Shadow */}
-                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill="none" stroke="rgba(220,38,38,0.8)" strokeWidth="4" filter="blur(2px)" />
+                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill="none" stroke={shootMode ? "rgba(245,158,11,0.8)" : "rgba(220,38,38,0.8)"} strokeWidth={shootMode ? 6 : 4} filter="blur(2px)" />
                                 {/* Soccer Ball Icon */}
                                 <text x="20" y="22" textAnchor="middle" fill="white" fontSize="14" fontFamily="sans-serif">⚽</text>
                                 {/* Attack Power */}
@@ -411,6 +432,11 @@ const GameField: React.FC<GameFieldProps> = ({
                                   {Math.max(0, card.icons.filter((i: string) => i === 'attack').length - (slot.shotMarkers || 0))}
                                 </text>
                               </svg>
+                            )}
+                            
+                            {/* Shoot Mode Highlight */}
+                            {!isAi && shootMode && card.icons.includes('attack') && (
+                              <div className="absolute inset-0 bg-yellow-500/30 rounded-lg z-10 pointer-events-none animate-pulse" />
                             )}
                          </motion.div>
                       </div>
@@ -425,9 +451,9 @@ const GameField: React.FC<GameFieldProps> = ({
                     return (
                       <div
                         key={`preview-${zone.zone}-${colIdx}`}
-                        className={clsx("absolute left-0 top-0 w-[200%] h-full pointer-events-none transform-style-3d backface-hidden flex items-center justify-center opacity-80")}
+                        className={clsx("absolute left-0 top-0 pointer-events-none transform-style-3d backface-hidden flex items-center justify-center opacity-80")}
                         style={{
-                          left: `${cellX}px`,
+                          left: `${startCol * CELL_WIDTH}px`,
                           top: `${cellY}px`,
                           width: `${CELL_WIDTH * 2}px`,
                           height: `${CELL_HEIGHT}px`,
@@ -458,18 +484,58 @@ const GameField: React.FC<GameFieldProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-full border-[6px] border-white/30 rounded-sm bg-stone-900/50 relative overflow-hidden">
+    <div className="flex flex-col w-full h-full relative overflow-hidden">
       {/* Center Line */}
       <div className="absolute top-1/2 left-0 right-0 h-[4px] bg-white/40 -translate-y-1/2 z-20" />
 
-      {/* Top Field (Opponent if normal, Player if rotated) */}
-      <div className={clsx("flex-1 min-h-0 relative flex items-center justify-center", isRotated ? "" : "rotate-180")}>
-        {renderGrid(!isRotated)}
+      {/* Grid Lines for Debugging - Only render once */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="-396 -520 792 1040"
+        >
+          {/* Horizontal Grid Lines */}
+          {Array.from({ length: FIELD_CONFIG.ROWS + 1 }).map((_, rowIdx) => {
+            const y = -FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2 + rowIdx * FIELD_CONFIG.BASE_CELL_HEIGHT;
+            return (
+              <line
+                key={`h-line-${rowIdx}`}
+                x1={-FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2}
+                y1={y}
+                x2={FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2}
+                y2={y}
+                stroke="#000000"
+                strokeWidth="2"
+                strokeOpacity="0.5"
+              />
+            );
+          })}
+          {/* Vertical Grid Lines */}
+          {Array.from({ length: FIELD_CONFIG.COLS + 1 }).map((_, colIdx) => {
+            const x = -FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2 + colIdx * FIELD_CONFIG.BASE_CELL_WIDTH;
+            return (
+              <line
+                key={`v-line-${colIdx}`}
+                x1={x}
+                y1={-FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2}
+                x2={x}
+                y2={FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2}
+                stroke="#000000"
+                strokeWidth="2"
+                strokeOpacity="0.5"
+              />
+            );
+          })}
+        </svg>
       </div>
 
-      {/* Bottom Field (Player if normal, Opponent if rotated) */}
-      <div className={clsx("flex-1 min-h-0 relative flex items-center justify-center", isRotated ? "rotate-180" : "")}>
-        {renderGrid(isRotated)}
+      {/* Single 8-row grid - Render both AI and Player fields */}
+      <div className="flex-1 min-h-0 relative flex items-center justify-center">
+        {/* Render AI field (top half) */}
+        {renderGrid(true)}
+        {/* Render Player field (bottom half) */}
+        {renderGrid(false)}
       </div>
     </div>
   );

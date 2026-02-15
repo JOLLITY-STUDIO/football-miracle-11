@@ -3,6 +3,7 @@ import type { PlayerCard } from '../data/cards';
 import { PlayerCardComponent } from './PlayerCard';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import { MultiDigitDotMatrix } from './DotMatrixDisplay';
 
 interface Props {
   aiBench: PlayerCard[];
@@ -279,11 +280,11 @@ export const LeftPanel: React.FC<Props> = ({
               <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
             </div>
           </div>
-          <div className="bg-[#1a1a1a] rounded flex items-center justify-center py-2 relative overflow-hidden">
+          <div className="bg-[#1a1a1a] rounded flex items-center justify-center py-3 relative overflow-hidden">
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 0)', backgroundSize: '4px 4px' }} />
-            <span className="text-3xl font-['Russo_One'] text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)] z-10">
-              {aiScore.toString().padStart(2, '0')}
-            </span>
+            <div className="z-10">
+              <MultiDigitDotMatrix value={aiScore} digits={2} size="large" color="#f59e0b" />
+            </div>
           </div>
         </div>
 
@@ -384,11 +385,11 @@ export const LeftPanel: React.FC<Props> = ({
 
         {/* 3. Player Score (Bottom) */}
         <div className="w-full bg-[#0a0a0a] rounded-lg p-2 border border-white/10 shadow-2xl mt-4">
-          <div className="bg-[#1a1a1a] rounded flex items-center justify-center py-2 relative overflow-hidden mb-1">
+          <div className="bg-[#1a1a1a] rounded flex items-center justify-center py-3 relative overflow-hidden mb-1">
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 0)', backgroundSize: '4px 4px' }} />
-            <span className="text-3xl font-['Russo_One'] text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)] z-10">
-              {playerScore.toString().padStart(2, '0')}
-            </span>
+            <div className="z-10">
+              <MultiDigitDotMatrix value={playerScore} digits={2} size="large" color="#f59e0b" />
+            </div>
           </div>
           <div className="flex justify-between items-center px-1">
             <div className="flex gap-1">

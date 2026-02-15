@@ -1,0 +1,109 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.result-header {
+  text-align: center;
+  margin-bottom: 80rpx;
+}
+
+.result-title {
+  display: block;
+  font-size: 80rpx;
+  font-weight: bold;
+  margin-bottom: 30rpx;
+}
+
+.result-title.win {
+  color: #ffd700;
+  text-shadow: 0 0 30rpx rgba(255, 215, 0, 0.5);
+}
+
+.result-title.lose {
+  color: #ef4444;
+}
+
+.result-title.draw {
+  color: #a0aec0;
+}
+
+.result-message {
+  display: block;
+  font-size: 32rpx;
+  color: #fff;
+}
+
+.score-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40rpx;
+  margin-bottom: 100rpx;
+}
+
+.score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx;
+  border-radius: 20rpx;
+  min-width: 200rpx;
+}
+
+.score-box.player {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.score-box.ai {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+}
+
+.score-label {
+  font-size: 28rpx;
+  color: #fff;
+  margin-bottom: 20rpx;
+}
+
+.score-number {
+  font-size: 80rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.score-divider {
+  font-size: 60rpx;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+  width: 100%;
+  max-width: 400rpx;
+}
+
+.action-btn {
+  height: 100rpx;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+  color: #fff;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a2e;
+}
+
+.action-btn.secondary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}

@@ -77,8 +77,8 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
               setSelectedSide(aiSide);
               setTimeout(() => {
                 onComplete('ai', aiSide);
-              }, 1500);
-            }, 2000);
+              }, 500);
+            }, 800);
           } else {
             // Tie, restart
             setTimeout(() => {
@@ -86,11 +86,11 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
               setPlayerChoice(null);
               setAiChoice(null);
               setWinner(null);
-            }, 1000);
+            }, 500);
           }
-        }, 1500);
-      }, 1000);
-    }, 1500);
+        }, 800);
+      }, 500);
+    }, 500);
   };
 
   const handleSideSelect = (side: 'home' | 'away') => {

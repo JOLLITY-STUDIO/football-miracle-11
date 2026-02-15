@@ -1,0 +1,52 @@
+<view class="container">
+  <view class="header">
+    <text class="title">阵容选择</text>
+    <text class="subtitle">{{message}}</text>
+  </view>
+
+  <view class="selection-info">
+    <view class="info-box">
+      <text class="info-label">首发球员</text>
+      <text class="info-value">{{starters.length}}/10</text>
+    </view>
+    <view class="info-box">
+      <text class="info-label">替补球员</text>
+      <text class="info-value">{{substitutes.length}}/3</text>
+    </view>
+  </view>
+
+  <scroll-view class="cards-list" scroll-y>
+    <view 
+      class="card-item {{selectedCards.some(c => c.id === item.id) ? 'selected' : ''}}" 
+      wx:for="{{allCards}}" 
+      wx:key="id"
+      bindtap="toggleCard"
+      data-id="{{item.id}}"
+    >
+      <view class="card-left">
+        <text class="card-name">{{item.name}}</text>
+        <text class="card-real-name">{{item.realName}}</text>
+      </view>
+      <view class="card-stats">
+        <view class="mini-stat attack">
+          <text class="mini-stat-label">攻</text>
+          <text class="mini-stat-value">{{item.attack}}</text>
+        </view>
+        <view class="mini-stat defense">
+          <text class="mini-stat-label">防</text>
+          <text class="mini-stat-value">{{item.defense}}</text>
+        </view>
+      </view>
+      <view class="card-right">
+        <text class="position">{{item.positionLabel}}</text>
+        <text class="star" wx:if="{{item.isStar}}">★</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="footer">
+    <button class="confirm-btn" bindtap="confirmSelection" disabled="{{selectedCards.length !== 13}}">
+      确认阵容
+    </button>
+  </view>
+</view>

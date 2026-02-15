@@ -1,0 +1,111 @@
+<view class="container">
+  <view class="scoreboard">
+    <view class="score-item player">
+      <text class="score-label">玩家</text>
+      <text class="score-value">{{gameState.playerScore}}</text>
+    </view>
+    <view class="turn-info">
+      <text class="phase">{{gameState.phase === 'firstHalf' ? '上半场' : '下半场'}}</text>
+      <text class="turn">第 {{gameState.turnCount}} 回合</text>
+    </view>
+    <view class="score-item ai">
+      <text class="score-label">AI</text>
+      <text class="score-value">{{gameState.aiScore}}</text>
+    </view>
+  </view>
+
+  <view class="control-bar">
+    <view class="control-track">
+      <view class="control-marker" style="left: {{gameState.controlPosition * 10}}%"></view>
+    </view>
+    <text class="control-state {{controlState}}">{{controlState === 'attack' ? '进攻态' : controlState === 'defense' ? '防守态' : '常态'}}</text>
+  </view>
+
+  <view class="message-bar">
+    <text>{{message}}</text>
+  </view>
+
+  <scroll-view class="field-container" scroll-y>
+    <view class="field">
+      <view class="zone" wx:for="{{gameState.aiField}}" wx:key="zone" data-zone="{{item.zone}}">
+        <text class="zone-label">Zone {{item.zone}}</text>
+        <view class="zone-slots">
+          <view 
+            class="slot {{slot.playerCard ? 'occupied' : ''}}" 
+            wx:for="{{item.slots}}" 
+            wx:key="position"
+            wx:for-item="slot"
+            data-card="{{slot.playerCard}}"
+            data-zone="{{item.zone}}"
+            data-slot="{{slot.position}}"
+            bindtap="selectCard"
+          >
+            <view wx:if="{{slot.playerCard}}" class="player-card ai">
+              <text class="card-name">{{slot.playerCard.name}}</text>
+              <text class="card-stats">{{slot.playerCard.attack}}/{{slot.playerCard.defense}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="midfield-line"></view>
+      
+      <view class="zone" wx:for="{{gameState.playerField}}" wx:key="zone" data-zone="{{item.zone}}">
+        <text class="zone-label">Zone {{item.zone}}</text>
+        <view class="zone-slots">
+          <view 
+            class="slot {{slot.playerCard ? 'occupied' : ''}}" 
+            wx:for="{{item.slots}}" 
+            wx:key="position"
+            wx:for-item="slot"
+            data-card="{{slot.playerCard}}"
+            data-zone="{{item.zone}}"
+            data-slot="{{slot.position}}"
+            bindtap="selectCard"
+          >
+            <view wx:if="{{slot.playerCard}}" class="player-card player">
+              <text class="card-name">{{slot.playerCard.name}}</text>
+              <text class="card-stats">{{slot.playerCard.attack}}/{{slot.playerCard.defense}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="hand-area">
+    <text class="hand-title">手牌</text>
+    <scroll-view class="hand-cards" scroll-x>
+      <view 
+        class="hand-card {{gameState.currentTurn === 'player' ? 'active' : ''}}" 
+        wx:for="{{gameState.playerHand}}" 
+        wx:key="id"
+        bindtap="selectCard"
+        data-card="{{item}}"
+      >
+        <text class="hand-card-name">{{item.name}}</text>
+        <view class="hand-card-stats">
+          <text class="stat attack">{{item.attack}}</text>
+          <text class="stat defense">{{item.defense}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="action-bar" wx:if="{{gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player'}}">
+    <button class="action-btn pass" bindtap="teamAction" data-action="pass">传球</button>
+    <button class="action-btn press" bindtap="teamAction" data-action="press">逼抢</button>
+  </view>
+
+  <view class="action-bar" wx:if="{{gameState.turnPhase === 'playerAction' && gameState.currentTurn === 'player'}}">
+    <button class="action-btn end-turn" bindtap="endTurn">结束回合</button>
+  </view>
+</view>
+
+<view class="action-menu" wx:if="{{showActionMenu}}" bindtap="hideActionMenu">
+  <view class="menu-content" catchtap="">
+    <text class="menu-title">选择操作</text>
+    <button class="menu-btn" bindtap="performShot" data-card="{{selectedCard}}" data-slot="0" data-zone="{{selectedCard.zones[0]}}">射门</button>
+    <button class="menu-btn cancel" bindtap="hideActionMenu">取消</button>
+  </view>
+</view>

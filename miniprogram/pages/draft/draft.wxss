@@ -1,0 +1,145 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20rpx;
+}
+
+.round {
+  display: block;
+  font-size: 32rpx;
+  color: #ffd700;
+}
+
+.message {
+  text-align: center;
+  padding: 30rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20rpx;
+  margin-bottom: 40rpx;
+}
+
+.message text {
+  font-size: 28rpx;
+  color: #fff;
+}
+
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.draft-card {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  border: 3rpx solid #4a5568;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+  margin-bottom: 20rpx;
+}
+
+.card-name {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 10rpx;
+}
+
+.card-real-name {
+  display: block;
+  font-size: 28rpx;
+  color: #a0aec0;
+}
+
+.card-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20rpx;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx;
+  border-radius: 15rpx;
+  min-width: 150rpx;
+}
+
+.stat.attack {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.stat.defense {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #a0aec0;
+  margin-bottom: 10rpx;
+}
+
+.stat-value {
+  font-size: 48rpx;
+  font-weight: bold;
+}
+
+.stat.attack .stat-value {
+  color: #ef4444;
+}
+
+.stat.defense .stat-value {
+  color: #3b82f6;
+}
+
+.card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.position {
+  font-size: 28rpx;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.star {
+  font-size: 24rpx;
+  color: #ffd700;
+}
+
+.card-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.icon {
+  padding: 10rpx 20rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  color: #fff;
+}

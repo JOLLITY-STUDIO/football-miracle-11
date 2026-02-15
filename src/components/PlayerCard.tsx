@@ -40,8 +40,8 @@ const getIconImage = (icon: TacticalIcon): string => {
     case 'defense': return '/icons/defense_shield.svg';
     case 'pass': return '/cards/skills/icon-pass.png';
     case 'press': return '/icons/press_up.svg';
-    case 'breakthrough': return '/cards/skills/icon-shoot.svg';
-    case 'breakthroughAll': return '/cards/skills/icon-shoot.svg';
+    case 'breakthrough': return '/cards/skills/icon-shoot.png';
+    case 'breakthroughAll': return '/cards/skills/icon-shoot.png';
   }
 };
 
@@ -215,7 +215,7 @@ export const PlayerCardComponent: React.FC<Props> = ({
         whileHover={!disabled && !faceDown ? { y: -3, scale: 1.02 } : {}}
         className={clsx(
           "relative preserve-3d cursor-pointer transition-shadow rounded-lg overflow-hidden",
-          selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-10 shadow-lg",
+          selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-20 shadow-lg",
           disabled && "cursor-not-allowed"
         )}
         style={{
@@ -226,7 +226,10 @@ export const PlayerCardComponent: React.FC<Props> = ({
           maxWidth: cardSize[size].width,
           maxHeight: cardSize[size].height
         }}
-        onClick={onClick}
+        onClick={() => {
+          console.log('Player card clicked:', card.name, 'ID:', card.id);
+          onClick?.();
+        }}
         draggable={draggable}
         onDragStart={() => onDragStart?.(card)}
         onDragEnd={() => onDragEnd?.()}

@@ -66,10 +66,53 @@ export const performShot = (state: GameState, card: PlayerCard, slot: number, zo
     { ...state.playerUsedShotIcons, [card.id]: [...usedShotIcons, selectedShotIconIndex] } :
     { ...state.aiUsedShotIcons, [card.id]: [...usedShotIcons, selectedShotIconIndex] };
   
+  // Update shot markers for the field slot
+  const newPlayerField = isPlayer ? 
+    state.playerField.map(z => {
+      if (z.zone === zone) {
+        return {
+          ...z,
+          slots: z.slots.map(s => {
+            if (s.position === slot && s.playerCard?.id === card.id) {
+              return {
+                ...s,
+                shotMarkers: (s.shotMarkers || 0) + 1
+              };
+            }
+            return s;
+          })
+        };
+      }
+      return z;
+    }) : 
+    state.playerField;
+  
+  const newAiField = !isPlayer ? 
+    state.aiField.map(z => {
+      if (z.zone === zone) {
+        return {
+          ...z,
+          slots: z.slots.map(s => {
+            if (s.position === slot && s.playerCard?.id === card.id) {
+              return {
+                ...s,
+                shotMarkers: (s.shotMarkers || 0) + 1
+              };
+            }
+            return s;
+          })
+        };
+      }
+      return z;
+    }) : 
+    state.aiField;
+  
   return {
     ...state,
     pendingShot: shotAttempt,
     duelPhase: 'select_shot_icon',
-    ...(isPlayer ? { playerUsedShotIcons: newUsedShotIcons } : { aiUsedShotIcons: newUsedShotIcons })
+    ...(isPlayer ? { playerUsedShotIcons: newUsedShotIcons } : { aiUsedShotIcons: newUsedShotIcons }),
+    playerField: newPlayerField,
+    aiField: newAiField
   };
 };

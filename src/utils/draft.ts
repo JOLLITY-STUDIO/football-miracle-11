@@ -9,15 +9,16 @@ export const startDraftRound = (state: GameState): GameState => {
     .sort(() => Math.random() - 0.5);
   const draftCards = shuffledStars.slice(0, 3);
   
-  // 客队先选择（AI如果是客队）
-  const isPlayerHomeTeam = state.isHomeTeam;
-  const firstSelector = isPlayerHomeTeam ? 'ai' : 'player';
+  // 赢了猜拳的一方先选择
+  // isHomeTeam = true 表示玩家赢了猜拳，应该先选
+  // isHomeTeam = false 表示AI赢了猜拳，应该先选
+  const firstSelector = state.isHomeTeam ? 'player' : 'ai';
   
   return {
     ...state,
     availableDraftCards: draftCards,
     draftStep: firstSelector === 'ai' ? 2 : 1, // 1: 玩家选择, 2: AI选择, 3: 弃卡, 4: 下一轮
-    message: `Draft round started - ${firstSelector === 'ai' ? 'AI (Away Team) is choosing first...' : 'You (Away Team) choose first!'}`
+    message: `Draft round started - ${firstSelector === 'player' ? 'You won! Choose first!' : 'AI won! AI is choosing first...'}`
   };
 };
 

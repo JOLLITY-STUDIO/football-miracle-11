@@ -6,9 +6,10 @@ interface Props {
   onViewRecords: () => void;
   onCardGuide: () => void;
   onViewDemos: () => void;
+  onStartTutorial: () => void;
 }
 
-export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCardGuide, onViewDemos }) => {
+export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCardGuide, onViewDemos, onStartTutorial }) => {
   const [floatingIcons, setFloatingIcons] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
   const [showUpdates, setShowUpdates] = useState(false);
 
@@ -176,13 +177,13 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
           <span className="text-sm font-medium">How to Play</span>
         </motion.button>
         <motion.button 
-          onClick={onViewDemos}
+          onClick={onStartTutorial}
           className="flex flex-col items-center text-white/80 hover:text-white transition-all duration-300 group"
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
         >
-          <span className="text-3xl mb-2 group-hover:rotate-12 transition-transform duration-300">🎲</span>
-          <span className="text-sm font-medium">3D Demos</span>
+          <span className="text-3xl mb-2 group-hover:rotate-12 transition-transform duration-300">📖</span>
+          <span className="text-sm font-medium">Tutorial</span>
         </motion.button>
       </motion.div>
 

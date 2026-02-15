@@ -1,7 +1,7 @@
 {
   "name": "football-miracle-11",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "scripts": {
     "dev": "npx vite",
@@ -13,7 +13,10 @@
     "test:ui": "npx playwright test --ui",
     "test:debug": "npx playwright test --debug",
     "test:report": "npx playwright show-report test-results/html",
-    "test:unit": "npx vitest run"
+    "test:unit": "npx vitest run",
+    "copy:miniprogram": "node scripts/copy-to-miniprogram.js",
+    "build:miniprogram": "npm run build && npm run copy:miniprogram",
+    "prepare:assets": "node scripts/prepare-assets.js"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.0",

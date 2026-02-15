@@ -1,0 +1,1 @@
+自动根据web版地址：D:\studio\github\magic-number-eleven，更新我们的微信小游戏功能。跟踪游戏规则的变化。代码的修改等。

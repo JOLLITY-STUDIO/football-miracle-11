@@ -33,7 +33,7 @@ export const SynergyCardComponent: React.FC<Props> = ({
 
   const getBgGradient = () => {
     if (isVAR) return 'bg-gradient-to-br from-slate-800 to-black';
-    if (isAttack) return 'bg-gradient-to-br from-red-800 to-red-950';
+    if (isAttack) return 'bg-gradient-to-br from-[#F82D45] to-[#C62B1D]';
     if (isDefense) return 'bg-gradient-to-br from-blue-800 to-blue-950';
     if (isTackle) return 'bg-gradient-to-br from-purple-800 to-purple-950';
     if (isSetPiece) return 'bg-gradient-to-br from-orange-600 to-orange-800';

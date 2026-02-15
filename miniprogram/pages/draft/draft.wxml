@@ -1,0 +1,44 @@
+<view class="container">
+  <view class="header">
+    <text class="title">明星球员选秀</text>
+    <text class="round">第 {{draftRound}} / 3 轮</text>
+  </view>
+
+  <view class="message">
+    <text>{{message}}</text>
+  </view>
+
+  <view class="cards-container">
+    <view 
+      class="draft-card" 
+      wx:for="{{availableCards}}" 
+      wx:key="id"
+      bindtap="selectCard"
+      data-index="{{index}}"
+    >
+      <view class="card-header">
+        <text class="card-name">{{item.name}}</text>
+        <text class="card-real-name">{{item.realName}}</text>
+      </view>
+      <view class="card-stats">
+        <view class="stat attack">
+          <text class="stat-label">进攻</text>
+          <text class="stat-value">{{item.attack}}</text>
+        </view>
+        <view class="stat defense">
+          <text class="stat-label">防守</text>
+          <text class="stat-value">{{item.defense}}</text>
+        </view>
+      </view>
+      <view class="card-info">
+        <text class="position">{{item.positionLabel}}</text>
+        <text class="star" wx:if="{{item.isStar}}">★ 明星卡</text>
+      </view>
+      <view class="card-icons">
+        <view class="icon" wx:for="{{item.icons}}" wx:key="*this" wx:for-item="icon">
+          <text>{{icon}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

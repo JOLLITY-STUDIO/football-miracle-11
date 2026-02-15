@@ -1,0 +1,23 @@
+<view class="container">
+  <view class="result-header">
+    <text class="result-title {{result === '胜利！' ? 'win' : result === '失败' ? 'lose' : 'draw'}}">{{result}}</text>
+    <text class="result-message">{{message}}</text>
+  </view>
+
+  <view class="score-display">
+    <view class="score-box player">
+      <text class="score-label">玩家</text>
+      <text class="score-number">{{playerScore}}</text>
+    </view>
+    <view class="score-divider">:</view>
+    <view class="score-box ai">
+      <text class="score-label">AI</text>
+      <text class="score-number">{{aiScore}}</text>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="action-btn primary" bindtap="restartGame">再来一局</button>
+    <button class="action-btn secondary" open-type="share">分享战绩</button>
+  </view>
+</view>
