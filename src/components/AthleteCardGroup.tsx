@@ -60,15 +60,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   };
   
   return (
-    <div id="athlete-card-group" className="absolute bottom-[-5%] left-1/2 -translate-x-1/2 pointer-events-auto z-100" style={{ 
-      minHeight: `${settings.cardHeight * 2}px`, 
-      minWidth: `${settings.cardWidth * Math.min(cards.length, 8)}px`,
-      position: 'relative', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      padding: '10px'
-    }}>
+    <div id="athlete-card-group" className="absolute bottom-[-5%] left-1/2 -translate-x-1/2 pointer-events-auto z-100">
       <AnimatePresence>
         {cards.map((card, i) => {
           const { x, y, rotation } = calculateCardPosition(i);
