@@ -8,6 +8,7 @@ import { FIELD_CONFIG } from '../config/fieldDimensions';
 import FieldIcons from './FieldIcons';
 import { createFieldContext, calculateCellCenter, calculateCellPosition, getFieldViewBox } from '../utils/coordinateCalculator';
 import { FieldCellHighlight } from './FieldCellHighlight';
+import { CardPlacementService } from '../game/cardPlacementService';
 
 interface GameFieldProps {
   playerField: FieldZone[];
@@ -34,20 +35,6 @@ interface GameFieldProps {
   instantShotMode?: any;
   rotation?: number;
 }
-
-// Helper function to get valid zones based on player type
-const getValidZones = (type: string): number[] => {
-  switch (type) {
-    case 'fw':
-      return [2, 3, 4, 5]; // Forwards can be placed in zones 2-5
-    case 'mf':
-      return [1, 2, 5, 6]; // Midfielders can be placed in zones 1-2-5-6
-    case 'df':
-      return [0, 1, 6, 7]; // Defenders can be placed in zones 0-1-6-7
-    default:
-      return [];
-  }
-};
 
 const GameField: React.FC<GameFieldProps> = ({
   playerField,
@@ -84,55 +71,15 @@ const GameField: React.FC<GameFieldProps> = ({
     targetPosition: number,
     isFirstTurn: boolean
   ) => {
-    // Check if zone is in player's half (zones 4-7)
-    if (targetZone < 4 || targetZone > 7) {
-      return false;
-    }
-
-    // Check if zone is allowed for this card based on player type
-    const validZones = getValidZones(card.type);
-    if (!validZones.includes(targetZone)) {
-      return false;
-    }
-
-    // Find the zone in the field
-    const zone = field.find(z => z.zone === targetZone);
-    if (!zone) return false;
-
-    // Check if slot exists and is empty
-    const slot = zone.slots.find(s => s.position === targetPosition);
-    if (!slot || slot.athleteCard) {
-      return false;
-    }
-
-    // Special check for first turn: only allow placement in first 7 columns
-    // Cards span 2 columns, so max start position is 6 (occupies columns 6 and 7)
-    // This ensures cards are placed within the first 7 columns (0-6)
-    if (isFirstTurn && targetPosition > 6) {
-      return false;
-    }
-
-    // For cards that span 2 columns, check if the next slot is also empty
-    // Only check if the next slot exists (for column 6, check column 7)
-    if (targetPosition < 7) {
-      const nextSlot = zone.slots.find(s => s.position === targetPosition + 1);
-      if (!nextSlot || nextSlot.athleteCard) {
-        return false;
-      }
-    }
-
-    // Check if there are any other cards on the field
-    const hasAnyCard = field.some(z => z.slots.some(s => s.athleteCard));
-
-    // Check if forward cannot be placed in certain zones when no other cards are on field
-    // For player field (zones 4-7), zone 4 corresponds to zone 4 in the validZones
-    // When no other cards on field, forward cannot be placed in zones 3 or 4
-    // So for player, forward cannot be placed in zone 4 when no other cards are on field
-    if (!hasAnyCard && card.type === 'fw' && targetZone === 4) {
-      return false;
-    }
-
-    return true;
+    // Use CardPlacementService for consistent validation
+    const result = CardPlacementService.validatePlacement(
+      card,
+      field,
+      targetZone,
+      targetPosition,
+      isFirstTurn
+    );
+    return result.valid;
   }, []);
 
   // Helper to render grid cells
@@ -207,7 +154,6 @@ const GameField: React.FC<GameFieldProps> = ({
                       onSlotClick={onSlotClick}
                       onCellMouseEnter={handleCellMouseEnter}
                       onCellMouseLeave={handleCellMouseLeave}
-                      getValidZones={getValidZones}
                     />
                   </g>
                 ))}

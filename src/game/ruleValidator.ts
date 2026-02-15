@@ -24,6 +24,23 @@ export interface GameStateForRules {
 }
 
 export class RuleValidator {
+  /**
+   * Validates if a card can be placed at a specific position on the field
+   * 
+   * IMPORTANT: This function contains critical placement rules that should not be modified without careful consideration:
+   * - Column bounds: Cards span 2 columns, so startCol must be 0-6
+   * - Zone restrictions: Each player type can only be placed in specific zones
+   * - First card restrictions: First cards cannot be placed in certain zones
+   * - Adjacency requirements: Some zones require adjacent cards
+   * - First turn restrictions: Forwards in certain zones require adjacent cards on first turn
+   * 
+   * @param card - The athlete card to place
+   * @param fieldSlots - Current field state
+   * @param zone - Target zone number (0-7)
+   * @param startCol - Starting column position (0-6, cards span 2 columns)
+   * @param isFirstTurn - Whether this is the first turn of placement
+   * @returns ValidationResult with valid flag and reason if invalid
+   */
   static canPlaceCard(
     card: AthleteCard,
     fieldSlots: FieldState[],
