@@ -2,8 +2,9 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { athleteCard } from '../data/cards';
 import { AthleteCardComponent } from './AthleteCard';
+import type { GamePhase } from '../types/game';
 
-interface Props {
+interface AthleteCardGroupProps {
   cards: athleteCard[];
   selectedCard: athleteCard | null;
   setupStep: number;
@@ -22,7 +23,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
     rows: 1,
     cols: cards.length,
     arcAngle: 30,
-    arcHeight: 500,
+    arcHeight: 264,
     cardWidth: 132,
     cardHeight: 86,
     spacing: 20,
@@ -60,64 +61,64 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   };
   
   return (
-    <div id="athlete-card-group" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 pointer-events-auto z-100" style={{ width: '100%', maxWidth: '1200px', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', height: '200px' }}>
-      <AnimatePresence>
-        {cards.map((card, i) => {
-          const { x, y, rotation } = calculateCardPosition(i);
-          const isSelected = selectedCard?.id === card.id;
-          
-          return (
-            <motion.div
-              key={card.id}
-              layoutId={`card-${card.id}`}
-              initial={{
-                opacity: 0,
-                scale: 0.8,
-                x: 0,
-                y: 0
-              }}
-              animate={{
-                opacity: 1,
-                scale: isSelected ? 1.2 : 1,
-                x: isSelected ? 0 : x,
-                y: isSelected ? -20 : y,
-                rotate: isSelected ? 0 : rotation
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.8,
-                x: 0,
-                y: 0
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              onClick={() => onCardSelect(card)}
-              whileHover={{}}
-              whileTap={{}}
-              style={{
-                position: 'absolute',
-                width: `${settings.cardWidth}px`,
-                height: `${settings.cardHeight}px`,
-                left: '50%',
-                top: '50%',
-                transform: `translateX(-50%) translateY(-50%) translateX(${isSelected ? 0 : x}px) translateY(${isSelected ? -20 : y}px) rotate(${isSelected ? 0 : rotation}deg)`,
-                borderRadius: '8px',
-                cursor: 'pointer',
-                zIndex: isSelected ? 100 : i,
-                pointerEvents: 'auto'
-              }}
-            >
-              <AthleteCardComponent
-                card={card}
+    <div id="athlete-card-group" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 w-[90%] pointer-events-auto z-100" style={{ height: '200px' }}>
+      <div className="w-full h-full flex justify-center items-center pt-4 perspective-1000">
+        <AnimatePresence>
+          {cards.map((card: athleteCard, i: number) => {
+            const { x, y, rotation } = calculateCardPosition(i);
+            const isSelected = selectedCard?.id === card.id;
+            
+            return (
+              <motion.div
+                key={card.id}
+                layoutId={`card-${card.id}`}
+                initial={{
+                  opacity: 0,
+                  scale: 0.8,
+                  x: 0,
+                  y: 0
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: isSelected ? 1.2 : 1,
+                  x: isSelected ? 0 : x,
+                  y: isSelected ? -20 : y,
+                  rotate: isSelected ? 0 : rotation
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.8,
+                  x: 0,
+                  y: 0
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 onClick={() => onCardSelect(card)}
-                selected={isSelected}
-                size="small"
-                onMouseEnter={undefined}
-                onMouseLeave={undefined}
-              />
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+                whileHover={{}}
+                whileTap={{}}
+                style={{
+                  position: 'absolute',
+                  width: `${settings.cardWidth}px`,
+                  height: `${settings.cardHeight}px`,
+                  left: '50%',
+                  top: '50%',
+                  transform: `translateX(-50%) translateY(-50%) translateX(${isSelected ? 0 : x}px) translateY(${isSelected ? -20 : y}px) rotate(${isSelected ? 0 : rotation}deg)`,
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  zIndex: isSelected ? 100 : i,
+                  pointerEvents: 'auto'
+                }}
+              >
+                <AthleteCardComponent
+                  card={card}
+                  onClick={() => onCardSelect(card)}
+                  selected={isSelected}
+                  size="small"
+                />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
       <div className="absolute bottom-[-40px] text-center text-[10px] text-white/40 uppercase tracking-widest font-bold w-full">
         YOUR HAND: {cards.length}
       </div>

@@ -6,23 +6,25 @@ export const resolveShot = (state: GameState): GameState => {
   
   const { attacker, defender } = state.pendingShot;
   
-  // Calculate final attack power
-  const attackPower = attacker.card.power + 
-    (state.playerActiveSynergy.length * 2) + // Synergy bonus
-    (attacker.card.skills?.includes('shot') ? 3 : 0); // Shot skill bonus
+  const playerZones = state.currentTurn === 'player' ? state.playerField : state.aiField;
+  const aiZones = state.currentTurn === 'player' ? state.aiField : state.playerField;
   
-  // Calculate final defense power
+  const usedShotIcons = state.currentTurn === 'player' 
+    ? (state.playerUsedShotIcons[attacker.card.id] || [])
+    : (state.aiUsedShotIcons[attacker.card.id] || []);
+  
+  const attackPower = calculateAttackPower(attacker.card, playerZones, usedShotIcons) + 
+    (state.playerActiveSynergy.length * 2);
+  
   let defensePower = 0;
   if (defender) {
-    defensePower = defender.card.power + 
-      (state.aiActiveSynergy.length * 2) + // Synergy bonus
-      (defender.card.skills?.includes('defense') ? 3 : 0); // Defense skill bonus
+    defensePower = calculateDefensePower(defender.card, aiZones) + 
+      (state.aiActiveSynergy.length * 2);
   }
   
-  // Determine result
   let result: 'goal' | 'save' | 'miss';
   if (!defender) {
-    result = 'goal'; // No defender = automatic goal
+    result = 'goal';
   } else if (attackPower > defensePower) {
     result = 'goal';
   } else if (attackPower === defensePower) {
@@ -31,7 +33,6 @@ export const resolveShot = (state: GameState): GameState => {
     result = 'miss';
   }
   
-  // Update scores
   let newState = { ...state };
   if (result === 'goal') {
     if (state.currentTurn === 'player') {
@@ -41,7 +42,6 @@ export const resolveShot = (state: GameState): GameState => {
     }
   }
   
-  // Update pending shot with final values
   newState.pendingShot = {
     ...state.pendingShot,
     attackerPower: attackPower,

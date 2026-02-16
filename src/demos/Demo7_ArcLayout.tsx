@@ -42,9 +42,7 @@ export const Demo7_ArcLayout: React.FC<Demo7Props> = ({ onCellClick }) => {
 
   const handleCardClick = (row: number, col: number) => {
     setSelectedCard({ row, col });
-    onCellClick?.(row, col);
-    console.log(`Card clicked: Row ${row}, Col ${col}`);
-  };
+    onCellClick?.(row, col);  };
 
   const handleCardHover = (row: number, col: number) => {
     setHoveredCard({ row, col });

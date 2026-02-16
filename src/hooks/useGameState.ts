@@ -11,7 +11,7 @@ import {
 import type { athleteCard, SynergyCard } from '../data/cards';
 import { GameRecorder, saveGameRecord } from '../game/gameRecorder';
 
-// 类型定义，用于修�?TypeScript 错误
+// 类型定义，用于修�?TypeScript 错误
 interface PerformShotAction {
   type: 'PERFORM_SHOT';
   card: athleteCard;
@@ -67,11 +67,6 @@ export const useGameState = (
 
   // Action handlers
   const handleSlotClick = useCallback((zone: number, startCol: number) => {
-    console.log('Slot click handler called - zone:', zone, 'startCol:', startCol);
-    console.log('Current turn:', gameState.currentTurn);
-    console.log('Selected card:', gameState.selectedCard?.name);
-    console.log('Turn phase:', gameState.turnPhase);
-    console.log('Current action:', gameState.currentAction);
     
     // 检查是否是玩家回合
     if (gameState.currentTurn !== 'player') {
@@ -106,15 +101,16 @@ export const useGameState = (
       return;
     }
 
-    // 检查是否可以放置卡�?- 改进的逻辑
-    const canPlace = gameState.turnPhase === 'playerAction' || 
-                    gameState.turnPhase === 'teamAction' || 
-                    (gameState.isFirstTurn && gameState.turnPhase === 'start');
-
-    console.log('Can place card:', canPlace);
+    // 检查是否可以放置卡牌
+    const canDoAction = (gameState.turnPhase === 'playerAction' || 
+                          gameState.skipTeamAction || 
+                          gameState.turnPhase === 'teamAction' || 
+                          (gameState.isFirstTurn && gameState.turnPhase === 'start')) && 
+                          gameState.currentTurn === 'player';
+    
+    const canPlace = canDoAction && (gameState.currentAction === 'none' || gameState.currentAction === 'organizeAttack');
     
     if (!canPlace) {
-      console.log('Cannot place card - reason:', gameState.turnPhase);
       setGameState(prev => ({ 
         ...prev, 
         message: gameState.turnPhase === 'teamAction' 
@@ -126,7 +122,7 @@ export const useGameState = (
     }
 
     // 检查是否已经执行过动作
-    if (gameState.currentAction && gameState.currentAction !== 'none') {
+    if (gameState.currentAction && gameState.currentAction !== 'none' && gameState.currentAction !== 'organizeAttack') {
       setGameState(prev => ({ ...prev, message: 'Already performed an action this turn!' }));
       playSound('error');
       return;
@@ -140,27 +136,20 @@ export const useGameState = (
   }, [gameState, dispatch, playSound]);
 
   const handleAttack = useCallback((zone: number, slot: number) => {
-    console.log('Attack handler called - zone:', zone, 'slot:', slot);
-    console.log('Current turn:', gameState.currentTurn);
-    console.log('Turn phase:', gameState.turnPhase);
-    console.log('Current action:', gameState.currentAction);
     
     if (gameState.currentTurn !== 'player') return;
     
-    // 检查是否可以执行攻击操�?    const canPerformAction = gameState.turnPhase === 'playerAction' || 
-                          gameState.turnPhase === 'teamAction' || 
+    // 检查是否可以执行攻击操作
+    const canPerformAction = gameState.turnPhase === 'playerAction' || 
                           (gameState.isFirstTurn && gameState.turnPhase === 'start');
-
-    console.log('Can perform attack:', canPerformAction);
     
     if (!canPerformAction) {
-      console.log('Cannot perform attack - reason:', gameState.turnPhase);
       setGameState(prev => ({ ...prev, message: 'Cannot perform attack at this time' }));
       playSound('error');
       return;
     }
 
-    if (gameState.currentAction && gameState.currentAction !== 'none') {
+    if (gameState.currentAction && gameState.currentAction !== 'none' && gameState.currentAction !== 'organizeAttack') {
       setGameState(prev => ({ ...prev, message: 'Already performed an action this turn!' }));
       playSound('error');
       return;

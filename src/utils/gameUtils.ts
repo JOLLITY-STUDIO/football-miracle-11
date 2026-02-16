@@ -1,30 +1,28 @@
 import type { athleteCard } from '../data/cards';
 import type { FieldZone } from '../types/game';
+import { calculateAttackBonus, calculateDefenseBonus } from '../game/tactics';
 
-export const calculateAttackPower = (card: athleteCard): number => {
+export const calculateAttackPower = (card: athleteCard, zones: any[], usedShotIcons: number[] = []): number => {
   let power = card.power || 0;
   
-  if (card.skills?.includes('shot')) {
-    power += 2;
-  }
+  const attackIcons = card.iconPositions.filter(pos => pos.type === 'attack');
+  const availableAttackIcons = attackIcons.filter((_, index) => !usedShotIcons.includes(index));
+  power += availableAttackIcons.length;
   
-  if (card.position?.includes('CF') || card.position?.includes('ST')) {
-    power += 1;
-  }
+  const attackBonus = calculateAttackBonus(zones);
+  power += attackBonus;
   
   return power;
 };
 
-export const calculateDefensePower = (card: athleteCard): number => {
+export const calculateDefensePower = (card: athleteCard, zones: any[]): number => {
   let power = card.power || 0;
   
-  if (card.skills?.includes('defense')) {
-    power += 2;
-  }
+  const defenseIcons = card.iconPositions.filter(pos => pos.type === 'defense');
+  power += defenseIcons.length;
   
-  if (card.position?.includes('CB') || card.position?.includes('GK')) {
-    power += 1;
-  }
+  const defenseBonus = calculateDefenseBonus(zones);
+  power += defenseBonus;
   
   return power;
 };
@@ -41,17 +39,42 @@ export const countIcons = (field: FieldZone[], iconType: string): number => {
   return count;
 };
 
+export const calculateActivatedIconPositions = (playerField: FieldZone[], aiField: FieldZone[]): { zone: number; position: number }[] => {
+  const activatedPositions: { zone: number; position: number }[] = [];
+  
+  const processField = (field: FieldZone[], isPlayer: boolean) => {
+    field.forEach(zone => {
+      zone.slots.forEach(slot => {
+        if (slot.athleteCard) {
+          const card = slot.athleteCard;
+          card.iconPositions.forEach(iconPos => {
+            activatedPositions.push({
+              zone: zone.zone,
+              position: slot.position
+            });
+          });
+        }
+      });
+    });
+  };
+  
+  processField(playerField, true);
+  processField(aiField, false);
+  
+  return activatedPositions;
+};
+
 export const getControlState = (controlPosition: number): 'low' | 'medium' | 'high' => {
-  if (controlPosition < 33) return 'low';
+  if (controlPosition < 33) return 'high';
   if (controlPosition < 67) return 'medium';
-  return 'high';
+  return 'low';
 };
 
 export const getMaxSynergyCardsForAttack = (controlState: 'low' | 'medium' | 'high'): number => {
   switch (controlState) {
-    case 'low': return 1;
-    case 'medium': return 2;
     case 'high': return 3;
-    default: return 1;
+    case 'medium': return 2;
+    case 'low': return 0;
+    default: return 0;
   }
 };

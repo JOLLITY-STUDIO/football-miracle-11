@@ -271,7 +271,7 @@ export const AthleteCardComponent: React.FC<Props> = ({
             {/* 攻击力*/}
             <div className="absolute top-1 right-1 w-6 h-6 rounded bg-white/20 flex items-center justify-center backdrop-blur-sm">
               <span className="text-xs font-black text-white">
-                {card.isStar ? '⭐' : card.attack}
+                {card.isStar ? '⭐' : ''}
               </span>
             </div>
           </div>
@@ -298,19 +298,6 @@ export const AthleteCardComponent: React.FC<Props> = ({
 
               {/* 技能图标区�?- 与文字信息紧凑排�?*/}
               <div className="flex items-center justify-center space-x-1 pt-1">
-                {/* 完整图标（球员自带技能） */}
-                {card.completeIcon && (
-                  <div 
-                    className="w-5 h-5 rounded-full flex items-center justify-center border-2 shadow-lg"
-                    style={{
-                      backgroundColor: '#ffffff',
-                      borderColor: getIconColor(card.completeIcon)
-                    }}
-                  >
-                    <img src={getIconImage(card.completeIcon)} alt={card.completeIcon} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
-                  </div>
-                )}
-
                 {/* 技能效果徽�?*/}
                 {card.immediateEffect !== 'none' && (
                   <div className="w-5 h-5 flex items-center justify-center">

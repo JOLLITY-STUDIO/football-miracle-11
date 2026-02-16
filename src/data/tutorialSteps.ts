@@ -14,7 +14,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     title: '欢迎来到神奇十一人！',
     description: '这是一个足球策略卡牌游戏。你将扮演教练，通过合理的战术安排和球员调度来赢得比赛。让我们开始学习基本操作。',
     action: () => {
-      console.log('Welcome tutorial step');
     }
   },
   {

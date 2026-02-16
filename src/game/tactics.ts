@@ -272,15 +272,6 @@ export function calculateTacticalEffects(
     effects.set(conn.iconType, current + 1);
   }
 
-  for (const zone of zones) {
-    for (const slot of zone.slots) {
-      if (slot.athleteCard?.completeIcon) {
-        const current = effects.get(slot.athleteCard.completeIcon) || 0;
-        effects.set(slot.athleteCard.completeIcon, current + 1);
-      }
-    }
-  }
-
   return effects;
 }
 

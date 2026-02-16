@@ -80,17 +80,7 @@ export class CardPlacementService {
     startCol: number,
     isFirstTurn: boolean
   ): boolean {
-    // Check if zone is valid for player type
-    if (!isZoneValidForPlayerType(card.type, zone)) {
-      return false;
-    }
-
-    // Check if column is valid for placement
-    if (!isColumnValidForPlacement(startCol)) {
-      return false;
-    }
-
-    // Validate placement
+    // Validate placement directly using RuleValidator
     const result = RuleValidator.canPlaceCard(card, fieldSlots, zone, startCol, isFirstTurn);
     return result.valid;
   }

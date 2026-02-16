@@ -21,6 +21,7 @@ import { TutorialGuide } from './TutorialGuide';
 import { ActionButtons } from './ActionButtons';
 import { AthleteCardGroup } from './AthleteCardGroup';
 import { AmbientControls } from './AmbientControls';
+import { ShooterSelector } from './ShooterSelector';
 import {
   gameReducer,
   createInitialState,
@@ -74,7 +75,6 @@ const {
   }, [dispatch]);
 
   const handleStepComplete = useCallback((stepId: string) => {
-    console.log('Tutorial step completed:', stepId);
     setCurrentTutorialStep(prev => prev + 1);
   }, []);
 
@@ -138,6 +138,7 @@ const {
   const [showAmbientControls, setShowAmbientControls] = useState(false);
   const [shootMode, setShootMode] = useState<boolean>(false);
   const [selectedShootPlayer, setSelectedShootPlayer] = useState<{zone: number, position: number} | null>(null);
+  const [showShooterSelector, setShowShooterSelector] = useState(false);
   
   // Audio Feedback for card actions (hand changes)
   const prevPlayerHandCount = useRef(gameState.playerHand.length);
@@ -264,7 +265,7 @@ const {
           subtitle = 'Shot Attempt in Progress!';
         }
         else if (gameState.turnPhase === 'end') {
-          text = 'ACTION COMPLETE';
+          text = 'END TURN';
           subtitle = 'Turn ending...';
           duration = 1000; // Show for 1 second
         }
@@ -393,22 +394,11 @@ const {
   };
 
   const canDoAction = () => {
-    const result = (gameState.turnPhase === 'playerAction' || gameState.skipTeamAction) && gameState.currentTurn === 'player';
-    console.log('canDoAction check:', {
-      turnPhase: gameState.turnPhase,
-      skipTeamAction: gameState.skipTeamAction,
-      currentTurn: gameState.currentTurn,
-      result
-    });
+    const result = (gameState.turnPhase === 'playerAction' || gameState.skipTeamAction || gameState.turnPhase === 'teamAction' || (gameState.isFirstTurn && gameState.turnPhase === 'start')) && gameState.currentTurn === 'player';
     return result;
   };
   const canPlaceCards = () => {
-    const result = canDoAction() && gameState.currentAction === 'none';
-    console.log('canPlaceCards check:', {
-      canDoAction: canDoAction(),
-      currentAction: gameState.currentAction,
-      result
-    });
+    const result = canDoAction() && (gameState.currentAction === 'none' || gameState.currentAction === 'organizeAttack');
     return result;
   };
 
@@ -432,10 +422,18 @@ const {
       playSound('error');
       return;
     }
-    // Enter shoot mode
-    setShootMode(true);
+    // Open shooter selector
+    setShowShooterSelector(true);
     setSelectedShootPlayer(null);
     playSound('whistle');
+  };
+
+  // Handle shooter selection
+  const handleSelectShooter = (zone: number, position: number) => {
+    setSelectedShootPlayer({ zone, position });
+    // Enter shoot mode with selected player
+    setShootMode(true);
+    playSound('click');
   };
 
   // Handle close shoot mode
@@ -446,20 +444,11 @@ const {
   };
 
 const handleCardSelect = (card: athleteCard) => {
-  console.log('Card select called for:', card.name, 'ID:', card.id);
-  console.log('Current turn:', gameState.currentTurn);
-  console.log('Turn phase:', gameState.turnPhase);
-  console.log('Skip team action:', gameState.skipTeamAction);
-  console.log('Current action:', gameState.currentAction);
-  console.log('Can do action:', canDoAction());
-  console.log('Can place cards:', canPlaceCards());
   
   if (gameState.currentTurn !== 'player') {
-    console.log('Not player turn - ignoring click');
     return;
   }
   if (!canPlaceCards()) {
-    console.log('Cannot place cards - ignoring click');
     return;
   }
   playSound('draw');
@@ -1009,38 +998,64 @@ const handleCardSelect = (card: athleteCard) => {
         <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
 
 
-         {/* Top Center: Opponent Hand (Fanned - Horizontal) */}
+         {/* Top Center: Opponent Hand (Arc Layout - Same as Player) */}
          <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[80%] h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50">
             <AnimatePresence>
-                {gameState.aiHand.map((card, i) => (
-                  <motion.div
-                    key={card.id}
-                    initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
-                    animate={setupStep >= 3 ? { 
-                      opacity: 1, 
-                      y: 5 - Math.abs(i - (gameState.aiHand.length - 1) / 2) * 2, 
-                      scale: 1,
-                      rotate: 180 - (i - (gameState.aiHand.length - 1) / 2) * 5, 
-                      x: (i - (gameState.aiHand.length - 1) / 2) * -85 
-                    } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
-                    exit={{ opacity: 0, scale: 0.5, y: -50 }}
-                    whileHover={{ 
-                      scale: 1.5, 
-                      rotate: 0, 
-                      zIndex: 100
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="relative origin-center w-48 h-28 shadow-xl"
-                    style={{ zIndex: i }}
-                  >
-                     <AthleteCardComponent 
-                        card={card} 
-                        size="small" 
-                        faceDown={false}
-                        variant="away"
-                     />
-                  </motion.div>
-                ))}
+                {gameState.aiHand.map((card, i) => {
+                  // Calculate arc position for AI hand (same as player hand)
+                  const arcAngle = 30;
+                  const arcHeight = 500;
+                  const startAngle = -15;
+                  
+                  const anglePerCard = gameState.aiHand.length > 1 ? arcAngle / (gameState.aiHand.length - 1) : 0;
+                  const currentAngle = startAngle + (i * anglePerCard);
+                  const radius = arcHeight;
+                  const radian = (currentAngle * Math.PI) / 180;
+                  
+                  // Calculate position (similar to player hand but flipped vertically)
+                  const x = Math.sin(radian) * radius;
+                  const baseY = -Math.cos(radian) * radius + radius;
+                  const heightAdjustment = Math.cos(radian) * 80;
+                  const y = -(baseY - heightAdjustment + 43); // Negative y to place at top
+                  const rotation = 180 + currentAngle; // 180 degrees to invert cards
+                  
+                  return (
+                    <motion.div
+                      key={card.id}
+                      initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                      animate={setupStep >= 3 ? { 
+                        opacity: 1, 
+                        scale: 1,
+                        x: x,
+                        y: y,
+                        rotate: rotation
+                      } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, y: -50 }}
+                      whileHover={{ 
+                        scale: 1.5, 
+                        rotate: 0, 
+                        zIndex: 100
+                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      style={{ 
+                        position: 'absolute',
+                        width: '132px',
+                        height: '86px',
+                        left: '50%',
+                        top: '50%',
+                        transformOrigin: 'center center',
+                        zIndex: i
+                      }}
+                    >
+                       <AthleteCardComponent 
+                          card={card} 
+                          size="small" 
+                          faceDown={false}
+                          variant="away"
+                       />
+                    </motion.div>
+                  );
+                })}
             </AnimatePresence>
              <div className="absolute top-20 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold w-full">
                  OPP HAND: {gameState.aiHand.length}
@@ -1496,7 +1511,7 @@ const handleCardSelect = (card: athleteCard) => {
         text={phaseBannerText}
         subtitle={phaseBannerSubtitle}
         show={showPhaseBanner}
-        durationMs={phaseBannerText === 'ACTION COMPLETE' ? 1000 : 2000}
+        durationMs={phaseBannerText === 'END TURN' ? 1000 : 2000}
         soundType={
           phaseBannerText === 'HALF TIME' ? 'whistle_long' :
           phaseBannerText === 'FULL TIME' ? 'whistle_long' :

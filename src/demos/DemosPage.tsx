@@ -22,7 +22,6 @@ export const DemosPage: React.FC = () => {
     };
     
     setClickLog([newLog, ...clickLog].slice(0, 10));
-    console.log(`${demoName} clicked: Zone ${zone}, Col ${col}`);
   };
 
   const demos = [

@@ -50,6 +50,18 @@ export const FieldCellHighlight: React.FC<FieldCellHighlightProps> = ({
   // Determine highlight visibility
   const isHighlightVisible = validationResult.canHighlight;
 
+  // Debug logging
+  console.log('FieldCellHighlight debug:', {
+    zone,
+    colIdx,
+    selectedCard: selectedCard?.name,
+    isAi,
+    canPlaceCards,
+    isFirstTurn,
+    validationResult,
+    isHighlightVisible
+  });
+
   // Calculate cell position
   const x = colIdx * CELL_WIDTH;
   const y = row * CELL_HEIGHT;
@@ -78,9 +90,17 @@ export const FieldCellHighlight: React.FC<FieldCellHighlightProps> = ({
   // Handle click event
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('Click event triggered:', {
+      zone,
+      colIdx,
+      isHighlightVisible,
+      validationResult
+    });
     if (isHighlightVisible) {
       console.log('SVG Click at zone:', zone, 'col:', colIdx, 'placement start col:', startColForPlacement);
       onSlotClick(zone, startColForPlacement);
+    } else {
+      console.log('Click ignored - not highlightable');
     }
   };
 

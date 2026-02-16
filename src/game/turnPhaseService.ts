@@ -36,7 +36,7 @@ export const TURN_PHASE_CONFIG = {
   teamAction: {
     name: 'Team Action',
     description: 'Team action phase (pass, press)',
-    allowPlaceCard: true,
+    allowPlaceCard: false,
     allowTeamAction: true,
     allowShooting: false,
     autoTransition: 'playerAction',

@@ -4,16 +4,13 @@ import type { SynergyCard } from '../data/cards';
 import { calculateAttackPower } from './gameUtils';
 
 export const performShot = (state: GameState, card: athleteCard, slot: number, zone: number, synergyCards?: SynergyCard[]): GameState => {
-  // Check if the card has available shot icons
   const isPlayer = state.currentTurn === 'player';
   const usedShotIcons = isPlayer ? state.playerUsedShotIcons[card.id] || [] : state.aiUsedShotIcons[card.id] || [];
   
-  // Get all attack icon positions
   const attackIconPositions = card.iconPositions
     .map((pos, index) => ({ pos, index }))
     .filter(({ pos }) => pos.type === 'attack');
   
-  // Find available shot icons (not used)
   const availableShotIcons = attackIconPositions
     .filter(({ index }) => !usedShotIcons.includes(index));
   
@@ -24,14 +21,11 @@ export const performShot = (state: GameState, card: athleteCard, slot: number, z
     };
   }
   
-  // For now, use the first available shot icon
-  // In the future, this should be selected by the player/AI
   const selectedShotIconIndex = availableShotIcons[0]?.index ?? 0;
   
-  // Calculate base attack power
-  const baseAttackPower = calculateAttackPower(card);
+  const playerZones = isPlayer ? state.playerField : state.aiField;
+  const baseAttackPower = calculateAttackPower(card, playerZones, usedShotIcons);
   
-  // Find defender (if any)
   const defenderZone = state.aiField[zone];
   const defender = defenderZone ? defenderZone.cards[slot] : null;
   

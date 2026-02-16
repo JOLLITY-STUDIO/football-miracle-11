@@ -75,6 +75,7 @@ export interface GameState {
   selectedShotIcon: number | null;
   draftTurn: 'player' | 'ai';
   aiDraftHand: athleteCard[];
+  isTransitioning: boolean;
 }
 
 export interface MatchLogEntry {
@@ -102,7 +103,7 @@ export const createInitialState = (
     phase: 'coinToss',
     turnPhase: 'teamAction',
     currentTurn: 'player',
-    controlPosition: 50,
+    controlPosition: 60,
     playerScore: 0,
     aiScore: 0,
     playerSubstitutionsLeft: 3,
@@ -173,7 +174,9 @@ export const createInitialState = (
     aiDraftHand: [],
     // 教程相关状态
     tutorialStep: 0,
-    showTutorial: false
+    showTutorial: false,
+    // 过渡状态
+    isTransitioning: false
   };
 
   return initialState;
@@ -181,7 +184,7 @@ export const createInitialState = (
 
 export type GameAction = 
   | { type: 'ROCK_PAPER_SCISSORS'; isHomeTeam: boolean }
-  | { type: 'START_DRAFT_ROUND' }
+  | { type: 'START_DRAFT_ROUND'; cards?: athleteCard[] }
   | { type: 'PICK_DRAFT_CARD'; cardIndex: number }
   | { type: 'AI_DRAFT_PICK' }
   | { type: 'DISCARD_DRAFT_CARD' }
@@ -348,7 +351,16 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'START_DRAFT_ROUND': {
-      let newState = startDraftRound(state);
+      let newState;
+      if (action.cards && action.cards.length > 0) {
+        newState = {
+          ...state,
+          availableDraftCards: action.cards,
+          draftStep: 1
+        };
+      } else {
+        newState = startDraftRound(state);
+      }
       newState.matchLogs = addLog(newState, {
         type: 'system',
         message: `Draft Round ${newState.draftRound} started`
@@ -430,7 +442,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'PLACE_CARD': {
       if (!TurnPhaseService.canPlaceCard(state.turnPhase)) return state;
       
-      if (state.currentAction && state.currentAction !== 'none') return state;
+      if (state.currentAction && state.currentAction !== 'none' && state.currentAction !== 'organizeAttack') return state;
       
       const slotPosition = Math.floor(action.slot / 2) + 1;
       let newState = placeCard(state, action.card, action.zone, action.slot);
@@ -448,11 +460,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         newState.message = `Triggering ${action.card.name}'s effect...`;
       } else {
         newState.message = 'Organize your attack or end turn';
-      }
-      
-      // 濡傛灉褰撳墠鏄痶eamAction闃舵锛屾斁缃崱鐗屽悗鑷姩鍒囨崲鍒皃layerAction闃舵
-      if (state.turnPhase === 'teamAction') {
-        newState.turnPhase = 'playerAction';
       }
       
       return newState;

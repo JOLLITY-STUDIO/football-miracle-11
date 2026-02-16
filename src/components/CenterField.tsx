@@ -58,7 +58,7 @@ export const CenterField: React.FC<Props> = ({
   // Calculate canPlaceCards based on game state
   // Allow card placement in teamAction, playerAction, and start phases
   const canDoAction = (turnPhase === 'teamAction' || turnPhase === 'playerAction' || turnPhase === 'start') && currentTurn === 'player';
-  const canPlaceCards = canDoAction && currentAction === 'none';
+  const canPlaceCards = canDoAction && (currentAction === 'none' || currentAction === 'organizeAttack');
 
   // Calculate pitch dimensions from configuration
   const PITCH_WIDTH = getPitchWidth();

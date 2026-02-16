@@ -90,19 +90,18 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
   useEffect(() => {
     if (duelPhase !== 'none' && duelPhase !== 'result') {
       // Different delays for different phases for better rhythm
-      const delays: Record<DuelPhase, number> = {
-        'none': 0,
-        'init': 2500,           // Longer intro
+      const delays: Record<Exclude<DuelPhase, 'none' | 'result'>, number> = {
+        'init': 3000,           // Longer intro - give players time to see setup
         'select_shot_icon': 0,   // Manual selection - no auto advance
-        'reveal_attacker': 2000,
-        'reveal_defender': 2000,
-        'reveal_synergy': 3500,  // Longer for synergy reveal & flip
-        'reveal_skills': 3000,   // Longer for skill activation
-        'summary': 4000,         // Time for summary reading
-        'result': 0              // Wait for manual click
+        'reveal_attacker': 3500, // Longer to see base attack calculation
+        'reveal_defender': 3500, // Longer to see base defense calculation
+        'defender_synergy_selection': 0, // Manual selection
+        'reveal_synergy': 4500,  // Much longer for synergy reveal & flip animation
+        'reveal_skills': 4000,   // Longer for skill activation with effects
+        'summary': 5000,         // More time for summary reading and understanding
       };
       
-      const delay = delays[duelPhase] || 1500;
+      const delay = delays[duelPhase] || 2000;
       
       // Reset progress and start countdown
       setProgress(100);
@@ -145,42 +144,122 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
     }
   }, [duelPhase, isPlayerAttacking, onShotIconSelect, attacker, attackerUsedShotIcons]);
 
-  // Power counter animation
+  // Power counter animation with step-by-step breakdown
   useEffect(() => {
     if (duelPhase === 'reveal_attacker') {
+      // Show base attack power with animation
       const baseAttack = attacker.icons.filter((i: string) => i === 'attack').length;
-      setDisplayAttackPower(baseAttack);
+      // Animate from 0 to base value
+      let current = 0;
+      const increment = Math.ceil(baseAttack / 10);
+      const interval = setInterval(() => {
+        current += increment;
+        if (current >= baseAttack) {
+          setDisplayAttackPower(baseAttack);
+          clearInterval(interval);
+        } else {
+          setDisplayAttackPower(current);
+        }
+      }, 100);
+      return () => clearInterval(interval);
     } else if (duelPhase === 'reveal_defender') {
       if (defender) {
+        // Show base defense power with animation
         const baseDef = defender.icons.filter((i: string) => i === 'defense').length;
-        setDisplayDefensePower(baseDef);
+        let current = 0;
+        const increment = Math.ceil(baseDef / 10);
+        const interval = setInterval(() => {
+          current += increment;
+          if (current >= baseDef) {
+            setDisplayDefensePower(baseDef);
+            clearInterval(interval);
+          } else {
+            setDisplayDefensePower(current);
+          }
+        }, 100);
+        return () => clearInterval(interval);
       }
     } else if (duelPhase === 'reveal_synergy') {
-      // Animate synergy addition
+      // Animate synergy addition with clear visual feedback
       const synergyStars = attackSynergy.reduce((sum, c) => sum + c.stars, 0);
       const defSynergyStars = defenseSynergy.reduce((sum, c) => sum + c.stars, 0);
       
-      // Reveal cards first, then add power
+      // Wait for card flip animation, then add power gradually
       const timer = setTimeout(() => {
-        setDisplayAttackPower(prev => prev + synergyStars);
-        setDisplayDefensePower(prev => prev + defSynergyStars);
-      }, 1000); // Wait 1s for the card flip animation feel
+        const baseAttack = attacker.icons.filter((i: string) => i === 'attack').length;
+        const baseDef = defender ? defender.icons.filter((i: string) => i === 'defense').length : 0;
+        
+        // Animate attack synergy addition
+        let currentAttack = baseAttack;
+        const attackIncrement = Math.ceil(synergyStars / 8);
+        const attackInterval = setInterval(() => {
+          currentAttack += attackIncrement;
+          if (currentAttack >= baseAttack + synergyStars) {
+            setDisplayAttackPower(baseAttack + synergyStars);
+            clearInterval(attackInterval);
+          } else {
+            setDisplayAttackPower(currentAttack);
+          }
+        }, 150);
+        
+        // Animate defense synergy addition
+        let currentDef = baseDef;
+        const defIncrement = Math.ceil(defSynergyStars / 8);
+        const defInterval = setInterval(() => {
+          currentDef += defIncrement;
+          if (currentDef >= baseDef + defSynergyStars) {
+            setDisplayDefensePower(baseDef + defSynergyStars);
+            clearInterval(defInterval);
+          } else {
+            setDisplayDefensePower(currentDef);
+          }
+        }, 150);
+        
+        return () => {
+          clearInterval(attackInterval);
+          clearInterval(defInterval);
+        };
+      }, 1500); // Wait 1.5s for the card flip animation
       return () => clearTimeout(timer);
     } else if (duelPhase === 'reveal_skills') {
-      // Show skill bonuses
+      // Show skill bonuses with clear animation
       const attackerSkillBonus = activatedSkills.attackerSkills.length;
       const defenderSkillBonus = activatedSkills.defenderSkills.length;
       
       const timer = setTimeout(() => {
-        if (attackerSkillBonus > 0) setDisplayAttackPower(prev => prev + attackerSkillBonus);
-        if (defenderSkillBonus > 0) setDisplayDefensePower(prev => prev + defenderSkillBonus);
-      }, 800);
+        // Animate skill bonus addition
+        if (attackerSkillBonus > 0) {
+          let current = displayAttackPower;
+          const interval = setInterval(() => {
+            current += 1;
+            if (current >= displayAttackPower + attackerSkillBonus) {
+              setDisplayAttackPower(prev => prev + attackerSkillBonus);
+              clearInterval(interval);
+            } else {
+              setDisplayAttackPower(current);
+            }
+          }, 200);
+        }
+        
+        if (defenderSkillBonus > 0) {
+          let current = displayDefensePower;
+          const interval = setInterval(() => {
+            current += 1;
+            if (current >= displayDefensePower + defenderSkillBonus) {
+              setDisplayDefensePower(prev => prev + defenderSkillBonus);
+              clearInterval(interval);
+            } else {
+              setDisplayDefensePower(current);
+            }
+          }, 200);
+        }
+      }, 1000);
       return () => clearTimeout(timer);
     } else if (duelPhase === 'summary' || duelPhase === 'result') {
       setDisplayAttackPower(attackPower);
       setDisplayDefensePower(defensePower);
     }
-  }, [duelPhase, attacker, defender, attackSynergy, defenseSynergy, attackPower, defensePower, activatedSkills]);
+  }, [duelPhase, attacker, defender, attackSynergy, defenseSynergy, attackPower, defensePower, activatedSkills, displayAttackPower, displayDefensePower]);
 
   // Trigger screen shake on high-impact moments
   useEffect(() => {
@@ -197,16 +276,56 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
 
   if (duelPhase === 'none') return null;
 
+  // Type guard: at this point duelPhase is never 'none'
+  const currentPhase = duelPhase as Exclude<DuelPhase, 'none'>;
+
   const getPhaseInfo = () => {
-    switch (duelPhase) {
-      case 'init': return { stage: 'Stage 1: Preparation', step: 'Step 1.1: Initialization', desc: 'Attacker and Defender meet for a decisive moment.' };
-      case 'reveal_attacker': return { stage: 'Stage 2: Base Power', step: 'Step 2.1: Attacker Base', desc: 'Calculating the striker\'s fundamental power.' };
-      case 'reveal_defender': return { stage: 'Stage 2: Base Power', step: 'Step 2.2: Defender Base', desc: 'Measuring the wall\'s initial resistance.' };
-      case 'defender_synergy_selection': return { stage: 'Stage 3: Buffs', step: 'Step 3.1: Defender Synergy Selection', desc: 'Defender chooses synergy cards to counter the attack.' };
-      case 'reveal_synergy': return { stage: 'Stage 3: Buffs', step: 'Step 3.2: Synergy Reveal', desc: 'Revealing face-down synergy cards for both teams.' };
-      case 'reveal_skills': return { stage: 'Stage 3: Buffs', step: 'Step 3.3: Skill Activation', desc: 'Special player abilities and mental triggers!' };
-      case 'summary': return { stage: 'Stage 4: Conclusion', step: 'Step 4.1: Final Comparison', desc: 'Total forces compared. Who will prevail?' };
-      case 'result': return { stage: 'Stage 4: Conclusion', step: 'Step 4.2: Final Outcome', desc: 'The dust settles. The whistle blows.' };
+    switch (currentPhase) {
+      case 'init': return { 
+        stage: 'Stage 1: Preparation', 
+        step: 'Step 1.1: Initialization', 
+        desc: 'Attacker and Defender meet for a decisive moment. The duel begins!' 
+      };
+      case 'select_shot_icon': return {
+        stage: 'Stage 1: Preparation',
+        step: 'Step 1.2: Shot Icon Selection',
+        desc: 'Choose which attack icon to activate for this shot attempt.'
+      };
+      case 'reveal_attacker': return { 
+        stage: 'Stage 2: Base Power', 
+        step: 'Step 2.1: Attacker Base Power', 
+        desc: 'Calculating the striker\'s fundamental attack strength from icons.' 
+      };
+      case 'reveal_defender': return { 
+        stage: 'Stage 2: Base Power', 
+        step: 'Step 2.2: Defender Base Power', 
+        desc: 'Measuring the defensive wall\'s initial resistance strength.' 
+      };
+      case 'defender_synergy_selection': return { 
+        stage: 'Stage 3: Buffs & Enhancements', 
+        step: 'Step 3.1: Defender Synergy Selection', 
+        desc: 'Defender chooses synergy cards to counter the incoming attack.' 
+      };
+      case 'reveal_synergy': return { 
+        stage: 'Stage 3: Buffs & Enhancements', 
+        step: 'Step 3.2: Synergy Cards Reveal', 
+        desc: 'Revealing face-down synergy cards! Watch the power levels rise!' 
+      };
+      case 'reveal_skills': return { 
+        stage: 'Stage 3: Buffs & Enhancements', 
+        step: 'Step 3.3: Special Skills Activation', 
+        desc: 'Player special abilities activate! Mental strength and technique shine!' 
+      };
+      case 'summary': return { 
+        stage: 'Stage 4: Final Calculation', 
+        step: 'Step 4.1: Power Comparison', 
+        desc: 'All forces calculated. Base + Synergy + Skills. Who will prevail?' 
+      };
+      case 'result': return { 
+        stage: 'Stage 4: Final Calculation', 
+        step: 'Step 4.2: Final Outcome', 
+        desc: 'The moment of truth. The whistle blows. The result is revealed!' 
+      };
       default: return { stage: '', step: '', desc: '' };
     }
   };
@@ -235,7 +354,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
       </div>
 
       {/* Heartbeat Animation - Pulsing Background */}
-      {duelPhase !== 'none' && duelPhase !== 'result' && (
+      {currentPhase !== 'result' && (
         <motion.div
           className="absolute inset-0 pointer-events-none"
           animate={{
@@ -243,14 +362,14 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
             scale: [1, 1.05, 1]
           }}
           transition={{
-            duration: duelPhase === 'reveal_synergy' ? 0.8 : 
-                      duelPhase === 'reveal_skills' ? 0.6 : 
-                      duelPhase === 'summary' ? 0.4 : 1.2,
+            duration: currentPhase === 'reveal_synergy' ? 0.8 : 
+                      currentPhase === 'reveal_skills' ? 0.6 : 
+                      currentPhase === 'summary' ? 0.4 : 1.2,
             repeat: Infinity,
             ease: "easeInOut"
           }}
           style={{
-            background: `radial-gradient(circle at center, ${duelPhase === 'reveal_synergy' || duelPhase === 'reveal_skills' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.2)'} 0%, transparent 70%)`
+            background: `radial-gradient(circle at center, ${currentPhase === 'reveal_synergy' || currentPhase === 'reveal_skills' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.2)'} 0%, transparent 70%)`
           }}
         />
       )}
@@ -272,7 +391,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
           <div className="text-white/50 text-xs font-bold tracking-[0.2em] mt-1 uppercase">{phaseInfo.desc}</div>
           
           {/* Countdown Progress Bar */}
-          {duelPhase !== 'none' && duelPhase !== 'result' && duelPhase !== 'select_shot_icon' && (
+          {currentPhase !== 'result' && currentPhase !== 'select_shot_icon' && currentPhase !== 'defender_synergy_selection' && (
             <motion.div
               initial={{ width: '100%' }}
               animate={{ width: `${progress}%` }}
@@ -430,7 +549,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
             {/* Attack Synergy Reveal */}
             <div className="flex gap-3 h-28">
               <AnimatePresence>
-                {(duelPhase !== 'none') && attackSynergy.map((card, i) => (
+                {attackSynergy.map((card, i) => (
                   <motion.div
                     key={card.id}
                     initial={{ scale: 0, rotateY: 180, opacity: 0 }}
@@ -688,7 +807,7 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
             {/* Defense Synergy Reveal */}
             <div className="flex gap-3 h-28">
               <AnimatePresence>
-                {(duelPhase !== 'none') && defenseSynergy.map((card, i) => (
+                {defenseSynergy.map((card, i) => (
                   <motion.div
                     key={card.id}
                     initial={{ scale: 0, rotateY: 180, opacity: 0 }}

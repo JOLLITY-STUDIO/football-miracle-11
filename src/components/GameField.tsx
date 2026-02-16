@@ -9,6 +9,7 @@ import FieldIcons from './FieldIcons';
 import { createFieldContext, calculateCellCenter, calculateCellPosition, getFieldViewBox } from '../utils/coordinateCalculator';
 import { FieldCellHighlight } from './FieldCellHighlight';
 import { CardPlacementService } from '../game/cardPlacementService';
+import { calculateActivatedIconPositions } from '../utils/gameUtils';
 
 interface GameFieldProps {
   playerField: FieldZone[];
@@ -90,6 +91,13 @@ const GameField: React.FC<GameFieldProps> = ({
     const COLS = FIELD_CONFIG.COLS;
     const ROWS = 4; // Each half only has 4 rows
     
+    // Debug: log field data
+    console.log(`Rendering grid for ${isAi ? 'AI' : 'Player'}:`, {
+      fieldDataLength: fieldData.length,
+      zones: fieldData.map(z => z.zone),
+      isAi
+    });
+    
     // Create field context for coordinate calculations
     const fieldContext = createFieldContext(isAi);
 
@@ -102,7 +110,7 @@ const GameField: React.FC<GameFieldProps> = ({
         style={{
           width: `${COLS * CELL_WIDTH}px`,
           height: `${ROWS * CELL_HEIGHT}px`,
-          zIndex: isAi ? 101 : 100, // AI field has higher z-index
+          zIndex: isAi ? 100 : 101, // Player field has higher z-index
           pointerEvents: 'auto',
           position: 'absolute',
           top: isAi ? 0 : `${ROWS * CELL_HEIGHT}px`,
@@ -191,7 +199,6 @@ const GameField: React.FC<GameFieldProps> = ({
 
                   // Debug: log card rendering
                   if (card && !isAi) {
-                    console.log(`Rendering card at zone ${zone.zone}, slot ${colIdx}:`, card.name, 'ID:', card.id);
                   }
 
                   // Calculate cell position (absolute positioning within the field container)
@@ -203,7 +210,6 @@ const GameField: React.FC<GameFieldProps> = ({
                   const isCardStart = card && (!prevCard || prevCard.id !== card.id);
 
                   if (isCardStart) {
-                    console.log(`Card start at zone ${zone.zone}, slot ${colIdx}:`, card.name);
                     return (
                       <div
                         key={`${isAi ? 'ai' : 'p'}-card-${zone.zone}-${colIdx}`}
@@ -413,7 +419,11 @@ const GameField: React.FC<GameFieldProps> = ({
       {/* Single 8-row grid container - Render both AI and Player fields */}
       <div className="flex-1 min-h-0 relative flex items-center justify-center" style={{ position: 'relative', width: `${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH}px`, height: `${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT}px` }}>
         {/* Field Icons - Render only once */}
-        <FieldIcons />
+        <FieldIcons 
+          playerField={playerField}
+          aiField={aiField}
+          activePositions={calculateActivatedIconPositions(playerField, aiField)}
+        />
         {/* Render AI field (top half) */}
         {renderGrid(true)}
         {/* Render Player field (bottom half) */}

@@ -145,6 +145,23 @@ For example:
   - Transparent indicates invalid areas
 - **Regression Testing**: Need to test highlight display clarity
 
+### BUG-2026-02-16-008: Cannot place cards on player field
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Impact Scope**: Card placement functionality
+- **Related Files**:
+  - `src/components/GameField.tsx`
+- **Problem Description**: Players cannot place cards on their own field
+- **Root Cause**: AI field had higher z-index (101) than player field (100), causing AI field to cover player field and intercept click events
+- **Fix Solution**: Swapped z-index values - player field now has higher z-index (101) than AI field (100)
+- **Version**: 0.1.126
+- **Git Commit**: N/A
+- **Impact Analysis**:
+  - Players can now place cards on their own field
+  - AI cards remain visible
+  - Click events now properly reach player field elements
+- **Regression Testing**: Need to test card placement on all player field positions
+
 ## Bug Tracing Methods
 
 ### 1. Git Commit Message Format
