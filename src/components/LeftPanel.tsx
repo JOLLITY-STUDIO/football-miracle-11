@@ -16,6 +16,7 @@ interface Props {
   isHomeTeam: boolean;
   playerSubstitutionsLeft: number;
   substitutionSelectedId?: string | undefined;
+  phase: string;  // 添加游戏阶段参数
   onHoverEnter: (card: athleteCard, event?: React.MouseEvent) => void;
   onHoverLeave: () => void;
   onSubstituteSelect: (card: athleteCard) => void;
@@ -34,6 +35,7 @@ export const LeftPanel: React.FC<Props> = ({
   isHomeTeam,
   playerSubstitutionsLeft,
   substitutionSelectedId,
+  phase,  // 添加phase参数
   onHoverEnter,
   onHoverLeave,
   onSubstituteSelect,
@@ -349,6 +351,17 @@ export const LeftPanel: React.FC<Props> = ({
             <div className="text-[12px] text-white font-black italic tracking-tighter leading-none">MAGIC</div>
             <div className="text-[10px] text-white font-light tracking-[0.4em] leading-none mt-1">ELEVEN</div>
           </div>
+          
+          {/* Half Time Indicator */}
+          {(phase === 'firstHalf' || phase === 'secondHalf') && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none">
+              <div className="bg-black/60 border border-white/20 rounded px-2 py-1">
+                <div className="text-[8px] text-white font-bold tracking-wider">
+                  {phase === 'firstHalf' ? '1ST HALF' : '2ND HALF'}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 3. Player Score (Bottom) */}

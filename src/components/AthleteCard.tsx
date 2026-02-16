@@ -15,7 +15,7 @@ interface Props {
   onMouseEnter?: (event?: React.MouseEvent) => void;
   onMouseLeave?: () => void;
   selected?: boolean;
-  size?: 'tiny' | 'small' | 'medium' | 'large';
+  size?: 'tiny' | 'small' | 'medium' | 'large' | 'xlarge';
   faceDown?: boolean;
   draggable?: boolean;
   onDragStart?: (card: athleteCardType) => void;
@@ -30,7 +30,8 @@ const SIZE_CONFIG = {
   tiny: { width: 99, height: 65 },
   small: { width: 132, height: 86 },
   medium: { width: 165, height: 108 },
-  large: { width: 198, height: 130 }
+  large: { width: 198, height: 130 },
+  xlarge: { width: 297, height: 195 }
 };
 
 const getRoleName = (type: string) => {
@@ -50,7 +51,7 @@ const getIconImage = (icon: TacticalIcon): string => {
   switch (icon) {
     case 'attack': return '/icons/attack_ball.svg';
     case 'defense': return '/icons/defense_shield.svg';
-    case 'pass': return '/cards/skills/icon-pass.png';
+    case 'pass': return '/icons/synergy_plus.svg'; // 协同图标
     case 'press': return '/icons/press_up.svg';
     default: return '/icons/attack_ball.svg';
   }
@@ -115,51 +116,57 @@ export const AthleteCardComponent: React.FC<Props> = ({
     letterSpacing: '0.05em'
   };
 
+  // 计算半圆图标大小，用于边距设置
+  const cardWidth = SIZE_CONFIG[size || 'medium'].width;
+  const halfIconDiameter = cardWidth / 6; // 直径为卡片宽度的1/6
+  const iconRadius = halfIconDiameter / 2;
+
   const renderHalfIcon = (iconPos: { type: TacticalIcon; position: IconPosition }, index: number) => {
     const info = getHalfIconInfo(iconPos.position);
     if (!info) return null;
     
     const iconColor = getIconColor(iconPos.type);
     const iconImage = getIconImage(iconPos.type);
-    // 半圆直径为卡片高度的1/6
-    const cardHeight = SIZE_CONFIG[size || 'medium'].height;
-    const halfIconDiameter = cardHeight / 6;
-    const radius = halfIconDiameter / 2;
+    
+    // 使用外部计算的图标半径
+    const radius = iconRadius;
     
     // Check if this is a shot icon and if it's been used
     const isShotIcon = iconPos.type === 'attack';
     const isUsed = isShotIcon && (usedShotIcons?.includes(index) || false);
     
+    // 统一所有图标的容器大小，确保图标图片大小一致
+    const containerSize = halfIconDiameter;
     const containerStyle: React.CSSProperties = {
       position: 'absolute',
-      width: info.edge === 'top' || info.edge === 'bottom' ? `${halfIconDiameter}px` : `${radius}px`,
-      height: info.edge === 'top' || info.edge === 'bottom' ? `${radius}px` : `${halfIconDiameter}px`,
+      width: `${containerSize}px`,
+      height: `${containerSize}px`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 10,
-      overflow: 'hidden',
+      zIndex: 15,
+      overflow: 'visible',
       filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))',
-      transform: info.edge === 'top' || info.edge === 'bottom' ? 'translateX(-50%)' : 'translateY(-50%)',
-      ...(info.edge === 'top' ? { top: 0, left: info.pos } :
-          info.edge === 'bottom' ? { bottom: 0, left: info.pos } :
-          info.edge === 'left' ? { top: info.pos, left: 0 } :
-          { top: info.pos, right: 0 })
+      ...(info.edge === 'top' ? { top: 0, left: info.pos, transform: 'translateX(-50%) translateY(-50%)' } :
+          info.edge === 'bottom' ? { bottom: 0, left: info.pos, transform: 'translateX(-50%) translateY(50%)' } :
+          info.edge === 'left' ? { top: info.pos, left: 0, transform: 'translateX(-50%) translateY(-50%)' } :
+          { top: info.pos, right: 0, transform: 'translateX(50%) translateY(-50%)' })
     };
 
+    // 调整裁剪路径，使用统一的容器大小，确保显示正确的半张
     const clipPathStyle = {
-      top: `polygon(0 0, 100% 0, 100% ${radius}px, 50% ${radius}px, 0 ${radius}px)`,
-      bottom: `polygon(0 ${radius}px, 50% ${radius}px, 100% ${radius}px, 100% 100%, 0 100%)`,
-      left: `polygon(0 0, ${radius}px 50%, 0 100%)`,
-      right: `polygon(${radius}px 0, ${radius}px 100%, 100% 50%)`
-    }[info.edge];
+      top: `inset(50% 0 0 0)`, // 显示下半部分
+      bottom: `inset(0 0 50% 0)`, // 显示上半部分
+      left: `inset(0 0 0 50%)`, // 显示右半部分
+      right: `inset(0 50% 0 0)` // 显示左半部分
+    }[info.edge] || 'inset(0 0 0 0)';
 
     return (
       <div
         key={`half-${iconPos.position}-${index}`}
         style={containerStyle}
       >
-        {/* 背景图片的凹进部�?*/}
+        {/* 背景图片的凹进部分 */}
         <div
           className="absolute inset-0"
           style={{
@@ -179,19 +186,33 @@ export const AthleteCardComponent: React.FC<Props> = ({
             zIndex: 2
           }}
         />
-        {/* 图标 */}
-        <img
-          src={iconImage}
-          alt={iconPos.type}
-          style={{ 
-            width: `${radius * 1.2}px`, 
-            height: `${radius * 1.2}px`, 
-            objectFit: 'contain', 
-            position: 'relative', 
-            zIndex: 3,
-            filter: isUsed ? 'grayscale(100%)' : 'none'
+        {/* 图标 - 与完整图标保持一致的大小，只显示半圆区域 */}
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            clipPath: clipPathStyle,
+            position: 'relative',
+            zIndex: 3
           }}
-        />
+        >
+          <img
+            src={iconImage}
+            alt={iconPos.type}
+            style={{ 
+              width: `${containerSize}px`, // 使用容器大小，让图标自然居中显示
+              height: `${containerSize}px`,
+              objectFit: 'contain', 
+              filter: isUsed ? 'grayscale(100%)' : 'none',
+              // 移除 transform，让图标自然居中显示
+              transform: 'none'
+            }}
+          />
+        </div>
       </div>
     );
   };
@@ -224,7 +245,7 @@ export const AthleteCardComponent: React.FC<Props> = ({
             boxSizing: 'border-box'
           }}
           onClick={() => {
-            logger.debug('Player card clicked:', card.name, 'ID:', card.id);
+            logger.debug('Player card clicked:', card.nickname, 'ID:', card.id);
             onClick?.();
           }}
           draggable={draggable}
@@ -234,16 +255,22 @@ export const AthleteCardComponent: React.FC<Props> = ({
         {/* Front Face - 横版布局 左右各半 */}
         <div
           className={clsx(
-            "absolute inset-0 backface-hidden flex overflow-hidden rounded-lg"
+            "absolute inset-0 flex overflow-hidden rounded-lg"
           )}
           style={{ backfaceVisibility: 'hidden' }}
         >
+          {/* 明星卡标记 - 显示在整张卡的中间 */}
+          {card.isStar && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+              <span className="text-yellow-400 text-4xl drop-shadow-lg">⭐</span>
+            </div>
+          )}
           {/* 左边1/2：背景色区域 */}
           <div className={clsx("relative w-1/2 h-full border-r border-black/30 rounded-l-lg", cardBg)}>
             {card.imageUrl ? (
               <img 
                 src={card.imageUrl} 
-                alt={card.name}
+                alt={card.nickname}
                 className="w-full h-full object-cover"
                 style={{ objectPosition: 'center' }}
               />
@@ -252,25 +279,16 @@ export const AthleteCardComponent: React.FC<Props> = ({
                 <span className="text-3xl">👤</span>
               </div>
             )}
-            
-            {/* 明星卡标记*/}
-            {card.isStar && (
-              <div className="absolute top-1 left-1">
-                <span className="text-yellow-400 text-lg drop-shadow-lg">⭐</span>
-              </div>
-            )}
 
-            {/* 攻击力*/}
-            <div className="absolute top-1 right-1 w-6 h-6 rounded bg-white/20 flex items-center justify-center backdrop-blur-sm">
-              <span className="text-xs font-black text-white">
-                {card.isStar ? '⭐' : ''}
-              </span>
-            </div>
+            {/* 移除攻击力显示，因为游戏规则中没有 power 概念 */}
           </div>
 
           {/* 右边1/2：纯白色信息区域 */}
-          <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-2 rounded-r-lg">
-            <div className="flex flex-col items-center justify-center space-y-1">
+          <div 
+            className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center rounded-r-lg"
+            style={{ padding: `${iconRadius}px` }} // 使用半圆图标半径作为边距
+          >
+            <div className="flex flex-col items-center justify-center space-y-1 w-full">
               {/* 位置标签 - 徽章样式 */}
               <div className="bg-stone-800 px-2 py-0.5 rounded-md shadow-sm mb-1">
                 <span className="text-xs font-black tracking-wider leading-none text-white">
@@ -278,19 +296,22 @@ export const AthleteCardComponent: React.FC<Props> = ({
                 </span>
               </div>
               
-              {/* 角色/类型 */}
+              {/* 绰号 */}
               <div className="text-xs font-black tracking-widest leading-none" style={textStrokeStyle}>
-                {card.name}
+                {card.nickname}
               </div>
 
               {/* 球员名字 */}
-              <div className="text-[9px] font-bold text-center leading-tight truncate w-full px-1" style={textStrokeStyle}>
+              <div 
+                className="text-[9px] font-bold text-center leading-tight truncate px-1" 
+                style={{ ...textStrokeStyle, maxWidth: `calc(100% - ${iconRadius}px)` }}
+              >
                 {card.realName}
               </div>
 
-              {/* 技能图标区�?- 与文字信息紧凑排�?*/}
+              {/* 技能图标区域- 与文字信息紧凑排列*/}
               <div className="flex items-center justify-center space-x-1 pt-1">
-                {/* 技能效果徽�?*/}
+                {/* 技能效果徽章*/}
                 {card.immediateEffect !== 'none' && (
                   <div className="w-5 h-5 flex items-center justify-center">
                     <SkillEffectBadge 
@@ -310,7 +331,7 @@ export const AthleteCardComponent: React.FC<Props> = ({
 
         {/* Back Face */}
         <div 
-          className="absolute inset-0 backface-hidden overflow-hidden rounded-lg border-2 border-stone-700"
+          className="absolute inset-0 overflow-hidden rounded-lg border-2 border-stone-700"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
           {/* 统一卡牌背面设计 */}

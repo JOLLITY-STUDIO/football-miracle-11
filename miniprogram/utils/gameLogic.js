@@ -123,7 +123,7 @@ function finishSquadSelection(state, starters, subs) {
   return {
     ...state,
     phase: 'firstHalf',
-    turnPhase: 'playerAction',
+    turnPhase: 'athleteAction',
     turnCount: state.isHomeTeam ? 1 : 2,
     isFirstTurn: true,
     skipTeamAction: true,

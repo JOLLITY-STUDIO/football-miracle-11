@@ -26,7 +26,7 @@
    - 选择场上完成的战术图标之一并发动效果
    - **重要**：首次回合时场上没有选手卡，因此跳过团队行动
    
-2. **选手行动 (Player Action)**
+2. **选手行动 (Athlete Action)**
    - （规则未完整提供）
 
 ## 当前实现验证 (Current Implementation Verification)
@@ -60,9 +60,9 @@ if (state.phase === 'firstHalf') {
 ```typescript
 export const TURN_PHASE_CONFIG = {
   teamAction: {
-    autoTransition: 'playerAction',  // 自动转换到选手行动
+    autoTransition: 'athleteAction',  // 自动转换到选手行动
   },
-  playerAction: {
+  athleteAction: {
     allowPlaceCard: true,
     allowShooting: true,
   }
@@ -228,7 +228,7 @@ export const FirstTurnGuide: React.FC = () => {
 
 显示当前回合的进度：
 ```
-[Team Action] → [Player Action] → [End Turn]
+[Team Action] → [Athlete Action] → [End Turn]
      ✓              ⏳              ○
 ```
 
@@ -238,7 +238,7 @@ export const FirstTurnGuide: React.FC = () => {
 
 ```typescript
 // 首回合特殊提示
-if (turnPhase === 'playerAction' && isFirstTurn) {
+if (turnPhase === 'athleteAction' && isFirstTurn) {
   return {
     title: 'FIRST TURN - PLAYER ACTION',
     message: 'Team Action skipped (no players on field). Place your first player!',

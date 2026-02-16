@@ -612,3 +612,216 @@ grep "0.1.53" BUG_TRACKING.md
   - Fixed z-index to `z-[50]`
 - **Version**: 0.1.130
 - **Impact**: Field is now clickable, game can proceed
+
+### BUG-2026-02-16-019: Player card placement validation error
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: Card placement rules, Game logic
+- **Impact Level**: Critical - Blocks gameplay
+- **Related Files**:
+  - `src/game/ruleValidator.ts`
+- **Problem Description**: 
+  - Players cannot place cards on the field
+  - Validation logic incorrectly rejected valid placement positions
+- **Root Cause**: 
+  - `canPlaceCard` function had incorrect field validation
+  - Player field validation was using AI zone rules
+  - Incorrect adjacent card checking for Zone 1 and Zone 2
+- **Fix Solution**: 
+  - Updated `canPlaceCard` function with separate logic for player and AI fields
+  - Fixed player field validation to use correct zone rules
+  - Implemented proper adjacent card checking for all zones
+  - Added clear error messages for debugging
+- **Version**: 0.1.131
+- **Impact Analysis**:
+  - Players can now place cards on their field
+  - Validation correctly enforces placement rules
+  - Error messages provide clear feedback
+- **Regression Testing**:
+  - ✅ Test card placement in all player zones
+  - ✅ Test adjacent card requirements
+  - ✅ Test invalid placement scenarios
+
+### BUG-2026-02-16-020: Turn end without required action
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: Turn management, Game rules
+- **Impact Level**: Important - Affects game integrity
+- **Related Files**:
+  - `src/hooks/useGameState.ts`
+- **Problem Description**: 
+  - Players could end turn without placing a card or shooting
+  - This violated game rules requiring at least one action per turn
+- **Root Cause**: 
+  - No validation in `handleEndTurn` function
+  - Players could skip all actions and end turn
+- **Fix Solution**: 
+  - Added validation check in `handleEndTurn` function
+  - Ensures players have either placed a card or attempted a shot
+  - Displays error message if no action taken
+  - Plays error sound for feedback
+- **Version**: 0.1.131
+- **Impact Analysis**:
+  - Players must now perform at least one action per turn
+  - Game rules are properly enforced
+  - Clear feedback when trying to end turn without action
+- **Regression Testing**:
+  - ✅ Test ending turn without action (should fail)
+  - ✅ Test ending turn after placing card (should succeed)
+  - ✅ Test ending turn after shooting (should succeed)
+
+### BUG-2026-02-16-021: AI front line zone incorrect
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: AI logic, Game rules
+- **Impact Level**: Important - Affects AI behavior
+- **Related Files**:
+  - `src/game/ruleValidator.ts`
+- **Problem Description**:
+  - AI was placing cards in wrong front line zone
+  - Front line was incorrectly set to Zone 2 instead of Zone 3
+- **Root Cause**:
+  - Incorrect zone configuration in AI field validation
+  - Used Zone 2 as front line instead of Zone 3
+- **Fix Solution**:
+  - Updated AI field validation to use Zone 3 as front line
+  - Fixed adjacent card checking for AI zones
+  - Ensured AI follows same placement rules as players
+- **Version**: 0.1.131
+- **Impact Analysis**:
+  - AI now places cards in correct front line (Zone 3)
+  - AI placement follows game rules
+  - More realistic AI behavior
+- **Regression Testing**:
+  - ✅ Test AI card placement in Zone 3
+  - ✅ Test AI adjacent card requirements
+  - ✅ Verify AI follows front line rules
+
+### BUG-2026-02-16-022: Team Action phase banner not displaying
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: UI display, Game phases
+- **Impact Level**: Important - Affects user experience
+- **Related Files**:
+  - `src/components/GameStatusBanner.tsx`
+- **Problem Description**:
+  - Team Action phase banner not showing during gameplay
+  - Players couldn't see current phase information
+- **Root Cause**:
+  - Incorrect phase checking logic in banner component
+  - Missing handling for Team Action phase
+- **Fix Solution**:
+  - Updated phase checking logic to include Team Action phase
+  - Added clear display for all game phases
+  - Ensured banner shows correct phase information
+- **Version**: 0.1.131
+- **Impact Analysis**:
+  - Team Action phase banner now displays correctly
+  - Players can see current phase information
+  - Better game state awareness
+- **Regression Testing**:
+  - ✅ Test Team Action phase banner display
+  - ✅ Test all other phase banner displays
+  - ✅ Verify banner updates correctly between phases
+
+### BUG-2026-02-16-023: Half-time rules incorrect
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: Game rules, Match flow
+- **Impact Level**: Critical - Affects game outcome
+- **Related Files**:
+  - `src/game/gameLogic.ts`
+  - `src/utils/teamActions.ts`
+  - `src/utils/immediateEffects.ts`
+  - `src/hooks/useGameState.ts`
+- **Problem Description**:
+  - Half-time used fixed turn count (10 turns) instead of synergy deck exhaustion
+  - This violated game rules requiring伤停补时 based on synergy card depletion
+- **Root Cause**:
+  - Incorrect half-time condition in `isHalfTime` function
+  - No synergy deck exhaustion checking
+  - Fixed turn count logic instead of dynamic stoppage time
+- **Fix Solution**:
+  - Updated `isHalfTime` and `isFullTime` functions to use stoppage time
+  - Implemented synergy deck exhaustion checking
+  - Added stoppage time activation when synergy deck is empty
+  - Updated all game flow logic to use new rules
+- **Version**: 0.1.132
+- **Impact Analysis**:
+  - Half-time now triggered by synergy deck exhaustion + stoppage time
+  - Game follows official rules
+  - More dynamic and unpredictable match flow
+  - Stoppage time adds excitement to end of halves
+- **Regression Testing**:
+  - ✅ Test synergy deck exhaustion triggering stoppage time
+  - ✅ Test half-time after stoppage time in first half
+  - ✅ Test full-time after stoppage time in second half
+  - ✅ Verify match ends correctly when synergy deck is empty
+  - ✅ Test multiple matches with different synergy card usage patterns
+
+### BUG-2026-02-16-024: First turn Team Action skip not implemented
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: Game flow, User experience
+- **Impact Level**: Important - Affects game setup
+- **Related Files**:
+  - `src/game/turnPhaseService.ts`
+- **Problem Description**:
+  - First turn did not automatically skip Team Action phase
+  - Players had to manually skip even with no cards on field
+- **Root Cause**:
+  - Missing first turn detection in Team Action phase logic
+  - No automatic skip when field is empty
+- **Fix Solution**:
+  - Added first turn detection in `shouldSkipTeamAction` function
+  - Implemented automatic skip when no cards are on the field
+  - Added clear message explaining the skip
+- **Version**: 0.1.131
+- **Impact Analysis**:
+  - First turn now automatically skips Team Action phase
+  - Players receive clear explanation for the skip
+  - Smoother game setup process
+- **Regression Testing**:
+  - ✅ Test first turn automatic Team Action skip
+  - ✅ Test subsequent turns with cards on field (should not skip)
+  - ✅ Verify skip message displays correctly
+
+### BUG-2026-02-17-001: No sound effects during gameplay
+- **Discovery Date**: 2026-02-17
+- **Fix Date**: 2026-02-17
+- **Status**: ✅ Fixed
+- **Impact Scope**: Audio feedback, User experience
+- **Impact Level**: Important - Affects game immersion
+- **Related Files**:
+  - `src/utils/audio.ts`
+- **Problem Description**:
+  - No sound effects playing during gameplay
+  - Card placement, button clicks, and other actions were silent
+- **Root Cause**:
+  - Audio system was trying to load corrupted `*_new.wav` files (only 40 bytes each)
+  - These files were likely empty or corrupted placeholders
+- **Fix Solution**:
+  1. **Changed audio file paths**: Updated all references from `*_new.wav` to `*.wav` to use complete, valid audio files
+  2. **Removed corrupted files**: Deleted all `*_new.wav` files that were empty/corrupted
+  3. **Verified file integrity**: Confirmed all `*.wav` files are complete (844 bytes each)
+  4. **Maintained audio settings**: Kept existing volume and rate configurations
+- **Version**: 0.1.133
+- **Impact Analysis**:
+  - ✅ Card placement now plays "snap" sound
+  - ✅ Button clicks now play "click" sound
+  - ✅ Card draws now play "draw" sound
+  - ✅ All game actions now have proper audio feedback
+  - ✅ Game immersion and user experience greatly improved
+- **Regression Testing**:
+  - ✅ Test card placement sound
+  - ✅ Test button click sounds
+  - ✅ Test card draw sounds
+  - ✅ Test all other game sound effects
+  - ✅ Verify audio settings persistence
+

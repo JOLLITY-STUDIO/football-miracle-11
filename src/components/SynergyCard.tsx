@@ -32,33 +32,44 @@ export const SynergyCardComponent: React.FC<Props> = ({
   const isVAR = card.name.includes('VAR');
 
   const getBgGradient = () => {
-    if (isVAR) return 'bg-gradient-to-br from-slate-800 to-black';
-    if (isAttack) return 'bg-gradient-to-br from-[#F82D45] to-[#C62B1D]';
-    if (isDefense) return 'bg-gradient-to-br from-blue-800 to-blue-950';
-    if (isTackle) return 'bg-gradient-to-br from-purple-800 to-purple-950';
-    if (isSetPiece) return 'bg-gradient-to-br from-orange-600 to-orange-800';
-    return 'bg-gradient-to-br from-amber-700 to-amber-900';
+    // 统一使用白色/浅灰色背景
+    return 'bg-gradient-to-br from-gray-50 to-gray-100';
   };
 
   const getBorderColor = () => {
-    if (isVAR) return 'border-cyan-400';
-    if (isAttack) return 'border-red-600';
-    if (isDefense) return 'border-blue-600';
-    if (isTackle) return 'border-purple-600';
-    if (isSetPiece) return 'border-orange-500';
-    return 'border-amber-500';
+    // 统一使用深灰色边框
+    return 'border-gray-400';
   };
 
   const getIcon = () => {
-    if (isVAR) return '📺';
-    if (isAttack) return '⚔️';
-    if (isDefense) return '🛡️';
-    if (isTackle) return '👟';
-    if (isSetPiece) return '🚩';
-    return '📚';
+    // 简化图标，使用星星
+    return '⭐';
   };
 
-  const typeLabel = isTackle ? 'TACKLE!' : isAttack ? 'ATTACK!' : isDefense ? 'DEFENSE!' : isSetPiece ? 'SET PIECE' : isSpecial ? 'SPECIAL' : '';
+  // 渲染星级评分
+  const renderStars = (stars: number) => {
+    const starElements = Array.from({ length: stars }, (_, i) => (
+      <span key={i} className="text-yellow-500 text-2xl">⭐</span>
+    ));
+    
+    // 如果星星数量 <= 3，显示在一行
+    if (stars <= 3) {
+      return <div className="flex items-center justify-center gap-1">{starElements}</div>;
+    }
+    
+    // 如果星星数量 > 3，需要换行显示
+    const firstRow = starElements.slice(0, 3);
+    const secondRow = starElements.slice(3);
+    
+    return (
+      <div className="flex flex-col items-center justify-center gap-1">
+        <div className="flex items-center justify-center gap-1">{firstRow}</div>
+        <div className="flex items-center justify-center gap-1">{secondRow}</div>
+      </div>
+    );
+  };
+
+  const typeLabel = 'SYNERGY CARD';
 
   return (
     <motion.div
@@ -81,50 +92,28 @@ export const SynergyCardComponent: React.FC<Props> = ({
       >
         {/* Front Face */}
         <div className={`
-          absolute inset-0 backface-hidden overflow-hidden border-2 border-stone-800
+          absolute inset-0 backface-hidden overflow-hidden border-2 border-gray-400
           ${getBgGradient()}
-          ${getBorderColor()}
         `}
         style={{ backfaceVisibility: 'hidden' }}
         >
-          {/* 卡片内容 - 左右布局 */}
-          <div className="h-full flex">
-            {/* 左边1/2：背景色区域 */}
-            <div className="relative w-1/2 h-full border-r border-black/30">
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-4xl">{getIcon()}</div>
+          {/* 卡片内容 - 居中布局 */}
+          <div className="h-full flex flex-col items-center justify-center p-4 relative">
+            {/* Tackle卡特殊标记 */}
+            {isTackle && (
+              <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">
+                ⚽ TACKLE!
               </div>
-              
-              {/* 类型图标 */}
-              <div className="absolute bottom-2 left-2 w-6 h-6 rounded bg-white/20 flex items-center justify-center">
-                <span className="text-xs font-black text-white">
-                  {isAttack ? '⚔️' : isDefense ? '🛡️' : isTackle ? '👟' : '📚'}
-                </span>
-              </div>
+            )}
+            
+            {/* 星级显示 - 放在中间 */}
+            <div className="mb-3">
+              {renderStars(card.stars)}
             </div>
             
-            {/* 右边1/2：白色信息区�?*/}
-            <div className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center px-2">
-              <div className="flex flex-col items-center justify-center space-y-2">
-                {/* 类型标签 */}
-                <div className={`px-2 py-0.5 rounded-md ${isAttack ? 'bg-red-600' : isDefense ? 'bg-blue-600' : isTackle ? 'bg-purple-600' : 'bg-amber-600'}`}>
-                  <span className="text-xs font-black tracking-wider text-white">{typeLabel}</span>
-                </div>
-                
-                {/* 卡片名称 */}
-                <div className="text-xs font-black tracking-wider text-center leading-none" style={{ color: isAttack ? '#dc2626' : isDefense ? '#2563eb' : isTackle ? '#8b5cf6' : '#d97706' }}>
-                  {card.name}
-                </div>
-                
-                {/* 技能�?*/}
-                {card.stars > 0 && (
-                  <div className="flex items-center justify-center space-x-1">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isAttack ? 'bg-red-100 border-red-500' : isDefense ? 'bg-blue-100 border-blue-500' : isTackle ? 'bg-purple-100 border-purple-500' : 'bg-amber-100 border-amber-500'}`}>
-                      <span className={`text-xs font-bold ${isAttack ? 'text-red-800' : isDefense ? 'text-blue-800' : isTackle ? 'text-purple-800' : 'text-amber-800'}`}>+{card.stars}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* 类型标签 */}
+            <div className="bg-gray-800 text-white px-3 py-1 rounded-md">
+              <span className="text-xs font-bold tracking-wider">{typeLabel}</span>
             </div>
           </div>
         </div>
@@ -137,13 +126,13 @@ export const SynergyCardComponent: React.FC<Props> = ({
             {/* 大五角星背景 */}
             <div className="absolute inset-0 flex items-center justify-center z-0">
               <div className="w-full h-full flex items-center justify-center transform rotate-90">
-                {/* SVG 金色五角�?*/}
+                {/* SVG 金色五角星 */}
                 <svg width="200" height="200" viewBox="0 0 100 100">
                   <path 
                     d="M50 0 L63 38 L100 38 L69 61 L81 100 L50 76 L19 100 L31 61 L0 38 L37 38 Z" 
                     fill="#fbbf24"
                     stroke="#fcd34d"
-                    stroke-width="6"
+                    strokeWidth="6"
                   />
                 </svg>
               </div>
@@ -159,4 +148,3 @@ export const SynergyCardComponent: React.FC<Props> = ({
     </motion.div>
   );
 };
-

@@ -155,7 +155,7 @@ function canShoot(card, field, zone, slot, gameState, isPlayer) {
     return { valid: false, reason: 'Card mismatch' }
   }
   
-  if (gameState.turnPhase !== 'playerAction') {
+  if (gameState.turnPhase !== 'athleteAction') {
     return { valid: false, reason: 'Cannot shoot during this phase' }
   }
   

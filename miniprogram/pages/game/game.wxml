@@ -97,7 +97,7 @@
     <button class="action-btn press" bindtap="teamAction" data-action="press">逼抢</button>
   </view>
 
-  <view class="action-bar" wx:if="{{gameState.turnPhase === 'playerAction' && gameState.currentTurn === 'player'}}">
+  <view class="action-bar" wx:if="{{gameState.turnPhase === 'athleteAction' && gameState.currentTurn === 'player'}}">
     <button class="action-btn end-turn" bindtap="endTurn">结束回合</button>
   </view>
 </view>

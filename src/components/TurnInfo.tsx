@@ -11,7 +11,7 @@ interface Props {
 export const TurnInfo: React.FC<Props> = ({ currentTurn, turnCount, phase, turnPhase, message }) => {
   const getActionPhaseText = () => {
     if (turnPhase === 'teamAction') return '球队行动';
-    if (turnPhase === 'playerAction') return '球员行动';
+    if (turnPhase === 'athleteAction') return '球员行动';
     return '';
   };
 

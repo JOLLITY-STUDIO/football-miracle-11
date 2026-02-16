@@ -298,8 +298,8 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
                   <div className="player-name">{player.realName}</div>
                   <div className="player-position">{player.positionLabel}</div>
                   <div className="player-stats">
-                    <span className="atk">ATK:{player.attack}</span>
-                    <span className="def">DEF:{player.defense}</span>
+                    <span className="atk">ATK:{player.icons.filter(i => i === 'attack').length}</span>
+                    <span className="def">DEF:{player.icons.filter(i => i === 'defense').length}</span>
                   </div>
                   {status === 'starter' && <div className="selection-badge">START</div>}
                   {status === 'substitute' && <div className="selection-badge sub">SUB</div>}

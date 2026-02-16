@@ -29,7 +29,7 @@ describe('Player State Tracking', () => {
     const stateWithPlayer = {
       ...initialState,
       playerHand: [athleteCard],
-      turnPhase: 'playerAction' as const,
+      turnPhase: 'athleteAction' as const,
       currentTurn: 'player' as const
     };
 
@@ -58,7 +58,7 @@ describe('Player State Tracking', () => {
     const stateWithPlayer = {
       ...initialState,
       playerHand: [athleteCard],
-      turnPhase: 'playerAction' as const,
+      turnPhase: 'athleteAction' as const,
       currentTurn: 'player' as const,
       playerField: [{ 
         zone: 0,
@@ -142,7 +142,7 @@ describe('Player State Tracking', () => {
         ]
       }],
       playerHand: [incomingCard],
-      turnPhase: 'playerAction' as const,
+      turnPhase: 'athleteAction' as const,
       currentTurn: 'player' as const
     };
 

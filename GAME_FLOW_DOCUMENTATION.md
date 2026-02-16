@@ -101,7 +101,7 @@ case 'PICK_DRAFT_CARD': {
 
 **电子版本实现:**
 - `phase: 'firstHalf'`
-- `turnPhase: 'teamAction' | 'playerAction' | 'shooting' | 'end'`
+- `turnPhase: 'teamAction' | 'athleteAction' | 'shooting' | 'end'`
 - 回合制系统，每回合有行动点
 
 ```typescript
@@ -110,7 +110,7 @@ case 'TEAM_ACTION':
   let newState = performTeamAction(state, action.action);
   const actor = state.currentTurn === 'player' ? 'You' : 'AI';
   const actionName = action.action === 'pass' ? 'Pass' : 'Press';
-  newState.turnPhase = 'playerAction';
+  newState.turnPhase = 'athleteAction';
   return newState;
 ```
 

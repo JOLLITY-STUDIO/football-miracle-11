@@ -63,7 +63,7 @@ if (turnPhase === 'teamAction') {
 
 ```typescript
 // 在 PhaseBanner 组件中
-if (isFirstTurn && turnPhase === 'playerAction') {
+if (isFirstTurn && turnPhase === 'athleteAction') {
   return (
     <motion.div className="...">
       <div className="text-6xl mb-4">🎯</div>

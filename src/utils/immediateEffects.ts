@@ -177,7 +177,7 @@ const handleStealSynergy = (state: GameState, isPlayerTurn: boolean): GameState 
 };
 
 const handleInstantShot = (state: GameState, card: athleteCard, zone: number, slot: number, isPlayerTurn: boolean): GameState => {
-  const message = `${card.name} can shoot immediately!`;
+  const message = `${card.nickname} can shoot immediately!`;
   
   return {
     ...state,
@@ -201,7 +201,7 @@ const handleInstantShot = (state: GameState, card: athleteCard, zone: number, sl
 };
 
 const handleIgnoreDefense = (state: GameState, card: athleteCard, zone: number, slot: number, isPlayerTurn: boolean): GameState => {
-  const message = `${card.name} ignores defense this turn!`;
+  const message = `${card.nickname} ignores defense this turn!`;
   
   return {
     ...state,

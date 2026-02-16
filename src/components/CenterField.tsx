@@ -17,6 +17,7 @@ interface Props {
   lastPlacedCard: athleteCard | null;
   onCardMouseEnter: (card: athleteCard, event?: React.MouseEvent) => void;
   onCardMouseLeave: () => void;
+  onCardClick: (card: athleteCard) => void;
   onInstantShotClick?: ((zone: number, slot: number) => void) | undefined;
   instantShotMode?: any;
   currentAction?: PlayerActionType;
@@ -25,6 +26,7 @@ interface Props {
   shootMode?: boolean;
   selectedShootPlayer?: {zone: number, position: number} | null;
   onCloseShootMode?: () => void;
+  onCompleteIconsCalculated?: (passCount: number, pressCount: number) => void;
   viewSettings?: {
     pitch: number;
     rotation: number;
@@ -45,6 +47,7 @@ export const CenterField: React.FC<Props> = ({
   lastPlacedCard,
   onCardMouseEnter,
   onCardMouseLeave,
+  onCardClick,
   onInstantShotClick,
   instantShotMode,
   currentAction = 'none',
@@ -53,11 +56,12 @@ export const CenterField: React.FC<Props> = ({
   shootMode = false,
   selectedShootPlayer = null,
   onCloseShootMode,
+  onCompleteIconsCalculated,
   viewSettings = { pitch: 0, rotation: 0, zoom: 1, height: 0 },
 }) => {
   // Calculate canPlaceCards based on game state
-  // Allow card placement in teamAction, playerAction, and start phases
-  const canDoAction = (turnPhase === 'teamAction' || turnPhase === 'playerAction' || turnPhase === 'start') && currentTurn === 'player';
+  // Allow card placement in teamAction, athleteAction, and start phases
+  const canDoAction = (turnPhase === 'teamAction' || turnPhase === 'athleteAction' || turnPhase === 'start') && currentTurn === 'player';
   const canPlaceCards = canDoAction && (currentAction === 'none' || currentAction === 'organizeAttack');
 
   // Calculate pitch dimensions from configuration
@@ -97,11 +101,13 @@ export const CenterField: React.FC<Props> = ({
             lastPlacedCard={lastPlacedCard}
             onCardMouseEnter={onCardMouseEnter}
             onCardMouseLeave={onCardMouseLeave}
+            onCardClick={onCardClick}
             canPlaceCards={canPlaceCards}
             setupStep={setupStep}
             rotation={rotation}
             shootMode={shootMode}
             selectedShootPlayer={selectedShootPlayer}
+            onCompleteIconsCalculated={onCompleteIconsCalculated}
           />
         </div>
       </div>

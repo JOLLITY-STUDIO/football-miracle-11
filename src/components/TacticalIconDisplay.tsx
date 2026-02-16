@@ -2,27 +2,21 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 interface TacticalIconDisplayProps {
-  attackCount: number;
-  defenseCount: number;
-  passCount: number;
-  pressCount: number;
+  iconCounts: Record<string, number>;
   isPlayer: boolean;
   compact?: boolean;
 }
 
 export const TacticalIconDisplay: React.FC<TacticalIconDisplayProps> = ({
-  attackCount,
-  defenseCount,
-  passCount,
-  pressCount,
+  iconCounts,
   isPlayer,
   compact = false,
 }) => {
   const icons = [
-    { type: 'attack', count: attackCount, icon: '⚔️', color: '#ef4444', label: 'Attack' },
-    { type: 'defense', count: defenseCount, icon: '🛡️', color: '#3b82f6', label: 'Defense' },
-    { type: 'pass', count: passCount, icon: '📤', color: '#10b981', label: 'Pass' },
-    { type: 'press', count: pressCount, icon: '👊', color: '#f59e0b', label: 'Press' }
+    { type: 'attack', count: iconCounts.attack || 0, icon: '⚔️', color: '#ef4444', label: 'Attack' },
+    { type: 'defense', count: iconCounts.defense || 0, icon: '🛡️', color: '#3b82f6', label: 'Defense' },
+    { type: 'pass', count: iconCounts.pass || 0, icon: '📤', color: '#10b981', label: 'Pass' },
+    { type: 'press', count: iconCounts.press || 0, icon: '👊', color: '#f59e0b', label: 'Press' }
   ];
 
   if (compact) {

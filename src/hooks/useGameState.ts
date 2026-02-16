@@ -102,7 +102,7 @@ export const useGameState = (
     }
 
     // 检查是否可以放置卡牌
-    const canDoAction = (gameState.turnPhase === 'playerAction' || 
+    const canDoAction = (gameState.turnPhase === 'athleteAction' || 
                           gameState.skipTeamAction || 
                           gameState.turnPhase === 'teamAction' || 
                           (gameState.isFirstTurn && gameState.turnPhase === 'start')) && 
@@ -132,7 +132,7 @@ export const useGameState = (
     const card = gameState.selectedCard;
     dispatch({ type: 'PLACE_CARD', card, zone, slot: startCol });
     dispatch({ type: 'SELECT_PLAYER_CARD', card: null });
-    playSound('flip');
+    playSound('snap');
   }, [gameState, dispatch, playSound]);
 
   const handleAttack = useCallback((zone: number, slot: number) => {
@@ -140,7 +140,7 @@ export const useGameState = (
     if (gameState.currentTurn !== 'player') return;
     
     // 检查是否可以执行攻击操作
-    const canPerformAction = gameState.turnPhase === 'playerAction' || 
+    const canPerformAction = gameState.turnPhase === 'athleteAction' || 
                           (gameState.isFirstTurn && gameState.turnPhase === 'start');
     
     if (!canPerformAction) {
@@ -218,7 +218,7 @@ export const useGameState = (
 
   const handleEndTurn = useCallback(() => {
     // 验证玩家是否执行了至少一个动作（放置球员或射门）
-    if (gameState.currentTurn === 'player' && gameState.turnPhase === 'playerAction') {
+    if (gameState.currentTurn === 'player' && gameState.turnPhase === 'athleteAction') {
       const hasPlacedCard = gameState.currentAction === 'organizeAttack';
       const hasAttemptedShot = gameState.pendingShot !== null;
       

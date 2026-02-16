@@ -6,6 +6,7 @@ import type { athleteCard, SynergyCard } from '../data/cards';
 import { AthleteCardComponent } from './AthleteCard';
 import { SynergyCardComponent } from './SynergyCard';
 import { PenaltyModal } from './PenaltyModal';
+import { CardPreviewModal } from './CardPreviewModal';
 import { LeftPanel } from './LeftPanel';
 import { CenterField } from './CenterField';
 import { RightPanel } from './RightPanel';
@@ -139,6 +140,8 @@ const {
   const [shootMode, setShootMode] = useState<boolean>(false);
   const [selectedShootPlayer, setSelectedShootPlayer] = useState<{zone: number, position: number} | null>(null);
   const [showShooterSelector, setShowShooterSelector] = useState(false);
+  const [showCardPreview, setShowCardPreview] = useState(false);
+  const [previewCard, setPreviewCard] = useState<athleteCard | null>(null);
   
   // Audio Feedback for card actions (hand changes)
   const prevPlayerHandCount = useRef(gameState.playerAthleteHand.length);
@@ -254,7 +257,7 @@ const {
           text = 'TACTICAL PHASE';
           subtitle = 'Choose Team Action: Pass or Press';
         }
-        else if (gameState.turnPhase === 'playerAction') {
+        else if (gameState.turnPhase === 'athleteAction') {
           text = 'ATHLETE ACTION';
           // Check if this is the first turn and we're skipping team action
           if (gameState.isFirstTurn && gameState.currentTurn === 'player') {
@@ -399,17 +402,21 @@ const {
   };
 
   const canDoAction = () => {
-    const result = (gameState.turnPhase === 'playerAction' || gameState.skipTeamAction || gameState.turnPhase === 'teamAction' || (gameState.isFirstTurn && gameState.turnPhase === 'start')) && gameState.currentTurn === 'player';
+    const result = (gameState.turnPhase === 'athleteAction' || gameState.skipTeamAction || gameState.turnPhase === 'teamAction' || (gameState.isFirstTurn && gameState.turnPhase === 'start')) && gameState.currentTurn === 'player';
     return result;
   };
   const canPlaceCards = () => {
+    // 在 teamAction 阶段不能放置卡片，玩家只能执行 pass、press 或跳过
+    if (gameState.turnPhase === 'teamAction') {
+      return false;
+    }
     const result = canDoAction() && (gameState.currentAction === 'none' || gameState.currentAction === 'organizeAttack');
     return result;
   };
 
   // Check if there are attack icons on the field
   const hasAttackIconsOnField = () => {
-    const field = gameState.playerField;
+    const field = gameState.isHomeTeam ? gameState.playerField : gameState.aiField;
     for (const zone of field) {
       for (const slot of zone.slots) {
         if (slot.athleteCard && slot.athleteCard.icons.includes('attack')) {
@@ -422,8 +429,8 @@ const {
 
   // Handle global shoot button click
   const handleShoot = () => {
-    if (!hasAttackIconsOnField()) {
-      setGameState(prev => ({ ...prev, message: 'No attack icons on the field!' }));
+    if (!hasShootablePlayers) {
+      setGameState(prev => ({ ...prev, message: 'No shootable players available!' }));
       playSound('error');
       return;
     }
@@ -453,9 +460,7 @@ const handleCardSelect = (card: athleteCard) => {
   if (gameState.currentTurn !== 'player') {
     return;
   }
-  if (!canPlaceCards()) {
-    return;
-  }
+  // 玩家在任何阶段都可以选择卡片，只是在某些阶段不能放置
   playSound('draw');
   dispatch({ type: 'SELECT_PLAYER_CARD', card: gameState.selectedCard?.id === card.id ? null : card });
 };
@@ -494,6 +499,13 @@ const handleCardSelect = (card: athleteCard) => {
   const handleHoverLeaveCard = () => {
     setHoveredCard(null);
     setHoverSoundPlayedForId(null);
+  };
+
+  // Handle card click for preview
+  const handleCardClick = (card: athleteCard) => {
+    setPreviewCard(card);
+    setShowCardPreview(true);
+    playSound('click');
   };
 
   const handleCancelSubstitution = () => {
@@ -630,8 +642,17 @@ const handleCardSelect = (card: athleteCard) => {
     playSound('whistle');
   };
 
-  const passCount = countIcons(gameState.playerField, 'pass');
-  const pressCount = countIcons(gameState.playerField, 'press');
+  const [completePassCount, setCompletePassCount] = React.useState(0);
+  const [completePressCount, setCompletePressCount] = React.useState(0);
+  
+  const handleCompleteIconsCalculated = (counts: Record<string, number>) => {
+    setCompletePassCount(counts.pass || 0);
+    setCompletePressCount(counts.press || 0);
+  };
+  
+  // Use complete icon counts for team actions
+  const passCount = completePassCount;
+  const pressCount = completePressCount;
   const canDoTeamAction = !gameState.skipTeamAction || gameState.playerField.some(z => z.slots.some(s => s.athleteCard));
 
   const handleVolumeChange = (newVolume: number) => {
@@ -710,6 +731,7 @@ const handleCardSelect = (card: athleteCard) => {
                   isHomeTeam={gameState.isHomeTeam}
                   playerSubstitutionsLeft={gameState.playerSubstitutionsLeft}
                   substitutionSelectedId={gameState.substitutionMode?.incomingCard.id}
+                  phase={gameState.phase}  // 添加phase参数
                   onHoverEnter={handleHoverEnterCard}
                   onHoverLeave={handleHoverLeaveCard}
                   onSubstituteSelect={handleSubstituteSelect}
@@ -739,6 +761,7 @@ const handleCardSelect = (card: athleteCard) => {
                   lastPlacedCard={lastPlacedCard}
                   onCardMouseEnter={handleHoverEnterCard}
                   onCardMouseLeave={handleHoverLeaveCard}
+                  onCardClick={handleCardClick}
                   onInstantShotClick={handleInstantShot}
                   instantShotMode={gameState.instantShotMode}
                   currentAction={gameState.currentAction}
@@ -747,6 +770,7 @@ const handleCardSelect = (card: athleteCard) => {
                   shootMode={shootMode}
                   selectedShootPlayer={selectedShootPlayer}
                   onCloseShootMode={handleCloseShootMode}
+                  onCompleteIconsCalculated={handleCompleteIconsCalculated}
                   viewSettings={viewSettings}
                 />
 
@@ -1000,17 +1024,28 @@ const handleCardSelect = (card: athleteCard) => {
 
       {/* 2. HUD Layer - Top (Opponent) */}
       {gameState.phase !== 'coinToss' && (
-        <div className="absolute top-0 left-0 right-0 h-24 z-20 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 h-200 z-20 pointer-events-none">
 
 
          {/* Top Center: Opponent Hand (Arc Layout - Same as Player) */}
-         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50" style={{ width: 'fit-content' }}>
-            <div className="relative h-full" style={{ width: `${Math.max(gameState.aiAthleteHand.length * 100, 400)}px` }}>
+         <div 
+           className="fixed top-0 left-1/2 -translate-x-1/2 z-[50]" 
+           style={{ 
+             height: '200px', 
+             width: `${Math.max(gameState.aiAthleteHand.length * (132 + 20), 400)}px`,
+             maxWidth: '90vw', // 确保不超出屏幕
+             pointerEvents: 'none' // 容器本身不拦截点击
+           }}
+         >
+            <div 
+              className="relative h-full flex justify-center items-center pb-4 perspective-1000" 
+              style={{ width: '100%' }}
+            >
               <AnimatePresence>
                   {gameState.aiAthleteHand.map((card, i) => {
                     // Calculate arc position for AI hand (same as player hand)
                     const arcAngle = 30;
-                    const arcHeight = 500;
+                    const arcHeight = 264; // Match player hand arc height
                     const startAngle = -15;
                     
                     const anglePerCard = gameState.aiAthleteHand.length > 1 ? arcAngle / (gameState.aiAthleteHand.length - 1) : 0;
@@ -1018,25 +1053,40 @@ const handleCardSelect = (card: athleteCard) => {
                     const radius = arcHeight;
                     const radian = (currentAngle * Math.PI) / 180;
                     
-                    // Calculate position (similar to player hand but flipped vertically)
+                    // Calculate position (same as player hand but adjusted for top placement)
                     const x = Math.sin(radian) * radius;
                     const baseY = -Math.cos(radian) * radius + radius;
                     const heightAdjustment = Math.cos(radian) * 80;
                     const y = -(baseY - heightAdjustment + 43); // Negative y to place at top
-                    const rotation = 180 + currentAngle; // 180 degrees to invert cards
+                    const rotation = currentAngle; // Same rotation as player hand
                     
                     return (
                       <motion.div
                         key={card.id}
-                        initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                        initial={{
+                          opacity: 0,
+                          scale: 0.8,
+                          x: 0,
+                          y: 0
+                        }}
                         animate={setupStep >= 3 ? { 
                           opacity: 1, 
                           scale: 1,
                           x: x,
                           y: y,
                           rotate: rotation
-                        } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
-                        exit={{ opacity: 0, scale: 0.5, y: -50 }}
+                        } : {
+                          opacity: 0,
+                          scale: 0.8,
+                          x: 0,
+                          y: 0
+                        }}
+                        exit={{
+                          opacity: 0,
+                          scale: 0.8,
+                          x: 0,
+                          y: 0
+                        }}
                         whileHover={{ 
                           scale: 1.5, 
                           rotate: 0, 
@@ -1049,8 +1099,10 @@ const handleCardSelect = (card: athleteCard) => {
                           height: '86px',
                           left: '50%',
                           top: '50%',
-                          transformOrigin: 'center center',
-                          zIndex: i
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          zIndex: i,
+                          pointerEvents: 'auto'
                         }}
                       >
                          <AthleteCardComponent 
@@ -1063,7 +1115,7 @@ const handleCardSelect = (card: athleteCard) => {
                     );
                   })}
               </AnimatePresence>
-              <div className="absolute top-20 left-1/2 -translate-x-1/2 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold whitespace-nowrap">
+              <div className="absolute top-[-40px] left-1/2 -translate-x-1/2 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold whitespace-nowrap">
                    OPP HAND: {gameState.aiAthleteHand.length}
               </div>
             </div>
@@ -1150,7 +1202,7 @@ const handleCardSelect = (card: athleteCard) => {
                       <span className="text-sm tracking-widest group-hover:scale-110 transition-transform">PASS</span>
                       <span className="text-[10px] font-bold text-green-200/80 mt-1">DRAW SYNERGY</span>
                       <div className="mt-2 flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
-                        <span className="text-[9px] font-black">{Math.min(passCount, 5 - gameState.playerSynergyHand.length)}</span>
+                        <span className="text-[9px] font-black">{Math.max(0, Math.min(passCount, 5 - gameState.playerSynergyHand.length))}</span>
                         <span className="text-[8px] opacity-60">CARDS</span>
                       </div>
                     </button>
@@ -1175,50 +1227,52 @@ const handleCardSelect = (card: athleteCard) => {
 
           {/* Action Buttons Panel */}
           <div className="flex gap-3">
-                {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' && !gameState.skipTeamAction && passCount === 0 && pressCount === 0 ? (
-                  <div className="flex flex-col gap-3 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
-                    {/* Auto-skip hint if both are 0 */}
-                    <button
-                      onClick={() => {
-                        // Directly set turnPhase to playerAction instead of executing pass
-                        setGameState(prev => ({
-                          ...prev,
-                          turnPhase: 'playerAction',
-                          message: 'Turn phase set to player action'
-                        }));
-                        playSound('click');
-                      }}
-                      className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
-                    >
-                      No actions available - Skip �?                    </button>
-                  </div>
+                {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' ? (
+                  passCount === 0 && pressCount === 0 ? (
+                    <div className="flex flex-col gap-3 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
+                      {/* Auto-skip hint if both are 0 */}
+                      <button
+                        onClick={() => {
+                          // Directly set turnPhase to athleteAction instead of executing pass
+                          setGameState(prev => ({
+                            ...prev,
+                            turnPhase: 'athleteAction',
+                            message: 'Turn phase set to athlete action'
+                          }));
+                          playSound('click');
+                        }}
+                        className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
+                      >
+                        No actions available - Skip Team Action                    </button>
+                    </div>
+                  ) : null
                 ) : (
-                  <div className="flex flex-col gap-3">
-                    {/* Shoot Button */}
-                    <button
-                      onClick={() => {
-                        setShootMode(true);
-                        playSound('click');
-                      }}
-                      disabled={gameState.currentTurn !== 'player' || gameState.turnPhase !== 'playerAction' || !hasShootablePlayers}
-                      className="py-3 px-4 bg-[#F82D45] hover:bg-[#E72940] disabled:from-stone-800/50 disabled:to-stone-900/50 disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(248,45,69,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                    >
-                      <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
-                      <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">SHOOT</span>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-                    </button>
-                    
-                    {/* End Turn Button */}
-                    <button
-                      onClick={handleEndTurn}
-                      disabled={gameState.currentTurn !== 'player' || gameState.turnPhase !== 'playerAction'}
-                      className="py-3 px-4 bg-gradient-to-br from-blue-600/90 to-blue-800/90 hover:from-blue-500 hover:to-blue-700 disabled:from-stone-800/50 disabled:to-stone-900/50 disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(37,99,235,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                    >
-                      <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
-                      <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">END TURN</span>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-                    </button>
-                  </div>
+                  gameState.turnPhase === 'athleteAction' && gameState.currentTurn === 'player' ? (
+                    <div className="flex flex-col gap-3">
+                      {/* Shoot Button */}
+                      <button
+                        onClick={() => {
+                          handleShoot();
+                        }}
+                        disabled={!hasShootablePlayers}
+                        className="py-3 px-4 bg-[#F82D45] hover:bg-[#E72940] disabled:from-stone-800/50 disabled:to-stone-900/50 disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(248,45,69,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
+                        <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">SHOOT</span>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                      </button>
+                      
+                      {/* End Turn Button */}
+                      <button
+                        onClick={handleEndTurn}
+                        className="py-3 px-4 bg-gradient-to-br from-blue-600/90 to-blue-800/90 hover:from-blue-500 hover:to-blue-700 disabled:from-stone-800/50 disabled:to-stone-900/50 disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(37,99,235,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
+                        <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">END TURN</span>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                      </button>
+                    </div>
+                  ) : null
                 )}
               </div>
           </div>
@@ -1305,7 +1359,7 @@ const handleCardSelect = (card: athleteCard) => {
               className="bg-[#2a2a2a] p-8 rounded-2xl border border-gray-700 max-w-md w-full shadow-2xl"
             >
               <h3 className="text-2xl font-['Russo_One'] text-white mb-2">Immediate Effect</h3>
-              <p className="text-yellow-400 font-bold mb-4">{gameState.pendingImmediateEffect.card.name}</p>
+              <p className="text-yellow-400 font-bold mb-4">{gameState.pendingImmediateEffect.card.nickname}</p>
               <p className="text-gray-300 mb-8">{getImmediateEffectDescription(gameState.pendingImmediateEffect.card.immediateEffect)}</p>
               <div className="flex gap-4">
                 <button onClick={handleTriggerImmediateEffect} className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg">TRIGGER</button>
@@ -1427,7 +1481,7 @@ const handleCardSelect = (card: athleteCard) => {
                 <h3 className="text-2xl font-['Russo_One'] text-white uppercase tracking-tighter">Instant Shot!</h3>
               </div>
               <p className="text-gray-300 mb-6 leading-relaxed">
-                <span className="text-yellow-400 font-bold">{gameState.instantShotMode.card.name}</span> can perform an immediate shot attempt. 
+                <span className="text-yellow-400 font-bold">{gameState.instantShotMode.card.nickname}</span> can perform an immediate shot attempt. 
                 Select synergy cards from your hand to boost the attack power!
               </p>
               <div className="bg-black/40 p-4 rounded-xl mb-8 border border-white/5">
@@ -1528,12 +1582,12 @@ const handleCardSelect = (card: athleteCard) => {
           phaseBannerText?.includes('Round') ? 'cheer' :
           'snap'
         }
-        onComplete={() => {
+        onComplete={React.useCallback(() => {
           setShowPhaseBanner(false);
           if (gameState.phase === 'draft' && gameState.draftStep === 0) {
             dispatch({ type: 'START_DRAFT_ROUND' });
           }
-        }}
+        }, [gameState.phase, gameState.draftStep, dispatch])}
       />
 
       {/* Duel Overlay */}
@@ -1627,9 +1681,24 @@ const handleCardSelect = (card: athleteCard) => {
         onComplete={handlePenaltyComplete}
       />
 
+      {/* Card Preview Modal */}
+      <CardPreviewModal
+        isOpen={showCardPreview}
+        card={previewCard}
+        onClose={() => setShowCardPreview(false)}
+      />
+
         {gameState.phase === 'draft' && (
           <DraftPhase gameState={gameState} dispatch={dispatch} />
         )}
+
+      {/* Shooter Selector Modal */}
+      <ShooterSelector
+        playerField={gameState.playerField}
+        isOpen={showShooterSelector}
+        onClose={() => setShowShooterSelector(false)}
+        onSelectPlayer={handleSelectShooter}
+      />
 
       {/* Global Card Hover Preview */}
       <AnimatePresence>

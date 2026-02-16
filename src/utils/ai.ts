@@ -7,11 +7,11 @@ import { RuleValidator } from '../game/ruleValidator';
 const getValidZones = (type: string): number[] => {
   switch (type) {
     case 'fw':
-      return [2, 3, 4, 5]; // 前锋可放置在2-5区域
+      return [2, 3]; // 前锋可放置在2-3区域（AI半场）
     case 'mf':
-      return [1, 2, 5, 6]; // 中场只能放置在1、2、5、6行
+      return [1, 2]; // 中场只能放置在1、2行（AI半场）
     case 'df':
-      return [0, 1, 6, 7]; // 后卫只能放置在0、1、6、7行
+      return [0, 1]; // 后卫只能放置在0、1行（AI半场）
     default:
       return [];
   }
@@ -32,13 +32,15 @@ export const aiTurn = (state: GameState): GameState => {
       for (let zone of validZones) {
         for (let slot = 0; slot <= 6; slot++) {
           // 使用 RuleValidator 验证放置位置（包含第一回合前锋相邻验证）
-          const validationResult = RuleValidator.canPlaceCard(
-            cardToPlace,
-            newState.aiField,
-            zone,
-            slot,
-            newState.isFirstTurn
-          );
+            // 只传递AI半场的zones给验证器，避免场地类型误判
+            const aiHalfField = newState.aiField.filter(z => z.zone < 4);
+            const validationResult = RuleValidator.canPlaceCard(
+              cardToPlace,
+              aiHalfField,
+              zone,
+              slot,
+              newState.isFirstTurn
+            );
           
           if (validationResult.valid) {
             // Place the card
@@ -86,9 +88,11 @@ export const processAiActionStep = (state: GameState): GameState => {
           for (let zone of validZones) {
             for (let slot = 0; slot <= 6; slot++) {
               // 使用 RuleValidator 验证放置位置（包含第一回合前锋相邻验证）
+              // 只传递AI半场的zones给验证器，避免场地类型误判
+              const aiHalfField = newState.aiField.filter(z => z.zone < 4);
               const validationResult = RuleValidator.canPlaceCard(
                 cardToPlace,
-                newState.aiField,
+                aiHalfField,
                 zone,
                 slot,
                 newState.isFirstTurn

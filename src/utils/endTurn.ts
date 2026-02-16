@@ -15,7 +15,7 @@ export const performEndTurn = (state: GameState): GameState => {
     turnCount: newTurnCount,
     turnPhase: 'teamAction',
     isFirstTurn: false,
-    skipTeamAction: state.isFirstTurn ? true : false,
+    skipTeamAction: false,
     isFirstMatchTurn: false
   };
   
@@ -25,7 +25,7 @@ export const performEndTurn = (state: GameState): GameState => {
     newState.aiUsedShotIcons = {};
     newState.message = 'Half-time! All used shot icons have been reset.';
     // Skip team action phase after half-time, go directly to player action
-    newState.turnPhase = 'playerAction';
+    newState.turnPhase = 'athleteAction';
   }
   
   // Reset for new turn

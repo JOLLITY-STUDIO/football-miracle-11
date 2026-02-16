@@ -133,7 +133,7 @@ export const FirstTurnGuide: React.FC<FirstTurnGuideProps> = ({
                     <div className="text-white text-xl">→</div>
                     <div className="flex-1 bg-blue-600/50 rounded-lg p-3 text-center border-2 border-blue-400">
                       <div className="text-2xl mb-1">🎯</div>
-                      <div className="font-bold text-white">Player Action</div>
+                      <div className="font-bold text-white">Athlete Action</div>
                       <div className="text-blue-200 text-xs mt-1">Place/Shoot</div>
                     </div>
                     <div className="text-white text-xl">→</div>

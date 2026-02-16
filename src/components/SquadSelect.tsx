@@ -160,6 +160,13 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
                   <div className={`relative bg-stone-900/40 rounded-lg overflow-hidden transition-all duration-300 border-2 ${
                     selectedIds.has(card.id) ? 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-white/5 hover:border-white/20'
                   }`}>
+                    {/* Debug: Check card data */}
+                    {console.log('Card data:', {
+                      id: card.id,
+                      name: card.nickname,
+                      iconPositions: card.iconPositions,
+                      icons: card.icons
+                    })}
                     <AthleteCardComponent
                       card={card}
                       size="small"

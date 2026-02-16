@@ -46,7 +46,7 @@ Page({
     const action = e.currentTarget.dataset.action
     let newState = gameLogic.performTeamAction(this.data.gameState, action)
     
-    newState.turnPhase = 'playerAction'
+    newState.turnPhase = 'athleteAction'
     
     this.setData({
       gameState: newState,
@@ -68,7 +68,7 @@ Page({
       return
     }
     
-    if (gameState.turnPhase !== 'playerAction') {
+    if (gameState.turnPhase !== 'athleteAction') {
       wx.showToast({
         title: '现在不能放置卡牌',
         icon: 'none'

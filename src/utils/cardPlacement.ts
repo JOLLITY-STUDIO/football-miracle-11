@@ -24,7 +24,7 @@ export const placeCard = (
   zone: number, 
   slot: number
 ): GameState => {
-  logger.game('PLACE_CARD', { card: card.name, cardId: card.id, zone, slot, turn: state.currentTurn });
+  logger.game('PLACE_CARD', { card: card.nickname, cardId: card.id, zone, slot, turn: state.currentTurn });
   
   // Validate slot bounds
   if (slot < 0 || slot > 7) {
@@ -89,7 +89,9 @@ export const placeCard = (
   // Place card in both slots
   targetZone.slots[slot1Index] = { ...slot1, athleteCard: card };
   targetZone.slots[slot2Index] = { ...slot2, athleteCard: card };
-  logger.game('CARD_PLACED', { cardName: card.name, slots: [slot, slot + 1] });
+  logger.game('CARD_PLACED', { cardName: card.nickname, slots: [slot, slot + 1] });
+  
+
   
   // Remove card from hand
   const sourceHand = isPlayerTurn ? state.playerAthleteHand : state.aiAthleteHand;
@@ -107,7 +109,7 @@ export const placeCard = (
       aiField: newField,
       aiAthleteHand: newHand
     }),
-    message: `${card.name} placed on field`
+    message: `${card.nickname} placed on field`
   };
   
   logger.debug('Final state:', { 

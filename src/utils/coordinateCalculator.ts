@@ -1,7 +1,8 @@
 // Coordinate calculation utilities for game field
 // This module provides unified coordinate calculations for both SVG highlights and card rendering
 
-import { FIELD_CONFIG } from '../config/fieldDimensions';
+import { FIELD_CONFIG as FIELD_DIMENSIONS } from '../config/fieldDimensions';
+import { FIELD_CONFIG } from '../config/fieldConfig';
 
 interface Coordinates {
   x: number;
@@ -14,24 +15,36 @@ interface CellDimensions {
 }
 
 interface FieldContext {
-  isAi: boolean;
+  halfId: 'top' | 'bottom';
   rows: number;
   cols: number;
   cellWidth: number;
   cellHeight: number;
+  mirrorColumns: boolean;
 }
 
 /**
  * Create a field context for coordinate calculations
  */
-export const createFieldContext = (isAi: boolean): FieldContext => {
+export const createFieldContext = (halfId: 'top' | 'bottom'): FieldContext => {
+  const halfConfig = FIELD_CONFIG.halves[halfId];
+  
   return {
-    isAi,
-    rows: 4, // Each half has 4 rows
-    cols: FIELD_CONFIG.COLS,
-    cellWidth: FIELD_CONFIG.BASE_CELL_WIDTH,
-    cellHeight: FIELD_CONFIG.BASE_CELL_HEIGHT
+    halfId,
+    rows: FIELD_CONFIG.rowsPerHalf,
+    cols: FIELD_CONFIG.columns,
+    cellWidth: FIELD_DIMENSIONS.BASE_CELL_WIDTH,
+    cellHeight: FIELD_DIMENSIONS.BASE_CELL_HEIGHT,
+    mirrorColumns: halfConfig.display.mirrorColumns
   };
+};
+
+/**
+ * Create a field context by zone number
+ */
+export const createFieldContextByZone = (zone: number): FieldContext => {
+  const halfConfig = FIELD_CONFIG.getHalfByZone(zone);
+  return createFieldContext(halfConfig.id);
 };
 
 /**
@@ -39,16 +52,17 @@ export const createFieldContext = (isAi: boolean): FieldContext => {
  * Uses centered coordinate system
  */
 export const calculateCellCenter = (context: FieldContext, row: number, col: number): Coordinates => {
-  const { isAi, rows, cols, cellWidth, cellHeight } = context;
+  const { rows, cols, cellWidth, cellHeight, mirrorColumns } = context;
   
-  // Reverse column positions for AI to create vertical mirror image
-  const adjustedCol = isAi ? cols - 1 - col : col;
+  // Reverse column positions if mirroring is enabled
+  const adjustedCol = mirrorColumns ? cols - 1 - col : col;
   
   // Calculate x coordinate (centered horizontally)
   const x = -cols * cellWidth / 2 + adjustedCol * cellWidth + cellWidth / 2;
   
-  // Calculate y coordinate (AI in upper half, player in lower half)
-  const y = isAi 
+  // Calculate y coordinate based on half position
+  const isTopHalf = context.halfId === 'top';
+  const y = isTopHalf 
     ? -rows * cellHeight / 2 + row * cellHeight + cellHeight / 2
     : row * cellHeight + cellHeight / 2 - rows * cellHeight / 2;
   
@@ -60,11 +74,9 @@ export const calculateCellCenter = (context: FieldContext, row: number, col: num
  * Uses absolute positioning within the field container
  */
 export const calculateCellPosition = (context: FieldContext, row: number, col: number): Coordinates => {
-  const { isAi, cellWidth, cellHeight } = context;
+  const { cellWidth, cellHeight } = context;
   
   // Calculate absolute positions
-  // Cards start at the clicked column and span 2 columns
-  // AI and player use the same column positioning
   const x = col * cellWidth;
   const y = row * cellHeight;
   

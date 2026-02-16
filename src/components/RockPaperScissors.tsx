@@ -494,13 +494,13 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                   }}
                   transition={{ duration: 0.5, repeat: winner === 'ai' ? Infinity : 0 }}
                 >
-                  <div className={`inline-block backdrop-blur-sm border-4 rounded-2xl px-8 py-6 shadow-2xl ${
+                  <div className={`backdrop-blur-sm border-4 rounded-2xl px-8 py-6 shadow-2xl min-w-[200px] flex flex-col items-center ${
                     winner === 'ai' 
                       ? 'bg-gradient-to-br from-red-600/50 to-red-900/50 border-red-400' 
                       : 'bg-gradient-to-br from-red-600/20 to-red-900/20 border-red-500/30'
                   }`}>
                     <div className="text-xl text-red-300 mb-3 font-bold uppercase tracking-widest">Opponent</div>
-                    <div className="mb-3">
+                    <div className="mb-3 flex justify-center items-center">
                       {aiChoice && (
                         <img 
                           src={getChoiceEmoji(aiChoice)} 
@@ -509,7 +509,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                         />
                       )}
                     </div>
-                    <div className="text-red-200 text-lg font-bold">
+                    <div className="text-red-200 text-lg font-bold text-center">
                       {aiChoice ? getChoiceName(aiChoice) : ''}
                     </div>
                   </div>
@@ -525,13 +525,13 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                   }}
                   transition={{ duration: 0.5, repeat: winner === 'player' ? Infinity : 0 }}
                 >
-                  <div className={`inline-block backdrop-blur-sm border-4 rounded-2xl px-8 py-6 shadow-2xl ${
+                  <div className={`backdrop-blur-sm border-4 rounded-2xl px-8 py-6 shadow-2xl min-w-[200px] flex flex-col items-center ${
                     winner === 'player' 
                       ? 'bg-gradient-to-br from-blue-600/50 to-blue-900/50 border-blue-400' 
                       : 'bg-gradient-to-br from-blue-600/20 to-blue-900/20 border-blue-500/30'
                   }`}>
                     <div className="text-xl text-blue-300 mb-3 font-bold uppercase tracking-widest">You</div>
-                    <div className="mb-3">
+                    <div className="mb-3 flex justify-center items-center">
                       {playerChoice && (
                         <img 
                           src={getChoiceEmoji(playerChoice)} 
@@ -540,7 +540,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                         />
                       )}
                     </div>
-                    <div className="text-blue-200 text-lg font-bold">
+                    <div className="text-blue-200 text-lg font-bold text-center">
                       {playerChoice ? getChoiceName(playerChoice) : ''}
                     </div>
                   </div>

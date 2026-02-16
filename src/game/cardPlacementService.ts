@@ -56,10 +56,25 @@ export class CardPlacementService {
   ): PlacementValidationResult {
     const result = RuleValidator.canPlaceCard(card, fieldSlots, zone, startCol, isFirstTurn);
     
+    // Use the same result for both valid and canHighlight to ensure consistency
+    const canHighlight = result.valid;
+    
+    console.log('🎯 CardPlacementService.validatePlacement:', {
+      card: card.nickname,
+      zone,
+      startCol,
+      isFirstTurn,
+      result: {
+        valid: result.valid,
+        reason: result.reason,
+        canHighlight
+      }
+    });
+    
     return {
       valid: result.valid,
       reason: result.reason,
-      canHighlight: this.canHighlight(card, fieldSlots, zone, startCol, isFirstTurn)
+      canHighlight
     };
   }
 
@@ -82,7 +97,20 @@ export class CardPlacementService {
   ): boolean {
     // Validate placement directly using RuleValidator
     const result = RuleValidator.canPlaceCard(card, fieldSlots, zone, startCol, isFirstTurn);
-    return result.valid;
+    const canHighlight = result.valid;
+    
+    console.log('🔍 CardPlacementService.canHighlight:', {
+      card: card.nickname,
+      zone,
+      startCol,
+      isFirstTurn,
+      result: {
+        valid: result.valid,
+        canHighlight
+      }
+    });
+    
+    return canHighlight;
   }
 
   /**
@@ -90,7 +118,7 @@ export class CardPlacementService {
    * Handles special case for column 7 (last column)
    * 
    * @param clickedColumn - The column that was clicked (0-7)
-   * @returns The actual start column for placement (0-6)
+   * @returns The actual start column for placement (0-6, cards span 2 columns)
    */
   static getStartColumn(clickedColumn: number): number {
     // Column 7 (last column) should map to column 6 for placement

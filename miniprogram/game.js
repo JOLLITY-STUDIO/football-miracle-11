@@ -138,7 +138,7 @@ class MenuScene {
       }
     })
     
-    if (gameState.turnPhase === 'playerAction' && gameState.currentTurn === 'player') {
+    if (gameState.turnPhase === 'athleteAction' && gameState.currentTurn === 'player') {
       const handY = this.game.height - 170
       const cardWidth = 80
       const cardHeight = 50
@@ -735,7 +735,7 @@ class GameScene {
         ctx.textAlign = 'center'
         ctx.fillText(btn.text, btn.x + btn.width / 2, btn.y + btn.height / 2 + 7)
       })
-    } else if (gameState.turnPhase === 'playerAction' && gameState.currentTurn === 'player') {
+    } else if (gameState.turnPhase === 'athleteAction' && gameState.currentTurn === 'player') {
       this.buttons.slice(2).forEach(btn => {
         ctx.fillStyle = '#6366f1'
         ctx.fillRect(btn.x, btn.y, btn.width, btn.height)
@@ -750,7 +750,7 @@ class GameScene {
 
   teamAction(action) {
     const newState = gameLogic.performTeamAction(this.game.gameState, action)
-    newState.turnPhase = 'playerAction'
+    newState.turnPhase = 'athleteAction'
     this.game.gameState = newState
   }
 

@@ -8,6 +8,7 @@ import { startDraftRound, pickDraftCard, aiPickDraftCard, discardDraftCard } fro
 import { performTeamAction } from '../utils/teamActions';
 import { placeCard } from '../utils/cardPlacement';
 import { performShot } from '../utils/shotActions';
+import { shuffleArray } from '../data/teams';
 import { useSynergy } from '../utils/synergyActions';
 import { performSubstitution } from '../utils/substitution';
 import { performImmediateEffect } from '../utils/immediateEffects';
@@ -265,8 +266,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               type: 'duel',
               phase: 'Duel',
               step: 'Reveal Attacker',
-              attacker: attacker.card.name,
-              message: `Attacker revealed: ${attacker.card.name}`
+              attacker: attacker.card.nickname,
+              message: `Attacker revealed: ${attacker.card.nickname}`
             });
             break;
           case 'reveal_defender':
@@ -274,8 +275,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               type: 'duel',
               phase: 'Duel',
               step: 'Reveal Defender',
-              defender: defender?.card.name || 'Empty',
-              message: `Defender revealed: ${defender?.card.name || 'Empty'}`
+              defender: defender?.card.nickname || 'Empty',
+              message: `Defender revealed: ${defender?.card.nickname || 'Empty'}`
             });
             break;
           case 'defender_synergy_selection':
@@ -376,7 +377,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (card) {
         newState.matchLogs = addLog(newState, {
           type: 'action',
-          message: `Player picked: ${card.name}`
+          message: `Player picked: ${card.nickname}`
         });
       }
       return newState;
@@ -405,7 +406,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         ...state, 
         phase: 'firstHalf' as GamePhase, 
         turnPhase: 'teamAction' as TurnPhase, 
-        turnCount: state.isHomeTeam ? 1 : 2, // 涓婚槦浠庣1鍥炲悎寮€濮嬶紝瀹㈤槦浠庣2鍥炲悎寮€濮?        isFirstTurn: true,
+        turnCount: 1, // Always start at turn 1 for the first turn of the match
+        isFirstTurn: true,
         skipTeamAction: false,
         isFirstMatchTurn: true,
         currentAction: 'none' as PlayerActionType,
@@ -419,7 +421,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       const initialPhase = TurnPhaseService.getInitialPhase(newState);
       newState.turnPhase = initialPhase;
       // Update message based on initial phase
-      if (initialPhase === 'playerAction') {
+      if (initialPhase === 'athleteAction') {
         newState.message = newState.isHomeTeam ? 'Your turn! Place a card.' : 'AI is thinking...';
       } else {
         newState.message = newState.isHomeTeam ? 'Your turn! Team action phase.' : 'AI is thinking...';
@@ -441,7 +443,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         let newState = performTeamAction(state, action.action);
         const actor = state.currentTurn === 'player' ? 'You' : 'AI';
         const actionName = action.action === 'pass' ? 'Pass' : 'Press';
-        newState.turnPhase = 'playerAction';
+        newState.turnPhase = 'athleteAction';
         newState.matchLogs = addLog(newState, {
           type: 'action',
           message: `${actor} executed ${actionName}`
@@ -462,12 +464,12 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newState.currentAction = 'organizeAttack';
       newState.matchLogs = addLog(newState, {
         type: 'action',
-        message: `${actor} placed ${action.card.name} at line ${action.zone}`
+        message: `${actor} placed ${action.card.nickname} at line ${action.zone}`
       });
 
       if (action.card.immediateEffect !== 'none') {
         newState.pendingImmediateEffect = { card: action.card, zone: action.zone, slot: slotPosition };
-        newState.message = `Triggering ${action.card.name}'s effect...`;
+        newState.message = `Triggering ${action.card.nickname}'s effect...`;
       } else {
         newState.message = 'Organize your attack or end turn';
       }
@@ -476,7 +478,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'USE_SYNERGY': {
-      if (state.turnPhase !== 'playerAction') return state;
+      if (state.turnPhase !== 'athleteAction') return state;
       let newState = useSynergy(state, action.synergyCard, action.targetCard);
       if (newState.selectedSynergyCards.length > 0) {
         newState.matchLogs = addLog(newState, {
@@ -488,7 +490,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'PERFORM_SHOT': {
-      if (state.turnPhase !== 'playerAction') return state;
+      if (state.turnPhase !== 'athleteAction') return state;
       if (!action.card) return state;
       
       let newState = performShot(state, action.card, action.slot, action.zone);
@@ -498,7 +500,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         const iconText = usedIconCount === 1 ? 'icon' : 'icons';
         newState.matchLogs = addLog(newState, {
           type: 'action',
-          message: `${state.currentTurn === 'player' ? 'You' : 'AI'} attempted a shot with ${action.card.name} (Used ${usedIconCount} shot ${iconText})`
+          message: `${state.currentTurn === 'player' ? 'You' : 'AI'} attempted a shot with ${action.card.nickname} (Used ${usedIconCount} shot ${iconText})`
         });
       }
       
@@ -506,7 +508,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'PERFORM_SUBSTITUTION': {
-      if (state.turnPhase !== 'playerAction') return state;
+      if (state.turnPhase !== 'athleteAction') return state;
       let newState = performSubstitution(state, action.incomingCard, action.outgoingCard, action.zone, action.slot);
       newState.matchLogs = addLog(newState, {
         type: 'action',
@@ -516,17 +518,17 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'PERFORM_IMMEDIATE_EFFECT': {
-      if (state.turnPhase !== 'playerAction') return state;
+      if (state.turnPhase !== 'athleteAction') return state;
       let newState = performImmediateEffect(state, action.card, action.zone, action.slot);
       newState.matchLogs = addLog(newState, {
         type: 'skill',
-        message: `Immediate effect triggered: ${action.card.name}`
+        message: `Immediate effect triggered: ${action.card.nickname}`
       });
       return newState;
     }
     
     case 'PERFORM_PENALTY': {
-      if (state.turnPhase !== 'playerAction') return state;
+      if (state.turnPhase !== 'athleteAction') return state;
       let newState = performPenalty(state, action.zone, action.slot);
       newState.matchLogs = addLog(newState, {
         type: 'action',
@@ -558,7 +560,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         phase: 'firstHalf' as GamePhase, 
         turnCount: 1, 
         isFirstTurn: true,
-        turnPhase: 'playerAction' as TurnPhase, // Skip team action phase for first turn
+        turnPhase: 'athleteAction' as TurnPhase, // Skip team action phase for first turn
         matchLogs: addLog(state, {
           type: 'system',
           message: 'Setup complete - Match ready to begin'
@@ -573,7 +575,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (card) {
         newState.matchLogs = addLog(newState, {
           type: 'action',
-          message: `AI picked: ${card.name}`
+          message: `AI picked: ${card.nickname}`
         });
       }
       return newState;
@@ -645,16 +647,34 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'CANCEL_SUBSTITUTION':
       return { ...state, substitutionMode: null, message: 'Substitution cancelled' };
     
-    case 'START_SECOND_HALF':
-      return { ...state, phase: 'secondHalf', isFirstTurn: true, skipTeamAction: true, isFirstMatchTurn: true, message: 'Second half started!' };
+    case 'START_SECOND_HALF': {
+      // 重新洗牌协同卡牌库 - 将所有协同卡回到牌库重新洗牌
+      const allSynergyCards = [...state.synergyDeck, ...state.synergyDiscard, ...state.playerSynergyHand];
+      const shuffledDeck = shuffleArray([...allSynergyCards]);
+      
+      return { 
+        ...state, 
+        phase: 'secondHalf', 
+        isFirstTurn: true, 
+        skipTeamAction: false, 
+        isFirstMatchTurn: true,
+        controlPosition: 50,              // 控制权回到50%中间位置
+        synergyDeck: shuffledDeck,        // 重新洗牌的协同卡牌库
+        synergyDiscard: [],               // 清空弃牌堆
+        playerSynergyHand: [],            // 清空玩家协同卡手牌
+        turnCount: state.turnCount,       // 保持回合计数继续累加
+        message: 'Second half started!' 
+      };
+    }
     
     case 'TRIGGER_EFFECT': {
       if (!state.pendingImmediateEffect) return state;
-      let newState = performImmediateEffect(state, state.pendingImmediateEffect.card, state.pendingImmediateEffect.zone, state.pendingImmediateEffect.slot);
+      const card = state.pendingImmediateEffect.card;
+      let newState = performImmediateEffect(state, card, state.pendingImmediateEffect.zone, state.pendingImmediateEffect.slot);
       newState.pendingImmediateEffect = null;
       newState.matchLogs = addLog(newState, {
         type: 'skill',
-        message: `Immediate effect triggered: ${state.pendingImmediateEffect.card.name}`
+        message: `Immediate effect triggered: ${card.nickname}`
       });
       return newState;
     }

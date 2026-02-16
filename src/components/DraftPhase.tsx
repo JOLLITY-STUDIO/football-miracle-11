@@ -173,7 +173,7 @@ const StarCardPreview: React.FC<{ cards: typeof starathleteCards }> = ({ cards }
                 className="bg-gray-800 rounded-xl p-4 border border-gray-600"
               >
                   <div className="text-center">
-                  <div className="text-yellow-400 text-lg font-bold mb-2">{card.name}</div>
+                  <div className="text-yellow-400 text-lg font-bold mb-2">{card.nickname}</div>
                   <div className="text-white text-sm mb-2">{card.realName}</div>
                   <div className="text-gray-400 text-xs mb-3">{card.positionLabel}</div>
                   <div className="flex flex-wrap gap-1 justify-center">
@@ -285,7 +285,7 @@ const StarCardDraw: React.FC<{ drawnCards: typeof starathleteCards }> = ({ drawn
               >
                 <div className="bg-gray-800 rounded-xl p-6 border-2 border-yellow-500 shadow-2xl">
                   <div className="text-center">
-                    <div className="text-yellow-400 text-xl font-bold mb-2">{card.name}</div>
+                    <div className="text-yellow-400 text-xl font-bold mb-2">{card.nickname}</div>
                     <div className="text-white text-sm mb-2">{card.realName}</div>
                     <div className="text-gray-400 text-xs mb-3">{card.positionLabel}</div>
                     <div className="flex flex-wrap gap-2 justify-center">

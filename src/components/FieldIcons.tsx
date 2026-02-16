@@ -1,6 +1,8 @@
 import React from 'react';
 import { FIELD_CONFIG } from '../config/fieldDimensions';
 import type { FieldZone } from '../types/game';
+import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
+import type { TacticalIcon } from '../data/cards';
 
 const { COLS, BASE_CELL_WIDTH, BASE_CELL_HEIGHT } = FIELD_CONFIG;
 const CELL_WIDTH = BASE_CELL_WIDTH;
@@ -11,12 +13,98 @@ interface FieldIconsProps {
   aiField?: FieldZone[];
   isRotated?: boolean;
   activePositions?: { zone: number; position: number }[]; // 激活的位置数组
+  onCompleteIconsCalculated?: (passCount: number, pressCount: number) => void;
 }
+
+// Calculate complete tactical icons based on player field
+const calculateCompleteIcons = (field: FieldZone[]): { passCount: number; pressCount: number } => {
+  let passCount = 0;
+  let pressCount = 0;
+  
+  // Logic to detect complete tactical formations
+  // This checks for semicircular icon combinations that form complete icons
+  field.forEach((zone, zoneIndex) => {
+    zone.slots.forEach((slot, slotIndex) => {
+      if (slot.athleteCard) {
+        const card = slot.athleteCard;
+        
+        // Check for pass icons with proper semicircular combinations
+        if (card.icons.includes('pass')) {
+          // Check adjacent slots for complementary semicircular pass icons
+          const adjacentSlots = getAdjacentSlots(field, zoneIndex, slotIndex);
+          
+          // Check if any adjacent card has pass icons in complementary slots
+          const hasComplementaryPass = adjacentSlots.some((adjSlot, adjIndex) => {
+            if (!adjSlot.athleteCard) return false;
+            
+            // Check if adjacent card has pass icons
+            if (!adjSlot.athleteCard.icons.includes('pass')) return false;
+            
+            // For simplicity, we'll consider any adjacent pass icon as forming a complete icon
+            // In a more detailed implementation, we would check specific slot positions
+            return true;
+          });
+          
+          if (hasComplementaryPass) {
+            passCount++;
+          }
+        }
+        
+        // Check for press icons with proper semicircular combinations
+        if (card.icons.includes('press')) {
+          // Check adjacent slots for complementary semicircular press icons
+          const adjacentSlots = getAdjacentSlots(field, zoneIndex, slotIndex);
+          
+          // Check if any adjacent card has press icons in complementary slots
+          const hasComplementaryPress = adjacentSlots.some((adjSlot, adjIndex) => {
+            if (!adjSlot.athleteCard) return false;
+            
+            // Check if adjacent card has press icons
+            if (!adjSlot.athleteCard.icons.includes('press')) return false;
+            
+            // For simplicity, we'll consider any adjacent press icon as forming a complete icon
+            // In a more detailed implementation, we would check specific slot positions
+            return true;
+          });
+          
+          if (hasComplementaryPress) {
+            pressCount++;
+          }
+        }
+      }
+    });
+  });
+  
+  return { passCount, pressCount };
+};
+
+// Get adjacent slots for a given zone and slot index
+const getAdjacentSlots = (field: FieldZone[], zoneIndex: number, slotIndex: number) => {
+  const adjacent = [];
+  
+  // Check same zone, adjacent slots
+  if (slotIndex > 0) {
+    adjacent.push(field[zoneIndex].slots[slotIndex - 1]);
+  }
+  if (slotIndex < field[zoneIndex].slots.length - 1) {
+    adjacent.push(field[zoneIndex].slots[slotIndex + 1]);
+  }
+  
+  // Check adjacent zones, same slot
+  if (zoneIndex > 0) {
+    adjacent.push(field[zoneIndex - 1].slots[slotIndex]);
+  }
+  if (zoneIndex < field.length - 1) {
+    adjacent.push(field[zoneIndex + 1].slots[slotIndex]);
+  }
+  
+  return adjacent;
+};
 
 // 检查位置是否被激活
 const isPositionActive = (zone: number, position: number, isPlayer: boolean, activePositions?: { zone: number; position: number }[]): boolean => {
   if (!activePositions || activePositions.length === 0) return false;
-  return activePositions.some(pos => pos.zone === zone && pos.position === position && pos.zone >= 4 === isPlayer);
+  return activePositions.some(pos => pos.zone === zone && pos.position === position);
 };
 
 // 获取激活图标的样式
@@ -65,7 +153,6 @@ const createIconStyle = (zone: number, position: number, isPlayer: boolean, acti
         height: activeStyle.height,
         opacity: activeStyle.opacity,
         filter: activeStyle.filter,
-        transform: activeStyle.transform,
         zIndex: activeStyle.zIndex
       })
     )
@@ -76,15 +163,55 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
   playerField = [], 
   aiField = [], 
   isRotated = false,
-  activePositions = []
+  activePositions = [],
+  onCompleteIconsCalculated
 }) => {
+  // Calculate complete icons when component renders
+  React.useEffect(() => {
+    if (onCompleteIconsCalculated && playerField.length > 0) {
+      const matcher = new TacticalIconMatcher(playerField);
+      const iconCounts = matcher.getIconCounts();
+      onCompleteIconsCalculated(iconCounts.pass, iconCounts.press);
+    }
+  }, [playerField, onCompleteIconsCalculated]);
+
+  // Calculate complete icons for display
+  const getCompleteIcons = (field: FieldZone[]): Array<{ type: TacticalIcon; centerX: number; centerY: number }> => {
+    if (!field || field.length === 0) return [];
+    
+    const matcher = new TacticalIconMatcher(field);
+    return matcher.getCompleteIcons().map(icon => ({
+      type: icon.type,
+      centerX: icon.centerX,
+      centerY: icon.centerY
+    }));
+  };
+
+  // Get complete icons for both fields
+  const playerCompleteIcons = getCompleteIcons(playerField);
+  const aiCompleteIcons = getCompleteIcons(aiField);
+
+  // Determine which zones belong to which field
+  const playerZones = playerField.map(z => z.zone);
+  const aiZones = aiField.map(z => z.zone);
+  const isPlayerTopHalf = playerZones.some(z => z < 4);
+  
+  // Debug: log zone information
+  console.log('🎯 FieldIcons Zone Info:', {
+    playerZones,
+    aiZones,
+    isPlayerTopHalf,
+    playerFieldLength: playerField.length,
+    aiFieldLength: aiField.length
+  });
+
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none"
       style={{ zIndex: 1 }}
     >
-      {/* AI半场图标 (zones 0-3) */}
-      {/* AI defense icons (top row, zones 0) - 半圆激活区域 */}
+      {/* AI半场图标 */}
+      {/* AI defense icons (top row) - 半圆激活区域 */}
       {Array.from({ length: COLS }).map((_, colIdx) => {
         // 创建半圆激活区域 - 从左到右
         const isInActiveZone = (colIdx > 0 && colIdx < 7);
@@ -111,7 +238,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
                     objectFit: 'contain',
                     filter: getActiveIconStyle(0, colIdx, false, activePositions).filter,
                     opacity: getActiveIconStyle(0, colIdx, false, activePositions).opacity,
-                    transform: getActiveIconStyle(0, colIdx, false, activePositions).transform,
+                    transform: 'rotate(180deg)',
                     transition: 'all 0.3s ease'
                   }}
                 />
@@ -121,7 +248,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
         );
       })}
       
-      {/* AI attack icons (bottom of AI half, zones 3) - 半圆激活区域 */}
+      {/* AI attack icons (bottom of AI half) - 半圆激活区域 */}
       {Array.from({ length: COLS }).map((_, colIdx) => {
         // 创建半圆激活区域 - 从左到右
         const isInActiveZone = (colIdx > 0 && colIdx < 7);
@@ -148,7 +275,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
                     objectFit: 'contain',
                     filter: getActiveIconStyle(3, colIdx, false, activePositions).filter,
                     opacity: getActiveIconStyle(3, colIdx, false, activePositions).opacity,
-                    transform: getActiveIconStyle(3, colIdx, false, activePositions).transform,
+                    transform: 'rotate(180deg)',
                     transition: 'all 0.3s ease'
                   }}
                 />
@@ -158,8 +285,8 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
         );
       })}
       
-      {/* 玩家半场图标 (zones 4-7) */}
-      {/* Player attack icons (top of player half, zones 4) - 半圆激活区域 */}
+      {/* 玩家半场图标 */}
+      {/* Player attack icons (top of player half) - 半圆激活区域 */}
       {Array.from({ length: COLS }).map((_, colIdx) => {
         // 创建半圆激活区域 - 从左到右
         const isInActiveZone = (colIdx > 0 && colIdx < 7);
@@ -196,7 +323,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
         );
       })}
       
-      {/* Player defense icons (bottom of player half, zones 7) - 半圆激活区域 */}
+      {/* Player defense icons (bottom of player half) - 半圆激活区域 */}
       {Array.from({ length: COLS }).map((_, colIdx) => {
         // 创建半圆激活区域 - 从左到右
         const isInActiveZone = (colIdx > 0 && colIdx < 7);
@@ -225,6 +352,53 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
                     opacity: getActiveIconStyle(7, colIdx, true, activePositions).opacity,
                     transform: getActiveIconStyle(7, colIdx, true, activePositions).transform,
                     transition: 'all 0.3s ease'
+                  }}
+                />
+              </div>
+            </foreignObject>
+          </g>
+        );
+      })}
+
+      {/* 拼合成功的完整图标 */}
+      {[...playerCompleteIcons, ...aiCompleteIcons].map((icon, index) => {
+        const iconMap: Record<TacticalIcon, string> = {
+          attack: '/icons/attack_ball.svg',
+          defense: '/icons/defense_shield.svg',
+          pass: '/icons/synergy_plus.svg',
+          press: '/icons/press_up.svg',
+          breakthrough: '/icons/attack_ball.svg',
+          breakthroughAll: '/icons/attack_ball.svg'
+        };
+
+        const iconUrl = iconMap[icon.type] || '/icons/attack_ball.svg';
+        
+        return (
+          <g key={`complete-icon-${index}`}>
+            <foreignObject
+              x={icon.centerX - 32}
+              y={icon.centerY - 32}
+              width={64}
+              height={64}
+            >
+              <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10
+              }}>
+                <img
+                  src={iconUrl}
+                  alt={`Complete ${icon.type} icon`}
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.9)) drop-shadow(0 0 20px rgba(255,255,255,0.9))',
+                    animation: 'pulse 2s infinite',
+                    zIndex: 10
                   }}
                 />
               </div>

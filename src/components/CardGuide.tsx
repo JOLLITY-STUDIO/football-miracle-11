@@ -261,7 +261,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                 {penaltyCards.map((card, i) => (
                   <div key={card.id} className="bg-stone-700/50 rounded-lg p-4 text-center">
                     <div className="text-4xl mb-2"></div>
-                    <div className="font-bold text-yellow-400">{card.name}</div>
+                    <div className="font-bold text-yellow-400">{card.nickname}</div>
                     <div className="text-sm text-stone-400">+{card.points} pts</div>
                     <span className="text-xs text-stone-500">#{i + 1}</span>
                   </div>
@@ -477,7 +477,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                     </div>
 
                     <div className="border-l-4 border-red-500 pl-4 bg-stone-700/20 p-2 rounded-r">
-                      <h4 className="font-bold text-red-400 mb-2">阶段2：球员行动 (Player Action)</h4>
+                      <h4 className="font-bold text-red-400 mb-2">阶段2：球员行动 (Athlete Action)</h4>
                       <p className="text-sm mb-2">必须选择一项执行：</p>
                       
                       <div className="space-y-3 mt-2">

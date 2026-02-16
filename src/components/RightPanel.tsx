@@ -375,12 +375,12 @@ export const RightPanel: React.FC<Props> = ({
                     <div className="w-16 h-16 flex-shrink-0">
                       <img 
                         src={card.imageUrl} 
-                        alt={card.name} 
+                        alt={card.nickname} 
                         className="w-full h-full object-contain"
                       />
                     </div>
                     <div className="flex-1">
-                      <div className="text-white font-bold">{card.name}</div>
+                      <div className="text-white font-bold">{card.nickname}</div>
                       <div className="text-white/60 text-sm">Type: {card.type}</div>
                       <div className="text-white/60 text-sm">Stars: {card.stars}</div>
                     </div>

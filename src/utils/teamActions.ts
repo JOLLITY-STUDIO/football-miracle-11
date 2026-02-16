@@ -93,6 +93,6 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
     aiSynergyHand: newAiSynergyHand,
     message,
     isStoppageTime,
-    turnPhase: 'playerAction'
+    turnPhase: 'athleteAction'
   };
 };

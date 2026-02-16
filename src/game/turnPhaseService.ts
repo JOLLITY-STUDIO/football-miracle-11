@@ -7,7 +7,7 @@
  * Turn Phases:
  * - 'start': Match start, initial setup
  * - 'teamAction': Team action phase (pass, press)
- * - 'playerAction': Player action phase (place cards, shoot)
+ * - 'athleteAction': Athlete action phase (place cards, shoot)
  * - 'shooting': Shooting phase (duel resolution)
  * - 'end': End turn phase
  * 
@@ -39,11 +39,11 @@ export const TURN_PHASE_CONFIG = {
     allowPlaceCard: false,
     allowTeamAction: true,
     allowShooting: false,
-    autoTransition: 'playerAction',
+    autoTransition: 'athleteAction',
   },
-  playerAction: {
-    name: 'Player Action',
-    description: 'Player action phase (place cards, shoot)',
+  athleteAction: {
+    name: 'Athlete Action',
+    description: 'Athlete action phase (place cards, shoot)',
     allowPlaceCard: true,
     allowTeamAction: false,
     allowShooting: true,
@@ -108,9 +108,9 @@ export class TurnPhaseService {
       return phaseConfig.autoTransition;
     }
     
-    // Special case: teamAction automatically transitions to playerAction
+    // Special case: teamAction automatically transitions to athleteAction
     if (currentPhase === 'teamAction') {
-      return 'playerAction';
+      return 'athleteAction';
     }
     
     return null;
@@ -123,8 +123,8 @@ export class TurnPhaseService {
    * @returns True if team action should be skipped
    */
   static shouldSkipTeamAction(state: GameState): boolean {
-    // Skip team action on first turn if no pass/press icons
-    if (state.isFirstTurn) {
+    // Skip team action on first 2 turns if no pass/press icons
+    if (state.turnCount <= 2) {
       const field = state.currentTurn === 'player' ? state.playerField : state.aiField;
       let hasPassOrPressIcons = false;
       
@@ -156,7 +156,7 @@ export class TurnPhaseService {
   static getInitialPhase(state: GameState): TurnPhase {
     // Check if team action should be skipped
     if (this.shouldSkipTeamAction(state)) {
-      return 'playerAction';
+      return 'athleteAction';
     }
     
     return 'teamAction';

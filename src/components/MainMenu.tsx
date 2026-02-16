@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGameAudio } from '../hooks/useGameAudio';
 
 interface Props {
   onStartGame3D: () => void;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCardGuide, onViewDemos, onStartTutorial }) => {
+  const { playSound } = useGameAudio();
   const [floatingIcons, setFloatingIcons] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
   const [showUpdates, setShowUpdates] = useState(false);
 
@@ -124,7 +126,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
         transition={{ delay: 0.8, duration: 0.8 }}
       >
         <motion.button
-          onClick={onStartGame3D}
+          onClick={() => { playSound('click'); onStartGame3D(); }}
           className="group relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:via-pink-500 hover:to-indigo-600 text-white text-lg py-4 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-purple-500/50"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -151,7 +153,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
         transition={{ delay: 1.2, duration: 0.8 }}
       >
         <motion.button 
-          onClick={onViewDemos}
+          onClick={() => { playSound('click'); onViewDemos(); }}
           className="flex flex-col items-center text-white/80 hover:text-white transition-all duration-300 group"
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
@@ -168,7 +170,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
           <span className="text-sm font-medium">My Cards</span>
         </motion.button>
         <motion.button 
-          onClick={onViewRecords}
+          onClick={() => { playSound('click'); onViewRecords(); }}
           className="flex flex-col items-center text-white/80 hover:text-white transition-all duration-300 group"
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
@@ -177,7 +179,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
           <span className="text-sm font-medium">Match History</span>
         </motion.button>
         <motion.button 
-          onClick={onCardGuide}
+          onClick={() => { playSound('click'); onCardGuide(); }}
           className="flex flex-col items-center text-white/80 hover:text-white transition-all duration-300 group"
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
@@ -186,7 +188,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
           <span className="text-sm font-medium">How to Play</span>
         </motion.button>
         <motion.button 
-          onClick={onStartTutorial}
+          onClick={() => { if (onStartTutorial) { playSound('click'); onStartTutorial(); } }}
           className="flex flex-col items-center text-white/80 hover:text-white transition-all duration-300 group"
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
@@ -212,7 +214,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
         {/* Updates Section */}
         <div className="mt-4">
           <motion.button
-            onClick={() => setShowUpdates(!showUpdates)}
+            onClick={() => { playSound('click'); setShowUpdates(!showUpdates); }}
             className="text-xs text-white/60 hover:text-white transition-colors underline"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

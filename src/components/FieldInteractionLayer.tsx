@@ -22,12 +22,16 @@ import { logger } from '../utils/logger';
  * - All user interactions go through this layer
  */
 
+import { FIELD_CONFIG } from '../config/fieldConfig';
+import { FIELD_CONFIG as FIELD_DIMENSIONS } from '../config/fieldDimensions';
+
 interface FieldInteractionLayerProps {
-  isAi: boolean;
+  halfId: 'top' | 'bottom';
   zone: number;
   colIdx: number;
   selectedCard: athleteCard | null;
   playerField: any[];
+  aiField: any[];
   canPlaceCards: boolean;
   isFirstTurn: boolean;
   onSlotClick: (zone: number, startCol: number) => void;
@@ -36,54 +40,151 @@ interface FieldInteractionLayerProps {
 }
 
 export const FieldInteractionLayer: React.FC<FieldInteractionLayerProps> = ({
-  isAi,
+  halfId,
   zone,
   colIdx,
   selectedCard,
   playerField,
+  aiField,
   canPlaceCards,
   isFirstTurn,
   onSlotClick,
   onCellMouseEnter,
   onCellMouseLeave,
 }) => {
-  const CELL_WIDTH = 99;
-  const CELL_HEIGHT = 130;
+  // 使用与球场配置一致的单元格尺寸
+  const CELL_WIDTH = FIELD_DIMENSIONS.BASE_CELL_WIDTH;
+  const CELL_HEIGHT = FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
 
-  // Calculate row position
-  const row = isAi ? zone : zone - 4;
+  // Get field half config
+  const halfConfig = FIELD_CONFIG.halves[halfId];
+
+  // Calculate row position relative to this half
+  const row = zone - halfConfig.startZone;
 
   // Get actual start column for placement
   const startColForPlacement = CardPlacementService.getStartColumn(colIdx);
 
+  // Determine which field to use based on halfId
+  // Bottom half (zones 4-7) uses playerField
+  // Top half (zones 0-3) uses aiField
+  const targetField = halfId === 'bottom' ? playerField : aiField;
+
   // Check if this cell is occupied (simple and direct check)
-  const currentZone = playerField.find((z: any) => z.zone === zone);
+  const currentZone = targetField.find((z: any) => z.zone === zone);
   const isOccupied = currentZone?.slots.some((slot: any) => 
     slot.position === colIdx && slot.athleteCard !== null
   ) || false;
   
+  // Debug logging before validation
+  console.log('🔍 FieldInteractionLayer Pre-Validation:', {
+    zone,
+    colIdx,
+    halfId,
+    isOccupied,
+    selectedCard: selectedCard?.nickname,
+    canPlaceCards: {
+      value: canPlaceCards,
+      type: typeof canPlaceCards,
+      isNotFalse: (canPlaceCards !== false)
+    },
+    startColForPlacement,
+    halfConfigInteractive: halfConfig.interaction.interactive,
+    hasSelectedCard: !!selectedCard,
+    validationConditions: {
+      hasSelectedCard: !!selectedCard,
+      canPlaceCards: (canPlaceCards !== false),
+      isInteractive: halfConfig.interaction.interactive,
+      notOccupied: !isOccupied,
+      allConditions: !!selectedCard && (canPlaceCards !== false) && halfConfig.interaction.interactive && !isOccupied
+    }
+  });
+
   // Validate placement (only if not occupied and not the second column of a card)
-  const validationResult = selectedCard && !isAi && canPlaceCards && !isOccupied
-    ? CardPlacementService.validatePlacement(
-        selectedCard,
-        playerField,
-        zone,
-        startColForPlacement,
-        isFirstTurn
-      )
-    : { valid: false, canHighlight: false };
+  let validationResult;
+  if (selectedCard && (canPlaceCards !== false) && halfConfig.interaction.interactive && !isOccupied) {
+    console.log('🔧 Calling CardPlacementService.validatePlacement with:', {
+      selectedCard: selectedCard.nickname,
+      targetField: targetField.map(z => ({ zone: z.zone, hasCards: z.slots.some((s: any) => s.athleteCard) })),
+      zone,
+      startColForPlacement,
+      isFirstTurn
+    });
+    
+    const result = CardPlacementService.validatePlacement(
+      selectedCard,
+      targetField,
+      zone,
+      startColForPlacement,
+      isFirstTurn
+    );
+    
+    console.log('🔧 CardPlacementService.validatePlacement returned:', result);
+    validationResult = result;
+  } else {
+    validationResult = { valid: false, canHighlight: false };
+    console.log('🔧 Using default validation result:', validationResult);
+  }
+  
+  // Debug: log validation result
+  console.log('🔍 Validation Result:', {
+    zone,
+    colIdx,
+    selectedCard: selectedCard?.nickname,
+    targetFieldZones: targetField.map(z => z.zone),
+    validationResult
+  });
 
   // Determine highlight visibility
-  const isHighlightVisible = validationResult.canHighlight;
+  // 只要验证结果有效且可以高亮，就设置为 true
+  const isHighlightVisible = Boolean(validationResult.canHighlight);
+
+  // Debug logging with more details
+  console.log('🎯 FieldInteractionLayer Debug:', {
+    zone,
+    colIdx,
+    halfId,
+    isOccupied,
+    selectedCard: selectedCard?.nickname,
+    canPlaceCards,
+    validationResult,
+    isHighlightVisible,
+    startColForPlacement,
+    halfConfigInteractive: halfConfig.interaction.interactive,
+    hasSelectedCard: !!selectedCard,
+    targetField: targetField.map(z => ({ zone: z.zone, hasCards: z.slots.some((s: any) => s.athleteCard) }))
+  });
+
+  // Additional debugging for the specific issue
+  console.log('🔍 isHighlightVisible Issue:', {
+    validationResultCanHighlight: validationResult.canHighlight,
+    isHighlightVisibleCalculated: isHighlightVisible,
+    validationResultValid: validationResult.valid,
+    shouldBeHighlighted: validationResult.valid && validationResult.canHighlight,
+    fillColor: isHighlightVisible
+      ? 'rgba(255, 215, 0, 0.6)' // Golden yellow for valid placement
+      : (validationResult.valid
+          ? 'rgba(239, 68, 68, 0.4)' // Red for valid zone but not valid placement
+          : 'transparent'),
+    strokeColor: isHighlightVisible
+      ? 'rgba(255, 215, 0, 0.8)' // Golden stroke for valid placement
+      : (validationResult.valid
+          ? 'rgba(239, 68, 68, 0.6)' // Red stroke for valid zone
+          : 'transparent')
+  });
 
   // Debug logging
   logger.debug('FieldInteractionLayer:', {
     zone,
     colIdx,
+    halfId,
     isOccupied,
-    selectedCard: selectedCard?.name,
+    selectedCard: selectedCard?.nickname,
     canPlaceCards,
-    isHighlightVisible
+    validationResult,
+    isHighlightVisible,
+    startColForPlacement,
+    halfConfigInteractive: halfConfig.interaction.interactive
   });
 
   // Calculate cell position
@@ -119,23 +220,25 @@ export const FieldInteractionLayer: React.FC<FieldInteractionLayerProps> = ({
     console.log('🖱️ FieldInteractionLayer CLICKED:', {
       zone,
       colIdx,
+      halfId,
       startColForPlacement,
       isHighlightVisible,
       isOccupied,
-      selectedCard: selectedCard?.name,
-      canPlaceCards,
+      selectedCard: selectedCard?.nickname,
       validationResult
     });
     
     logger.debug('FieldInteractionLayer Click:', {
       zone,
       colIdx,
+      halfId,
       startColForPlacement,
       isHighlightVisible,
       validationResult,
-      selectedCard: selectedCard?.name
+      selectedCard: selectedCard?.nickname
     });
     
+    // 只要高亮就可以点击，不受其他影响
     if (isHighlightVisible) {
       console.log('✅ Valid click - placing card at zone:', zone, 'col:', startColForPlacement);
       logger.debug('✓ Valid click - placing card at zone:', zone, 'col:', startColForPlacement);
@@ -144,7 +247,6 @@ export const FieldInteractionLayer: React.FC<FieldInteractionLayerProps> = ({
       console.log('❌ Invalid click - cell not available', {
         isOccupied,
         hasSelectedCard: !!selectedCard,
-        canPlaceCards,
         validationResult
       });
       logger.debug('✗ Invalid click - cell not available');
@@ -154,7 +256,7 @@ export const FieldInteractionLayer: React.FC<FieldInteractionLayerProps> = ({
   // Handle mouse enter event - for hover effects
   const handleMouseEnter = () => {
     if (isHighlightVisible) {
-      logger.debug('Mouse enter valid cell:', { zone, colIdx, startColForPlacement });
+      logger.debug('Mouse enter valid cell:', { zone, colIdx, halfId, startColForPlacement });
       onCellMouseEnter(zone, startColForPlacement);
     }
   };
@@ -172,8 +274,8 @@ export const FieldInteractionLayer: React.FC<FieldInteractionLayerProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={onCellMouseLeave}
       style={{
-        cursor: cursorStyle,
-        pointerEvents: isHighlightVisible ? 'auto' : 'none', // Only clickable when highlighted
+        cursor: isHighlightVisible ? 'pointer' : 'default',
+        pointerEvents: 'auto', // Always allow pointer events
         transition: 'all 0.2s ease'
       }}
       className={isHighlightVisible ? 'hover:opacity-80' : ''}

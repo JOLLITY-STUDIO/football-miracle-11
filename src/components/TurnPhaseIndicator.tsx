@@ -22,10 +22,10 @@ export const TurnPhaseIndicator: React.FC<TurnPhaseIndicatorProps> = ({
       skipped: isFirstTurn 
     },
     { 
-      id: 'playerAction', 
-      name: 'Player Action', 
+      id: 'athleteAction', 
+      name: 'Athlete Action', 
       icon: '🎯',
-      shortName: 'Player'
+      shortName: 'Athlete'
     },
     { 
       id: 'end', 

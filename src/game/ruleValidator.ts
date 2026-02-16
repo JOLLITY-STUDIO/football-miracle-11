@@ -48,12 +48,23 @@ export class RuleValidator {
     startCol: number,
     isFirstTurn: boolean
   ): ValidationResult {
+    console.log('🔍 RuleValidator.canPlaceCard called with:', {
+      card: card.nickname,
+      cardType: card.type,
+      zone,
+      startCol,
+      isFirstTurn,
+      fieldSlots: fieldSlots.map(z => ({ zone: z.zone, hasCards: z.slots.some(s => s.athleteCard) }))
+    });
+    
     const targetZone = fieldSlots.find(z => z.zone === zone);
     if (!targetZone) {
+      console.log('❌ Zone not found:', zone);
       return { valid: false, reason: 'Zone not found' };
     }
     
     if (startCol < 0 || startCol > 6) {
+      console.log('❌ Invalid column position:', startCol);
       return { valid: false, reason: 'Invalid column position' };
     }
     
@@ -74,6 +85,7 @@ export class RuleValidator {
     
     const validZones = getValidZones(card.type);
     if (!validZones.includes(zone)) {
+      console.log('❌ Card cannot be placed in this zone:', { cardType: card.type, zone, validZones });
       return { valid: false, reason: 'Card cannot be placed in this zone' };
     }
     
@@ -81,23 +93,32 @@ export class RuleValidator {
     const slot2 = targetZone.slots.find(s => s.position === startCol + 1);
     
     if (!slot1 || !slot2) {
+      console.log('❌ Slot not found:', { startCol, slot1: !!slot1, slot2: !!slot2 });
       return { valid: false, reason: 'Slot not found' };
     }
     
     if (slot1.athleteCard || slot2.athleteCard) {
+      console.log('❌ Slot already occupied:', { startCol, slot1Occupied: !!slot1.athleteCard, slot2Occupied: !!slot2.athleteCard });
       return { valid: false, reason: 'Slot already occupied' };
     }
     
     // 检查场地上是否有其他卡牌（根据场地类型自动判断）
-    const isPlayerField = fieldSlots.some(z => z.zone >= 4);
+    // 玩家场地的zone范围是4-7，AI场地是0-3
+    const hasPlayerZones = fieldSlots.some(z => z.zone >= 4);
+    const hasAIZones = fieldSlots.some(z => z.zone < 4);
+    const isPlayerField = hasPlayerZones && !hasAIZones;
     const hasAnyCard = fieldSlots.some(z => z.slots.some(s => s.athleteCard));
+    
+    console.log('🔍 Field state:', { hasPlayerZones, hasAIZones, isPlayerField, hasAnyCard });
     
     // 场上没有其他卡时，前锋不能放在前线
     if (!hasAnyCard && card.type === 'fw') {
       if (isPlayerField && zone === 4) {
+        console.log('❌ Forward cannot be placed in Zone 4 when no other cards are on field');
         return { valid: false, reason: 'Forward cannot be placed in Zone 4 when no other cards are on field' };
       }
       if (!isPlayerField && zone === 3) {
+        console.log('❌ Forward cannot be placed in Zone 3 when no other cards are on field');
         return { valid: false, reason: 'Forward cannot be placed in Zone 3 when no other cards are on field' };
       }
     }
@@ -116,7 +137,10 @@ export class RuleValidator {
           s.athleteCard && (Math.abs(s.position - startCol) <= 1 || Math.abs(s.position - (startCol + 1)) <= 1)
         );
         
+        console.log('🔍 Forward adjacency check (Zone 4):', { hasAdjacentInZone4, hasAheadInZone5 });
+        
         if (!hasAdjacentInZone4 && !hasAheadInZone5) {
+          console.log('❌ Forward in Zone 4 must be adjacent to another player card');
           return { valid: false, reason: 'Forward in Zone 4 must be adjacent to another player card' };
         }
       }
@@ -132,12 +156,16 @@ export class RuleValidator {
           s.athleteCard && (Math.abs(s.position - startCol) <= 1 || Math.abs(s.position - (startCol + 1)) <= 1)
         );
         
+        console.log('🔍 Forward adjacency check (Zone 3):', { hasAdjacentInZone3, hasBehindInZone2 });
+        
         if (!hasAdjacentInZone3 && !hasBehindInZone2) {
+          console.log('❌ Forward in Zone 3 must be adjacent to another AI card');
           return { valid: false, reason: 'Forward in Zone 3 must be adjacent to another AI card' };
         }
       }
     }
     
+    console.log('✅ Card can be placed:', { card: card.nickname, zone, startCol });
     return { valid: true };
   }
 
@@ -164,7 +192,7 @@ export class RuleValidator {
       return { valid: false, reason: 'Card mismatch' };
     }
     
-    if (gameState.turnPhase !== 'playerAction') {
+    if (gameState.turnPhase !== 'athleteAction') {
       return { valid: false, reason: 'Cannot shoot during this phase' };
     }
     

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useGameAudio } from '../hooks/useGameAudio';
 
 interface Props {
   turnPhase: string;
@@ -21,6 +22,7 @@ export const ActionButtons: React.FC<Props> = ({
   onShoot,
   canShoot,
 }) => {
+  const { playSound } = useGameAudio();
   if (currentTurn !== 'player') return null;
 
   return (
@@ -33,7 +35,7 @@ export const ActionButtons: React.FC<Props> = ({
               height="40"
               viewBox="0 0 120 40"
               className="cursor-pointer group"
-              onClick={() => onTeamAction('pass')}
+              onClick={() => { playSound('click'); onTeamAction('pass'); }}
             >
               <defs>
                 <linearGradient id="passButtonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -57,7 +59,7 @@ export const ActionButtons: React.FC<Props> = ({
               height="40"
               viewBox="0 0 120 40"
               className="cursor-pointer group"
-              onClick={() => onTeamAction('press')}
+              onClick={() => { playSound('click'); onTeamAction('press'); }}
             >
               <defs>
                 <linearGradient id="pressButtonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -77,7 +79,7 @@ export const ActionButtons: React.FC<Props> = ({
           )}
         </>
       )}
-      {turnPhase === 'playerAction' && (
+      {turnPhase === 'athleteAction' && (
         <>
         </>
       )}

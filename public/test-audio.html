@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #16213e;
+            border-radius: 8px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            background-color: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1a535c;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #16213e;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio System Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Audio Settings</h2>
+        <button onclick="testAudioSettings()">Test Audio Settings</button>
+        <div id="settings-status" class="status">Click button to test</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test Sound Effects</h2>
+        <button onclick="testSound('click')">Click</button>
+        <button onclick="testSound('snap')">Snap (Card Placement)</button>
+        <button onclick="testSound('draw')">Draw (Card Draw)</button>
+        <button onclick="testSound('flip')">Flip (Card Flip)</button>
+        <div id="sound-status" class="status">Click buttons to test sounds</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Reset Audio Settings</h2>
+        <button onclick="resetAudioSettings()">Reset Audio Settings</button>
+        <div id="reset-status" class="status">Click button to reset</div>
+    </div>
+
+    <script>
+        function testAudioSettings() {
+            const settings = localStorage.getItem('game_audio_settings');
+            const status = document.getElementById('settings-status');
+            
+            if (settings) {
+                status.innerHTML = `Current settings: ${settings}`;
+            } else {
+                status.innerHTML = 'No settings found. Creating default settings...';
+                localStorage.setItem('game_audio_settings', JSON.stringify({ bgm: true, sfx: true, volume: 0.7 }));
+                status.innerHTML += '<br>Created default settings: { bgm: true, sfx: true, volume: 0.7 }';
+            }
+        }
+        
+        function testSound(type) {
+            const status = document.getElementById('sound-status');
+            status.innerHTML = `Testing sound: ${type}...`;
+            
+            // Create Howl instance to test
+            const sound = new Howl({
+                src: [`/audio/${type === 'click' || type === 'snap' || type === 'swosh' || type === 'star_pulse' || type === 'toss' || type === 'ding' ? 'click_new.wav' : type === 'draw' || type === 'flip' || type === 'slide' ? 'card_flip_new.wav' : 'whistle_new.wav'}`],
+                volume: 0.7,
+                onload: function() {
+                    status.innerHTML = `Sound ${type} loaded successfully. Playing...`;
+                    this.play();
+                },
+                onplay: function() {
+                    status.innerHTML = `Sound ${type} is playing.`;
+                },
+                onend: function() {
+                    status.innerHTML = `Sound ${type} finished playing.`;
+                },
+                onloaderror: function(id, err) {
+                    status.innerHTML = `Error loading sound ${type}: ${err}`;
+                },
+                onplayerror: function(id, err) {
+                    status.innerHTML = `Error playing sound ${type}: ${err}`;
+                }
+            });
+        }
+        
+        function resetAudioSettings() {
+            const status = document.getElementById('reset-status');
+            localStorage.setItem('game_audio_settings', JSON.stringify({ bgm: true, sfx: true, volume: 0.7 }));
+            status.innerHTML = 'Audio settings reset to default: { bgm: true, sfx: true, volume: 0.7 }';
+        }
+        
+        // Load Howler.js
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js';
+        script.onload = function() {
+            console.log('Howler.js loaded successfully');
+        };
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>

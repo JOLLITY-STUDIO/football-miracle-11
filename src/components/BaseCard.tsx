@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface Props {
-  size?: 'tiny' | 'small' | 'medium' | 'large' | 'synergy';
+  size?: 'tiny' | 'small' | 'medium' | 'large' | 'xlarge' | 'synergy';
   children?: React.ReactNode;
   className?: string;
 }
@@ -13,6 +13,7 @@ const SIZE_CONFIG: Record<NonNullable<Props['size']>, { width: number, height: n
   small: { width: 132, height: 86 },  // 2x
   medium: { width: 165, height: 108 }, // 2.5x
   large: { width: 198, height: 130 },  // 3x
+  xlarge: { width: 297, height: 195 }, // 4.5x
   synergy: { width: 140, height: 92 }, // Legacy/Custom
 };
 

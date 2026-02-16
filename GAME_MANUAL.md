@@ -63,7 +63,7 @@
         *   显示横幅："YOUR FIRST TURN - AUTO SKIP TO ATHLETE ACTION"。
         *   横幅显示期间禁止任何操作，避免误操作。
         *   自动进入球员行动阶段。
-2.  **个人行动阶段 (Player Action Phase)**：
+2.  **个人行动阶段 (Athlete Action Phase)**：
     *   **放置卡牌**：将球员卡从手牌放置到符合其位置限制的球场区域。
     *   **移动球员**：调整场上球员的位置（如规则允许）。
     *   **发起进攻**：选择处于进攻位置（Zone 4 或 Zone 3）且具备"进攻"图标的球员发起射门。
@@ -266,8 +266,23 @@
 *   **图标配置**：
     *   每个球员卡通过 `icons` 数组定义拥有的图标类型
     *   通过 `iconPositions` 数组定义每个图标在半圆中的具体位置
-    *   图标位置包括：`slot1-topLeft`、`slot1-topRight`、`slot1-middleLeft`、`slot1-middleRight`、`slot1-bottomLeft`、`slot1-bottomRight`
+    *   图标位置包括：`slot-topLeft`、`slot-topRight`、`slot-middleLeft`、`slot-middleRight`、`slot-bottomLeft`、`slot-bottomRight`
     *   战术图标通过半圆图标拼合显示，不是写死固定的
+*   **半圆图标拼合系统**：
+    *   **拼合原理**：相邻卡片的半圆图标可以拼合成完整图标
+    *   **拼合条件**：
+        - 两张相邻卡片（水平或垂直相邻）
+        - 具有相同类型的战术图标（attack、defense、pass、press）
+        - 一张卡有左半圆图标（slot-xxxLeft），另一张卡有对应的右半圆图标（slot-xxxRight）
+        - 图标必须在对应的垂直位置（top对top、middle对middle、bottom对bottom）
+    *   **完整图标显示**：
+        - 在两个半圆图标的中心位置显示完整的战术图标
+        - 完整图标具有发光效果和脉冲动画
+        - 使用专门的图标图片（attack_ball.svg、defense_shield.svg、pass_arrow.svg、press_fist.svg）
+    *   **统计规则**：
+        - 只统计拼合成功的完整图标，不统计单独的半圆图标
+        - 未拼合的半圆图标不计入战术统计
+        - 完整图标按类型分别统计（攻击、防守、传球、压迫）
 *   **图标选择射门**：
     *   射门时，玩家需要选择一个激活的进攻图标
     *   只有未被使用的进攻图标可以被选择
@@ -282,9 +297,9 @@
 *   **力量计算**：
     *   球员卡不再有固定的攻击/防守数值
     *   力量基于激活的战术图标数量计算
-    *   进攻力 = 基础力量（0）+ 进攻图标数量 + 其他加成
-    *   防守力 = 基础力量（0）+ 防守图标数量 + 其他加成
-    *   特殊球员可能有完整的进攻或防守图标，按数量计算加成
+    *   进攻力 = 基础力量（0）+ 完整进攻图标数量 + 其他加成
+    *   防守力 = 基础力量（0）+ 完整防守图标数量 + 其他加成
+    *   只有拼合成功的完整图标才计入力量计算
 
 ### 7.3 协同卡加成
 *   **协同卡配置**：协同卡牌库共25张，按星数分布：
@@ -355,7 +370,7 @@
 ### 8.5 状态管理
 *   **游戏状态 (GameState)**：包含所有游戏相关状态。
     *   `phase`：游戏阶段（选秀、上半场、下半场等）。
-    *   `turnPhase`：回合阶段（teamAction、playerAction、shooting、end）。
+    *   `turnPhase`：回合阶段（teamAction、athleteAction、shooting、end）。
     *   `currentTurn`：当前回合（player或ai）。
     *   `controlPosition`：控制权位置（0-100）。
     *   `isTransitioning`：是否正在过渡（横幅显示期间禁用操作）。

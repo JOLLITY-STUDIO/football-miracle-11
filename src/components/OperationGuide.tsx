@@ -50,7 +50,7 @@ export const OperationGuide: React.FC<OperationGuideProps> = ({
     }
 
     // 球员行动阶段
-    if (turnPhase === 'playerAction') {
+    if (turnPhase === 'athleteAction') {
       if (selectedCard) {
         return {
           title: 'PLACE CARD',

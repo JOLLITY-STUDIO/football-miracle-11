@@ -4,9 +4,11 @@ import type { FieldZone } from '../types/game';
 import type { AthleteCard } from '../data/cards';
 import { AthleteCardComponent } from './AthleteCard';
 import { motion } from 'framer-motion';
-import { FIELD_CONFIG } from '../config/fieldDimensions';
+import { FIELD_CONFIG as FIELD_DIMENSIONS } from '../config/fieldDimensions';
+import { FIELD_CONFIG } from '../config/fieldConfig';
 import FieldIcons from './FieldIcons';
-import { createFieldContext, calculateCellCenter, calculateCellPosition, getFieldViewBox } from '../utils/coordinateCalculator';
+import { CompleteIconsOverlay } from './CompleteIconsOverlay';
+import { createFieldContext, createFieldContextByZone, calculateCellCenter, calculateCellPosition, getFieldViewBox } from '../utils/coordinateCalculator';
 import { FieldInteractionLayer } from './FieldInteractionLayer';
 import { logger } from '../utils/logger';
 import { CardPlacementService } from '../game/cardPlacementService';
@@ -20,6 +22,7 @@ interface GameFieldProps {
   onAttackClick: (zone: number, position: number) => void;
   onCardMouseEnter?: (card: AthleteCard) => void;
   onCardMouseLeave?: () => void;
+  onCardClick?: (card: AthleteCard) => void;
   shootMode?: boolean;
   selectedShootPlayer?: {zone: number, position: number} | null;
   canPlaceCards?: boolean;
@@ -28,6 +31,7 @@ interface GameFieldProps {
   isRotated?: boolean;
   hoveredZone?: number | null;
   hoveredSlot?: number | null;
+  onCompleteIconsCalculated?: (counts: Record<string, number>) => void;
   handleCellMouseEnter?: (zone: number, slot: number) => void;
   handleCellMouseLeave?: () => void;
   currentTurn?: 'player' | 'ai';
@@ -46,6 +50,7 @@ const GameField: React.FC<GameFieldProps> = ({
   onAttackClick,
   onCardMouseEnter,
   onCardMouseLeave,
+  onCardClick,
   canPlaceCards = true,
   isFirstTurn,
   setupStep,
@@ -61,7 +66,8 @@ const GameField: React.FC<GameFieldProps> = ({
   lastPlacedCard,
   onInstantShotClick,
   instantShotMode,
-  rotation = 0
+  rotation = 0,
+  onCompleteIconsCalculated
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -85,22 +91,23 @@ const GameField: React.FC<GameFieldProps> = ({
   }, []);
 
   // Helper to render grid cells
-  const renderGrid = (isAi: boolean) => {
-    const fieldData = isAi ? aiField : playerField;
-    const CELL_WIDTH = FIELD_CONFIG.BASE_CELL_WIDTH;
-    const CELL_HEIGHT = FIELD_CONFIG.BASE_CELL_HEIGHT;
-    const COLS = FIELD_CONFIG.COLS;
-    const ROWS = 4; // Each half only has 4 rows
+  const renderGrid = (halfId: 'top' | 'bottom') => {
+    const halfConfig = FIELD_CONFIG.halves[halfId];
+    const fieldData = halfId === 'top' ? aiField : playerField;
+    const CELL_WIDTH = FIELD_DIMENSIONS.BASE_CELL_WIDTH;
+    const CELL_HEIGHT = FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
+    const COLS = FIELD_CONFIG.columns;
+    const ROWS = FIELD_CONFIG.rowsPerHalf;
     
     // Debug: log field data
-    logger.debug(`Rendering grid for ${isAi ? 'AI' : 'Player'}:`, {
+    logger.debug(`Rendering grid for ${halfId} half:`, {
       fieldDataLength: fieldData.length,
       zones: fieldData.map(z => z.zone),
-      isAi
+      halfId
     });
     
     // Create field context for coordinate calculations
-    const fieldContext = createFieldContext(isAi);
+    const fieldContext = createFieldContext(halfId);
 
     return (
       <div 
@@ -111,10 +118,10 @@ const GameField: React.FC<GameFieldProps> = ({
         style={{
           width: `${COLS * CELL_WIDTH}px`,
           height: `${ROWS * CELL_HEIGHT}px`,
-          zIndex: isAi ? 100 : 101, // Player field has higher z-index
+          zIndex: halfId === 'top' ? 100 : 101, // Bottom half has higher z-index
           pointerEvents: 'auto',
           position: 'absolute',
-          top: isAi ? 0 : `${ROWS * CELL_HEIGHT}px`,
+          top: halfConfig.display.position.top,
           left: '50%',
           transform: 'translateX(-50%)' // Center horizontally
         }}
@@ -127,7 +134,7 @@ const GameField: React.FC<GameFieldProps> = ({
             console.log('🎯 SVG Container clicked!', {
               target: e.target,
               currentTarget: e.currentTarget,
-              isAi,
+              halfId,
               selectedCard: selectedCard?.name,
               canPlaceCards
             });
@@ -148,28 +155,25 @@ const GameField: React.FC<GameFieldProps> = ({
         >
           {/* Zones & Slots - Highlight rectangles */}
           {fieldData.map((zone, zIdx) => {
-            // Only render respective half zones
-            // AI only renders zones 0-3
-            // Player only renders zones 4-7
-            if (isAi && zone.zone >= 4) return null;
-            if (!isAi && zone.zone < 4) return null;
+            // Check if zone belongs to this half
+            const zoneHalfConfig = FIELD_CONFIG.getHalfByZone(zone.zone);
+            if (zoneHalfConfig.id !== halfId) return null;
             
-            // Calculate correct row position
-            // AI cards render at top of field (rows 0-3)
-            // Player cards render at bottom of field (rows 0-3, relative to their half)
-            const row = isAi ? zone.zone : zone.zone - 4;
+            // Calculate correct row position relative to this half
+            const row = zone.zone - zoneHalfConfig.startZone;
             
             return (
               <React.Fragment key={`zone-${zone.zone}`}>
                 {Array.from({ length: COLS }).map((_, colIdx) => (
-                  <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
+                  <g key={`${halfId}-${zone.zone}-${colIdx}`}>
                     {/* Interaction Cell - Handles all clicks */}
                     <FieldInteractionLayer
-                      isAi={isAi}
+                      halfId={halfId}
                       zone={zone.zone}
                       colIdx={colIdx}
                       selectedCard={selectedCard}
                       playerField={playerField}
+                      aiField={aiField}
                       canPlaceCards={canPlaceCards}
                       isFirstTurn={isFirstTurn}
                       onSlotClick={onSlotClick}
@@ -188,31 +192,50 @@ const GameField: React.FC<GameFieldProps> = ({
       <div 
         className="relative w-full h-full"
         style={{
-          pointerEvents: 'none', // Disable all pointer events - cards are display only
-          zIndex: 100 // Lower z-index, below SVG interaction layer
+          pointerEvents: 'none', // 修改为none，让点击事件穿透到交互层
+          zIndex: 2000 // Higher z-index, above SVG interaction layer
         }}
       >
           {fieldData.map((zone, zIdx) => {
-            // Only render respective half zones
-            // AI only renders zones 0-3
-            // Player only renders zones 4-7
-            if (isAi && zone.zone >= 4) return null;
-            if (!isAi && zone.zone < 4) return null;
+            // Check if zone belongs to this half
+            const zoneHalfConfig = FIELD_CONFIG.getHalfByZone(zone.zone);
+            if (zoneHalfConfig.id !== halfId) return null;
             
-            // Calculate correct row position (relative to respective half)
-            // AI cards render at top of field (rows 0-3)
-            // Player cards render at bottom of field (rows 0-3, relative to their half)
-            const row = isAi ? zone.zone : zone.zone - 4;
+            // Calculate correct row position relative to this half
+            const row = zone.zone - zoneHalfConfig.startZone;
+            
+            // Ensure row is within valid range
+            if (row < 0 || row >= ROWS) return null;
+            
+            // Debug: log zone data
+            logger.debug(`Processing zone ${zone.zone} in ${halfId} half:`, {
+              slotCount: zone.slots.length,
+              hasCards: zone.slots.some(s => s.athleteCard),
+              rowPosition: row
+            });
             
             return (
-              <React.Fragment key={`${isAi ? 'ai' : 'p'}-cards-${zone.zone}`}>
+              <React.Fragment key={`${halfId}-cards-${zone.zone}`}>
                 {Array.from({ length: COLS }).map((_, colIdx) => {
                   // Find card in this slot
                   const slot = zone.slots.find(s => s.position === colIdx);
+                  // Debug: log slot data
+                  if (slot) {
+                    logger.debug(`Found slot at position ${colIdx}:`, {
+                      hasAthleteCard: !!slot.athleteCard,
+                      athleteCardName: slot.athleteCard?.name,
+                      slotPosition: slot.position
+                    });
+                  } else {
+                    logger.debug(`No slot found at position ${colIdx} in zone ${zone.zone}`);
+                  }
                   const card = slot?.athleteCard;
 
                   // Debug: log card rendering
-                  if (card && !isAi) {
+                  if (card) {
+                    logger.debug(`Found card: ${card.nickname} at zone ${zone.zone}, slot ${colIdx}, half: ${halfId}`);
+                  } else if (slot && slot.athleteCard) {
+                    logger.debug(`Slot has athleteCard but card is undefined:`, slot.athleteCard);
                   }
 
                   // Calculate cell position (absolute positioning within the field container)
@@ -221,19 +244,31 @@ const GameField: React.FC<GameFieldProps> = ({
                   // Render Card if it exists and we are at start of card (check if previous column has same card)
                   const prevSlot = zone.slots.find(s => s.position === colIdx - 1);
                   const prevCard = prevSlot?.athleteCard;
+                  // Allow card to start at any column, not just even columns
                   const isCardStart = card && (!prevCard || prevCard.id !== card.id);
+                  
+                  // Debug: log isCardStart calculation
+                  if (card) {
+                    logger.debug(`Card start check for ${card.nickname} at zone ${zone.zone}, slot ${colIdx}:`, {
+                      colIdx,
+                      colIsEven: colIdx % 2 === 0,
+                      hasPrevCard: !!prevCard,
+                      prevCardSame: prevCard && prevCard.id === card.id,
+                      isCardStart
+                    });
+                  }
 
                   if (isCardStart) {
                     return (
                       <div
-                        key={`${isAi ? 'ai' : 'p'}-card-${zone.zone}-${colIdx}`}
+                        key={`${halfId}-card-${zone.zone}-${colIdx}`}
                         className={clsx("absolute transform-style-3d backface-hidden")}
                         style={{
                           left: `${cellX}px`,
                           top: `${cellY}px`,
                           width: `${CELL_WIDTH * 2}px`,
                           height: `${CELL_HEIGHT}px`,
-                          transform: isAi ? 'rotateX(-20deg) rotate(180deg) translateZ(1px)' : 'rotateX(-20deg) translateZ(1px)',
+                          transform: `rotateX(-20deg) rotate(${zoneHalfConfig.display.cardRotation}deg) translateZ(1px)`,
                           transformOrigin: 'center center',
                           filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
                           zIndex: 300,
@@ -264,11 +299,12 @@ const GameField: React.FC<GameFieldProps> = ({
                               card={card} 
                               size="large"
                               faceDown={false}
-                              variant={isAi ? "away" : "home"}
-                              disabled={isAi}
+                              variant={FIELD_CONFIG.getVariantByZone(zone.zone)}
+                              disabled={zoneHalfConfig.interaction.interactive === false}
                               usedShotIcons={slot.usedShotIcons || []}
                               onMouseEnter={() => onCardMouseEnter?.(card)}
                               onMouseLeave={() => onCardMouseLeave?.()}
+                              onClick={() => onCardClick?.(card)}
                             />
 
                             {/* Summon Effect (Flash) */}
@@ -299,7 +335,7 @@ const GameField: React.FC<GameFieldProps> = ({
                             )}
                             
                             {/* Attack Button Overlay */}
-                            {!isAi && card.icons.includes('attack') && (shootMode || (canPlaceCards)) && (
+                            {zoneHalfConfig.interaction.interactive && card.icons.includes('attack') && (shootMode || (canPlaceCards)) && (
                               <svg
                                 data-testid="shoot-button"
                                 width="80"
@@ -331,7 +367,7 @@ const GameField: React.FC<GameFieldProps> = ({
                             )}
                             
                             {/* Shoot Mode Highlight */}
-                            {!isAi && shootMode && card.icons.includes('attack') && (
+                            {zoneHalfConfig.interaction.interactive && shootMode && card.icons.includes('attack') && (
                               <div className="absolute inset-0 bg-yellow-500/30 z-10 pointer-events-none animate-pulse" />
                             )}
                          </motion.div>
@@ -342,7 +378,7 @@ const GameField: React.FC<GameFieldProps> = ({
                   // Render card preview when hovering over valid placement
                   const startCol = colIdx === 7 ? 6 : colIdx;
                   // Only show preview at the correct position (for col 7, show at col 6; for others, show at their own position)
-                  const shouldShowPreview = !card && !isAi && selectedCard && hoveredZone === zone.zone && hoveredSlot === startCol && startCol === colIdx;
+                  const shouldShowPreview = !card && zoneHalfConfig.interaction.interactive && selectedCard && hoveredZone === zone.zone && hoveredSlot === startCol && startCol === colIdx;
                   
                   // Only show preview when hovering over valid placement position
                   if (shouldShowPreview) {
@@ -355,7 +391,7 @@ const GameField: React.FC<GameFieldProps> = ({
                           top: `${cellY}px`,
                           width: `${CELL_WIDTH * 2}px`,
                           height: `${CELL_HEIGHT}px`,
-                          transform: 'rotateX(-20deg) translateZ(1px)',
+                          transform: `rotateX(-20deg) rotate(${zoneHalfConfig.display.cardRotation}deg) translateZ(1px)`,
                           transformOrigin: 'center center',
                           zIndex: 15
                         }}
@@ -393,17 +429,17 @@ const GameField: React.FC<GameFieldProps> = ({
         <svg
           width="100%"
           height="100%"
-          viewBox={`-${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2} -${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2} ${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH} ${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT}`}
+          viewBox={`-${FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH / 2} -${FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT / 2} ${FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH} ${FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT}`}
         >
           {/* Horizontal Grid Lines */}
-          {Array.from({ length: FIELD_CONFIG.ROWS + 1 }).map((_, rowIdx) => {
-            const y = -FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2 + rowIdx * FIELD_CONFIG.BASE_CELL_HEIGHT;
+          {Array.from({ length: FIELD_CONFIG.rowsPerHalf * 2 + 1 }).map((_, rowIdx) => {
+            const y = -FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT / 2 + rowIdx * FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
             return (
               <line
                 key={`h-line-${rowIdx}`}
-                x1={-FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2}
+                x1={-FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH / 2}
                 y1={y}
-                x2={FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2}
+                x2={FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH / 2}
                 y2={y}
                 stroke="#000000"
                 strokeWidth="2"
@@ -412,15 +448,15 @@ const GameField: React.FC<GameFieldProps> = ({
             );
           })}
           {/* Vertical Grid Lines */}
-          {Array.from({ length: FIELD_CONFIG.COLS + 1 }).map((_, colIdx) => {
-            const x = -FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH / 2 + colIdx * FIELD_CONFIG.BASE_CELL_WIDTH;
+          {Array.from({ length: FIELD_CONFIG.columns + 1 }).map((_, colIdx) => {
+            const x = -FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH / 2 + colIdx * FIELD_DIMENSIONS.BASE_CELL_WIDTH;
             return (
               <line
                 key={`v-line-${colIdx}`}
                 x1={x}
-                y1={-FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2}
+                y1={-FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT / 2}
                 x2={x}
-                y2={FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT / 2}
+                y2={FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT / 2}
                 stroke="#000000"
                 strokeWidth="2"
                 strokeOpacity="0.5"
@@ -431,17 +467,27 @@ const GameField: React.FC<GameFieldProps> = ({
       </div>
 
       {/* Single 8-row grid container - Render both AI and Player fields */}
-      <div className="flex-1 min-h-0 relative flex items-center justify-center" style={{ position: 'relative', width: `${FIELD_CONFIG.COLS * FIELD_CONFIG.BASE_CELL_WIDTH}px`, height: `${FIELD_CONFIG.ROWS * FIELD_CONFIG.BASE_CELL_HEIGHT}px` }}>
+      <div className="flex-1 min-h-0 relative flex items-center justify-center" style={{ position: 'relative', width: `${FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH}px`, height: `${FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT}px` }}>
         {/* Field Icons - Render only once */}
         <FieldIcons 
           playerField={playerField}
           aiField={aiField}
           activePositions={calculateActivatedIconPositions(playerField, aiField)}
         />
-        {/* Render AI field (top half) */}
-        {renderGrid(true)}
-        {/* Render Player field (bottom half) */}
-        {renderGrid(false)}
+        
+        {/* Complete Icons Overlay - 显示拼合的完整图标 */}
+        {onCompleteIconsCalculated && (
+          <CompleteIconsOverlay
+            playerField={playerField}
+            aiField={aiField}
+            onIconCountsCalculated={onCompleteIconsCalculated}
+          />
+        )}
+        
+        {/* Render top half */}
+        {renderGrid('top')}
+        {/* Render bottom half */}
+        {renderGrid('bottom')}
       </div>
     </div>
   );
