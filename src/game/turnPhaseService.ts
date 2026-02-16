@@ -129,16 +129,16 @@ export class TurnPhaseService {
       let hasPassOrPressIcons = false;
       
       field.forEach((zone) => {
-        zone.slots.forEach((slot) => {
-          if (slot.athleteCard) {
-            const hasPass = slot.athleteCard.icons.includes('pass');
-            const hasPress = slot.athleteCard.icons.includes('press');
-            if (hasPass || hasPress) {
-              hasPassOrPressIcons = true;
-            }
-          }
-        });
-      });
+         zone.slots.forEach((slot) => {
+           if (slot.athleteCard) {
+             const hasPass = slot.athleteCard.icons.includes('pass');
+             const hasPress = slot.athleteCard.icons.includes('press');
+             if (hasPass || hasPress) {
+               hasPassOrPressIcons = true;
+             }
+           }
+         });
+       });
       
       // If no pass/press icons, skip team action
       return !hasPassOrPressIcons;
