@@ -36,6 +36,11 @@ export const startDraftRound = (state: GameState): GameState => {
 };
 
 export const pickDraftCard = (state: GameState, cardIndex: number): GameState => {
+  // Only allow player to pick during player selection phase
+  if (state.draftStep !== 1) {
+    return state;
+  }
+  
   if (cardIndex >= 0 && cardIndex < state.availableDraftCards.length) {
     const selectedCard = state.availableDraftCards[cardIndex];
     if (!selectedCard) return state;
