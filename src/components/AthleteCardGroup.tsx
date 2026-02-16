@@ -61,8 +61,8 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   };
   
   return (
-    <div id="athlete-card-group" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 w-[90%] pointer-events-auto z-100" style={{ height: '200px' }}>
-      <div className="w-full h-full flex justify-center items-center pt-4 perspective-1000">
+    <div id="athlete-card-group" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 w-full max-w-[1200px] pointer-events-auto z-100 flex justify-center" style={{ height: '200px' }}>
+      <div className="relative w-fit h-full flex justify-center items-center pt-4 perspective-1000">
         <AnimatePresence>
           {cards.map((card: athleteCard, i: number) => {
             const { x, y, rotation } = calculateCardPosition(i);
@@ -119,7 +119,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
           })}
         </AnimatePresence>
       </div>
-      <div className="absolute bottom-[-40px] text-center text-[10px] text-white/40 uppercase tracking-widest font-bold w-full">
+      <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold whitespace-nowrap">
         YOUR HAND: {cards.length}
       </div>
     </div>

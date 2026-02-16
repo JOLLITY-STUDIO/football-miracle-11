@@ -999,67 +999,69 @@ const handleCardSelect = (card: athleteCard) => {
 
 
          {/* Top Center: Opponent Hand (Arc Layout - Same as Player) */}
-         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[80%] h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50">
-            <AnimatePresence>
-                {gameState.aiHand.map((card, i) => {
-                  // Calculate arc position for AI hand (same as player hand)
-                  const arcAngle = 30;
-                  const arcHeight = 500;
-                  const startAngle = -15;
-                  
-                  const anglePerCard = gameState.aiHand.length > 1 ? arcAngle / (gameState.aiHand.length - 1) : 0;
-                  const currentAngle = startAngle + (i * anglePerCard);
-                  const radius = arcHeight;
-                  const radian = (currentAngle * Math.PI) / 180;
-                  
-                  // Calculate position (similar to player hand but flipped vertically)
-                  const x = Math.sin(radian) * radius;
-                  const baseY = -Math.cos(radian) * radius + radius;
-                  const heightAdjustment = Math.cos(radian) * 80;
-                  const y = -(baseY - heightAdjustment + 43); // Negative y to place at top
-                  const rotation = 180 + currentAngle; // 180 degrees to invert cards
-                  
-                  return (
-                    <motion.div
-                      key={card.id}
-                      initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
-                      animate={setupStep >= 3 ? { 
-                        opacity: 1, 
-                        scale: 1,
-                        x: x,
-                        y: y,
-                        rotate: rotation
-                      } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
-                      exit={{ opacity: 0, scale: 0.5, y: -50 }}
-                      whileHover={{ 
-                        scale: 1.5, 
-                        rotate: 0, 
-                        zIndex: 100
-                      }}
-                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                      style={{ 
-                        position: 'absolute',
-                        width: '132px',
-                        height: '86px',
-                        left: '50%',
-                        top: '50%',
-                        transformOrigin: 'center center',
-                        zIndex: i
-                      }}
-                    >
-                       <AthleteCardComponent 
-                          card={card} 
-                          size="small" 
-                          faceDown={false}
-                          variant="away"
-                       />
-                    </motion.div>
-                  );
-                })}
-            </AnimatePresence>
-             <div className="absolute top-20 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold w-full">
-                 OPP HAND: {gameState.aiHand.length}
-             </div>
+         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50">
+            <div className="relative w-fit h-full">
+              <AnimatePresence>
+                  {gameState.aiHand.map((card, i) => {
+                    // Calculate arc position for AI hand (same as player hand)
+                    const arcAngle = 30;
+                    const arcHeight = 500;
+                    const startAngle = -15;
+                    
+                    const anglePerCard = gameState.aiHand.length > 1 ? arcAngle / (gameState.aiHand.length - 1) : 0;
+                    const currentAngle = startAngle + (i * anglePerCard);
+                    const radius = arcHeight;
+                    const radian = (currentAngle * Math.PI) / 180;
+                    
+                    // Calculate position (similar to player hand but flipped vertically)
+                    const x = Math.sin(radian) * radius;
+                    const baseY = -Math.cos(radian) * radius + radius;
+                    const heightAdjustment = Math.cos(radian) * 80;
+                    const y = -(baseY - heightAdjustment + 43); // Negative y to place at top
+                    const rotation = 180 + currentAngle; // 180 degrees to invert cards
+                    
+                    return (
+                      <motion.div
+                        key={card.id}
+                        initial={{ opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                        animate={setupStep >= 3 ? { 
+                          opacity: 1, 
+                          scale: 1,
+                          x: x,
+                          y: y,
+                          rotate: rotation
+                        } : { opacity: 0, y: -200, rotate: 180, scale: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, y: -50 }}
+                        whileHover={{ 
+                          scale: 1.5, 
+                          rotate: 0, 
+                          zIndex: 100
+                        }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        style={{ 
+                          position: 'absolute',
+                          width: '132px',
+                          height: '86px',
+                          left: '50%',
+                          top: '50%',
+                          transformOrigin: 'center center',
+                          zIndex: i
+                        }}
+                      >
+                         <AthleteCardComponent 
+                            card={card} 
+                            size="small" 
+                            faceDown={false}
+                            variant="away"
+                         />
+                      </motion.div>
+                    );
+                  })}
+              </AnimatePresence>
+              <div className="absolute top-20 left-1/2 -translate-x-1/2 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold whitespace-nowrap">
+                   OPP HAND: {gameState.aiHand.length}
+              </div>
+            </div>
          </div>
         </div>
       )}
