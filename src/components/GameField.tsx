@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { FIELD_CONFIG } from '../config/fieldDimensions';
 import FieldIcons from './FieldIcons';
 import { createFieldContext, calculateCellCenter, calculateCellPosition, getFieldViewBox } from '../utils/coordinateCalculator';
-import { FieldCellHighlight } from './FieldCellHighlight';
+import { FieldInteractionLayer } from './FieldInteractionLayer';
 import { logger } from '../utils/logger';
 import { CardPlacementService } from '../game/cardPlacementService';
 import { calculateActivatedIconPositions } from '../utils/gameUtils';
@@ -119,9 +119,19 @@ const GameField: React.FC<GameFieldProps> = ({
           transform: 'translateX(-50%)' // Center horizontally
         }}
       >
-        {/* SVG 3D Rendering */}
+        {/* SVG Highlight Layer - THE ONLY INTERACTION LAYER */}
+        {/* This layer handles ALL click events for card placement */}
         <svg
           viewBox={`0 0 ${COLS * CELL_WIDTH} ${ROWS * CELL_HEIGHT}`}
+          onClick={(e) => {
+            console.log('🎯 SVG Container clicked!', {
+              target: e.target,
+              currentTarget: e.currentTarget,
+              isAi,
+              selectedCard: selectedCard?.name,
+              canPlaceCards
+            });
+          }}
           style={{
             position: 'absolute',
             top: 0,
@@ -130,11 +140,13 @@ const GameField: React.FC<GameFieldProps> = ({
             height: '100%',
             transform: 'rotateX(-20deg) scale(1)',
             transformStyle: 'preserve-3d',
-            pointerEvents: 'auto',
-            zIndex: 500
+            pointerEvents: 'auto', // This layer captures all clicks
+            zIndex: 1000, // Highest z-index - above everything
+            cursor: selectedCard && canPlaceCards ? 'pointer' : 'default',
+            border: '2px solid red' // DEBUG: Shows SVG container bounds
           }}
         >
-          {/* Zones & Slots */}
+          {/* Zones & Slots - Highlight rectangles */}
           {fieldData.map((zone, zIdx) => {
             // Only render respective half zones
             // AI only renders zones 0-3
@@ -151,8 +163,8 @@ const GameField: React.FC<GameFieldProps> = ({
               <React.Fragment key={`zone-${zone.zone}`}>
                 {Array.from({ length: COLS }).map((_, colIdx) => (
                   <g key={`${isAi ? 'ai' : 'p'}-${zone.zone}-${colIdx}`}>
-                    {/* Cell Background - Show for all 8 columns */}
-                    <FieldCellHighlight
+                    {/* Interaction Cell - Handles all clicks */}
+                    <FieldInteractionLayer
                       isAi={isAi}
                       zone={zone.zone}
                       colIdx={colIdx}
@@ -171,12 +183,13 @@ const GameField: React.FC<GameFieldProps> = ({
           })}
         </svg>
         
-        {/* Render Cards and other HTML elements */}
+        {/* Card Display Layer - DISPLAY ONLY, NO INTERACTION */}
+        {/* This layer only shows cards, all clicks go through SVG layer above */}
       <div 
         className="relative w-full h-full"
         style={{
-          pointerEvents: 'none',
-          zIndex: 250 // Higher z-index to ensure cards are visible above SVG
+          pointerEvents: 'none', // Disable all pointer events - cards are display only
+          zIndex: 100 // Lower z-index, below SVG interaction layer
         }}
       >
           {fieldData.map((zone, zIdx) => {

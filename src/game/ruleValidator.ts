@@ -88,78 +88,53 @@ export class RuleValidator {
       return { valid: false, reason: 'Slot already occupied' };
     }
     
-    // 只检查玩家场地（4-7区域）是否有其他卡牌
-    const hasAnyCard = fieldSlots.some(z => z.zone >= 4 && z.slots.some(s => s.athleteCard));
+    // 检查场地上是否有其他卡牌（根据场地类型自动判断）
+    const isPlayerField = fieldSlots.some(z => z.zone >= 4);
+    const hasAnyCard = fieldSlots.some(z => z.slots.some(s => s.athleteCard));
     
-    // 场上没有其他卡时，前锋不能放在4、5行
-    if (!hasAnyCard && card.type === 'fw' && (zone === 4 || zone === 5)) {
-      return { valid: false, reason: 'Forward cannot be placed in Zone 4 or 5 when no other cards are on field' };
-    }
-    
-    // Zone 5: 玩家半场第二行（中间区域）- 需要相邻验证
-    if (zone === 5) {
-      if (!hasAnyCard) {
-        return { valid: false, reason: 'First card cannot be placed in Zone 5' };
+    // 场上没有其他卡时，前锋不能放在前线
+    if (!hasAnyCard && card.type === 'fw') {
+      if (isPlayerField && zone === 4) {
+        return { valid: false, reason: 'Forward cannot be placed in Zone 4 when no other cards are on field' };
       }
-      
-      const zone5 = fieldSlots.find(z => z.zone === 5);
-      const zone4 = fieldSlots.find(z => z.zone === 4);
-      const zone6 = fieldSlots.find(z => z.zone === 6);
-      
-      const hasAdjacentInZone5 = zone5?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      const hasBehindInZone4 = zone4?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      const hasAheadInZone6 = zone6?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      
-      if (!hasAdjacentInZone5 && !hasBehindInZone4 && !hasAheadInZone6) {
-        return { valid: false, reason: 'Zone 5 requires adjacent card in Zone 4, 5, or 6' };
+      if (!isPlayerField && zone === 3) {
+        return { valid: false, reason: 'Forward cannot be placed in Zone 3 when no other cards are on field' };
       }
     }
     
-    // Zone 4: 玩家半场第一行（最靠近中线）- 第一回合前锋需要相邻验证
-    if (zone === 4 && isFirstTurn && card.type === 'fw') {
-      const zone4 = fieldSlots.find(z => z.zone === 4);
-      const zone5 = fieldSlots.find(z => z.zone === 5);
-      
-      const hasAdjacentInZone4 = zone4?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      const hasAheadInZone5 = zone5?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      
-      if (!hasAdjacentInZone4 && !hasAheadInZone5) {
-        return { valid: false, reason: 'First turn: Forward in Zone 4 requires adjacent players' };
+    // 前锋放置在前线时必须与已放置的另一张卡牌紧邻
+    if (card.type === 'fw') {
+      // 玩家场地（前线是Zone 4）
+      if (isPlayerField && zone === 4) {
+        const zone4 = fieldSlots.find(z => z.zone === 4);
+        const zone5 = fieldSlots.find(z => z.zone === 5);
+        
+        const hasAdjacentInZone4 = zone4?.slots.some(s => 
+          s.athleteCard && (Math.abs(s.position - startCol) <= 1 || Math.abs(s.position - (startCol + 1)) <= 1)
+        );
+        const hasAheadInZone5 = zone5?.slots.some(s => 
+          s.athleteCard && (Math.abs(s.position - startCol) <= 1 || Math.abs(s.position - (startCol + 1)) <= 1)
+        );
+        
+        if (!hasAdjacentInZone4 && !hasAheadInZone5) {
+          return { valid: false, reason: 'Forward in Zone 4 must be adjacent to another player card' };
+        }
       }
-    }
-    
-    // Zone 6: 玩家半场第三行（后卫区域）- 需要相邻验证
-    if (zone === 6) {
-      if (!hasAnyCard) {
-        return { valid: false, reason: 'First card cannot be placed in Zone 6' };
-      }
-      
-      const zone6 = fieldSlots.find(z => z.zone === 6);
-      const zone5 = fieldSlots.find(z => z.zone === 5);
-      const zone7 = fieldSlots.find(z => z.zone === 7);
-      
-      const hasAdjacentInZone6 = zone6?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      const hasBehindInZone5 = zone5?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      const hasAheadInZone7 = zone7?.slots.some(s => 
-        s.athleteCard && Math.abs(s.position - startCol) <= 1
-      );
-      
-      if (!hasAdjacentInZone6 && !hasBehindInZone5 && !hasAheadInZone7) {
-        return { valid: false, reason: 'Zone 6 requires adjacent card in Zone 5, 6, or 7' };
+      // AI场地（前线是Zone 3）
+      if (!isPlayerField && zone === 3) {
+        const zone3 = fieldSlots.find(z => z.zone === 3);
+        const zone2 = fieldSlots.find(z => z.zone === 2);
+        
+        const hasAdjacentInZone3 = zone3?.slots.some(s => 
+          s.athleteCard && (Math.abs(s.position - startCol) <= 1 || Math.abs(s.position - (startCol + 1)) <= 1)
+        );
+        const hasBehindInZone2 = zone2?.slots.some(s => 
+          s.athleteCard && (Math.abs(s.position - startCol) <= 1 || Math.abs(s.position - (startCol + 1)) <= 1)
+        );
+        
+        if (!hasAdjacentInZone3 && !hasBehindInZone2) {
+          return { valid: false, reason: 'Forward in Zone 3 must be adjacent to another AI card' };
+        }
       }
     }
     

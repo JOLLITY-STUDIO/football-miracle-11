@@ -385,6 +385,90 @@ For example:
   - Created `TacticalIconDisplay.tsx` for tactical icon visualization
   - Created `docs/UI_OPTIMIZATION_PLAN.md` for comprehensive UI improvements
 
+### BUG-2026-02-16-017: Highlighted cells not clickable - cursor remains arrow
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: Card placement interaction, User experience
+- **Impact Level**: Critical - Blocks gameplay
+- **Related Files**:
+  - `src/components/GameField.tsx`
+  - `src/components/FieldInteractionLayer.tsx` (renamed from `FieldCellHighlight.tsx`)
+- **Problem Description**: 
+  - Field cells show golden highlight indicating valid placement
+  - But cursor remains as arrow (not pointer)
+  - Clicking highlighted cells does nothing
+  - Players cannot place cards, blocking game progress
+- **Root Cause**: 
+  - **Architecture Issue**: Mixed responsibilities between SVG layer and card container
+  - SVG highlight layer (z-index: 500) was below card container (z-index: 250)
+  - Card container had `pointerEvents: 'none'` which blocked clicks
+  - Z-index values were inverted - interaction layer was below display layer
+  - No direct check for occupied cells in highlight logic
+  - Component name `FieldCellHighlight` didn't reflect its true purpose
+- **Fix Solution**: 
+  1. **Clarified Architecture**:
+     - SVG layer = **THE ONLY INTERACTION LAYER** (handles all clicks)
+     - Card container = **DISPLAY ONLY** (no interaction)
+  2. **Fixed Z-Index**:
+     - SVG interaction layer: `zIndex: 1000` (highest, above everything)
+     - Card display layer: `zIndex: 100` (lower, display only)
+  3. **Simplified Logic**:
+     - Added direct occupied cell check in FieldInteractionLayer
+     - Check `isOccupied` before validation
+     - Cleaner, more efficient logic
+  4. **Improved Pointer Events**:
+     - SVG layer: `pointerEvents: 'auto'` (captures all clicks)
+     - Card layer: `pointerEvents: 'none'` (display only)
+     - Individual cells: conditional based on `isHighlightVisible`
+  5. **Better Naming**:
+     - Renamed `FieldCellHighlight.tsx` → `FieldInteractionLayer.tsx`
+     - Name now clearly indicates this is the interaction layer
+     - Added comprehensive documentation comments
+- **Version**: 0.1.130
+- **Git Commit**: TBD
+- **Impact Analysis**:
+  - ✅ Players can now click highlighted cells to place cards
+  - ✅ Cursor correctly shows pointer on valid cells
+  - ✅ Architecture is clearer: interaction vs display separation
+  - ✅ Better performance with direct occupied check
+  - ✅ No more z-index conflicts
+  - ✅ Code is more maintainable with clear naming
+- **Regression Testing**: 
+  - ✅ Test card placement in all valid zones
+  - ✅ Verify cursor changes to pointer on highlight
+  - ✅ Test clicking occupied cells (should not highlight)
+  - ✅ Test clicking invalid cells (should do nothing)
+  - ✅ Test first turn card placement
+  - ✅ Verify cards display correctly (not affected by z-index change)
+- **Technical Details**:
+  ```typescript
+  // GameField.tsx - Clear separation of concerns
+  // SVG Layer: Interaction only (z-index: 1000)
+  <svg style={{ zIndex: 1000, pointerEvents: 'auto' }}>
+    <FieldInteractionLayer /> // Handles ALL clicks
+  </svg>
+  
+  // Card Layer: Display only (z-index: 100)
+  <div style={{ zIndex: 100, pointerEvents: 'none' }}>
+    <AthleteCardComponent /> // Display only, no interaction
+  </div>
+  
+  // FieldInteractionLayer.tsx - Simplified logic
+  const isOccupied = currentZone?.slots.some(slot => 
+    slot.position === colIdx && slot.athleteCard !== null
+  );
+  const validationResult = !isOccupied ? validate() : { valid: false };
+  ```
+- **Architecture Improvement**:
+  - Before: Mixed responsibilities, confusing naming, z-index conflicts
+  - After: Clear separation - SVG for interaction, HTML for display
+  - File naming now reflects actual purpose
+- **Code Quality**:
+  - Added comprehensive documentation comments
+  - Clarified component responsibilities
+  - Improved code readability
+
 ## Bug Tracing Methods
 
 ### 1. Git Commit Message Format
@@ -505,3 +589,26 @@ grep "AI card display" BUG_TRACKING.md
 # Find all bugs fixed in version 0.1.53
 grep "0.1.53" BUG_TRACKING.md
 ```
+
+
+### BUG-2026-02-16-018: Hand cards blocking field clicks
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: Card placement interaction
+- **Impact Level**: Critical - Blocks gameplay
+- **Related Files**:
+  - `src/components/AthleteCardGroup.tsx`
+- **Problem Description**: 
+  - Field completely unclickable even with highlights showing
+  - Hand card container was blocking all clicks to field below
+- **Root Cause**: 
+  - `AthleteCardGroup` container had `pointer-events-auto`
+  - This blocked all clicks from reaching the field
+  - Invalid Tailwind class `z-100` (should be `z-[100]`)
+- **Fix Solution**: 
+  - Changed container to `pointerEvents: 'none'`
+  - Only individual cards have `pointerEvents: 'auto'`
+  - Fixed z-index to `z-[50]`
+- **Version**: 0.1.130
+- **Impact**: Field is now clickable, game can proceed

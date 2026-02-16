@@ -75,11 +75,12 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   return (
     <div 
       id="athlete-card-group" 
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 pointer-events-auto z-100" 
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[50]" 
       style={{ 
         height: '200px', 
         width: `${containerWidth}px`,
-        maxWidth: '90vw' // 确保不超出屏幕
+        maxWidth: '90vw', // 确保不超出屏幕
+        pointerEvents: 'none' // 容器本身不拦截点击
       }}
     >
       <div 
