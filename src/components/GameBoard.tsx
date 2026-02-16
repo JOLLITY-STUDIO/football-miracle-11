@@ -256,9 +256,14 @@ const {
         }
         else if (gameState.turnPhase === 'playerAction') {
           text = 'ATHLETE ACTION';
-          subtitle = gameState.currentTurn === 'player' 
-            ? 'Place a Card or Attempt a Shot' 
-            : 'AI is Thinking...';
+          // Check if this is the first turn and we're skipping team action
+          if (gameState.isFirstTurn && gameState.currentTurn === 'player') {
+            subtitle = 'First turn: Team Action skipped. Place a Card or Attempt a Shot';
+          } else {
+            subtitle = gameState.currentTurn === 'player' 
+              ? 'Place a Card or Attempt a Shot' 
+              : 'AI is Thinking...';
+          }
         }
         else if (gameState.turnPhase === 'shooting') {
           text = 'BATTLE PHASE';
