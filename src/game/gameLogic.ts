@@ -28,12 +28,12 @@ export interface GameState {
   aiScore: number;
   playerSubstitutionsLeft: number;
   aiSubstitutionsLeft: number;
-  playerHand: athleteCard[];
+  playerAthleteHand: athleteCard[];  // 玩家球员手牌
   playerBench: athleteCard[];
   playerSynergyHand: SynergyCard[];
   playerField: FieldZone[];
   aiField: FieldZone[];
-  aiHand: athleteCard[];
+  aiAthleteHand: athleteCard[];  // AI球员手牌
   aiBench: athleteCard[];
   aiSynergyHand: SynergyCard[];
   synergyDeck: SynergyCard[];
@@ -108,7 +108,7 @@ export const createInitialState = (
     aiScore: 0,
     playerSubstitutionsLeft: 3,
     aiSubstitutionsLeft: 3,
-    playerHand: [],
+    playerAthleteHand: [],
     playerBench: [],
     playerSynergyHand: [],
     playerField: initialPlayerField || [
@@ -131,7 +131,7 @@ export const createInitialState = (
       { zone: 6, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
       { zone: 7, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) }
     ],
-    aiHand: [],
+    aiAthleteHand: [],
     aiBench: [],
     aiSynergyHand: [],
     synergyDeck: getSynergyDeckFixed(),
@@ -407,9 +407,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         skipTeamAction: true,
         isFirstMatchTurn: true,
         currentAction: 'none' as PlayerActionType,
-        playerHand: action.starters,
+        playerAthleteHand: action.starters,
         playerBench: action.subs,
-        aiHand: aiStarters,
+        aiAthleteHand: aiStarters,
         aiBench: aiSubs
       };      
       newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
@@ -641,6 +641,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'TRIGGER_EFFECT': {
       if (!state.pendingImmediateEffect) return state;
       let newState = performImmediateEffect(state, state.pendingImmediateEffect.card, state.pendingImmediateEffect.zone, state.pendingImmediateEffect.slot);
+      newState.pendingImmediateEffect = null;
       newState.matchLogs = addLog(newState, {
         type: 'skill',
         message: `Immediate effect triggered: ${state.pendingImmediateEffect.card.name}`
@@ -652,12 +653,12 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return { ...state, pendingImmediateEffect: null, message: 'Immediate effect skipped' };
     
     case 'SUBSTITUTE': {
-      const outgoingCard = state.playerHand.find(c => c.id === action.outgoingCardId) || state.playerBench.find(c => c.id === action.outgoingCardId);
+      const outgoingCard = state.playerAthleteHand.find((c: athleteCard) => c.id === action.outgoingCardId) || state.playerBench.find((c: athleteCard) => c.id === action.outgoingCardId);
       const incomingCard = state.playerBench.find(c => c.id === action.incomingCardId);
       if (outgoingCard && incomingCard) {
         let newState = { ...state };
-        if (state.playerHand.some(c => c.id === action.outgoingCardId)) {
-          newState.playerHand = state.playerHand.map(c => c.id === action.outgoingCardId ? incomingCard : c);
+        if (state.playerAthleteHand.some((c: athleteCard) => c.id === action.outgoingCardId)) {
+          newState.playerAthleteHand = state.playerAthleteHand.map((c: athleteCard) => c.id === action.outgoingCardId ? incomingCard : c);
         } else {
           newState.playerBench = state.playerBench.map(c => c.id === action.outgoingCardId ? incomingCard : c);
         }
@@ -755,6 +756,28 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       const isPlayerAttacking = state.currentTurn === 'player';
       const newAiActiveSynergy = isPlayerAttacking ? state.defenderSelectedSynergyCards : state.aiActiveSynergy;
       const newPlayerActiveSynergy = isPlayerAttacking ? state.playerActiveSynergy : state.defenderSelectedSynergyCards;
+      
+      // 检查防守方是否使用了铲球卡
+      const hasTackleCard = state.defenderSelectedSynergyCards.some(card => card.type === 'tackle');
+      
+      if (hasTackleCard) {
+        // 铲球卡效果：取消当前判定，触发点球大战
+        return {
+          ...state,
+          defenderSynergySelection: false,
+          defenderAvailableSynergyCards: [],
+          defenderSelectedSynergyCards: [],
+          playerSynergyHand: isPlayerDefending ? newDefenderHand : state.playerSynergyHand,
+          aiSynergyHand: isPlayerDefending ? state.aiSynergyHand : newDefenderHand,
+          synergyDeck: newSynergyDeck,
+          synergyDiscard: newSynergyDiscard,
+          playerActiveSynergy: newPlayerActiveSynergy,
+          aiActiveSynergy: newAiActiveSynergy,
+          phase: 'penaltyShootout',
+          pendingPenalty: true,
+          message: '🛑 TACKLE! 铲球阻止了进攻，进入点球大战！'
+        };
+      }
       
       return {
         ...state,

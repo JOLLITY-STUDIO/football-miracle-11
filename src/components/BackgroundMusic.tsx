@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { logger } from '../utils/logger';
 
 // Default BGM playlist
 const PLAYLIST: string[] = [
@@ -131,10 +132,10 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
             setIsPlaying(true);
           })
           .catch((e: any) => {
-            console.log("Autoplay blocked, user interaction required:", e.name);
+            logger.info("Autoplay blocked, user interaction required:", e.name);
             // Don't log for NotAllowedError as it's expected behavior
             if (e.name !== 'NotAllowedError') {
-              console.warn("Playback failed:", e);
+              logger.warn("Playback failed:", e);
             }
           });
       }
@@ -177,10 +178,10 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
           // Provide more detailed error information
           switch (err.name) {
             case 'NotAllowedError':
-              console.log("Autoplay blocked. User interaction required.");
+              logger.info("Autoplay blocked. User interaction required.");
               break;
             case 'AbortError':
-              console.debug("Playback aborted (interrupted by source change or pause)");
+              logger.debug("Playback aborted (interrupted by source change or pause)");
               break;
             case 'NotSupportedError':
               console.warn("Audio format not supported:", err.message);

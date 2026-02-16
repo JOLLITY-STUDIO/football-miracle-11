@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import type { AthleteCard, TacticalIcon, IconPosition } from '../data/cards';
 import { SkillEffectBadge } from './SkillEffectBadge';
+import { BaseCard } from './BaseCard';
+import { logger } from '../utils/logger';
 
 // Type alias for clarity
 type athleteCardType = AthleteCard;
@@ -23,6 +25,14 @@ interface Props {
   usedShotIcons?: number[]; // Array of indices of used shot icons
 }
 
+// Size config matching BaseCard
+const SIZE_CONFIG = {
+  tiny: { width: 99, height: 65 },
+  small: { width: 132, height: 86 },
+  medium: { width: 165, height: 108 },
+  large: { width: 198, height: 130 }
+};
+
 const getRoleName = (type: string) => {
   switch (type) {
     case 'forward': return 'FW';
@@ -42,8 +52,7 @@ const getIconImage = (icon: TacticalIcon): string => {
     case 'defense': return '/icons/defense_shield.svg';
     case 'pass': return '/cards/skills/icon-pass.png';
     case 'press': return '/icons/press_up.svg';
-    case 'breakthrough': return '/cards/skills/icon-shoot.png';
-    case 'breakthroughAll': return '/cards/skills/icon-shoot.png';
+    default: return '/icons/attack_ball.svg';
   }
 };
 
@@ -53,27 +62,20 @@ const getIconColor = (icon: TacticalIcon): string => {
     case 'defense': return '#3b82f6';
     case 'pass': return '#f59e0b';
     case 'press': return '#ef4444';
-    case 'breakthrough': return '#8b5cf6';
-    case 'breakthroughAll': return '#ec4899';
+    default: return '#22c55e';
   }
 };
 
-const getHalfIconInfo = (position: IconPosition): { edge: 'top' | 'bottom' | 'left' | 'right'; pos: string } => {
+const getHalfIconInfo = (position: IconPosition): { edge: 'top' | 'bottom' | 'left' | 'right'; pos: string } | null => {
   const positions: Record<IconPosition, { edge: 'top' | 'bottom' | 'left' | 'right'; pos: string }> = {
-    'slot1-topLeft': { edge: 'top', pos: '25%' },
-    'slot1-topRight': { edge: 'top', pos: '75%' },
-    'slot1-middleLeft': { edge: 'left', pos: '50%' },
-    'slot1-middleRight': { edge: 'right', pos: '50%' },
-    'slot1-bottomLeft': { edge: 'bottom', pos: '25%' },
-    'slot1-bottomRight': { edge: 'bottom', pos: '75%' },
-    'slot2-topLeft': { edge: 'top', pos: '25%' },
-    'slot2-topRight': { edge: 'top', pos: '75%' },
-    'slot2-middleLeft': { edge: 'left', pos: '50%' },
-    'slot2-middleRight': { edge: 'right', pos: '50%' },
-    'slot2-bottomLeft': { edge: 'bottom', pos: '25%' },
-    'slot2-bottomRight': { edge: 'bottom', pos: '75%' },
+    'slot-topLeft': { edge: 'top', pos: '25%' },
+    'slot-topRight': { edge: 'top', pos: '75%' },
+    'slot-middleLeft': { edge: 'left', pos: '50%' },
+    'slot-middleRight': { edge: 'right', pos: '50%' },
+    'slot-bottomLeft': { edge: 'bottom', pos: '25%' },
+    'slot-bottomRight': { edge: 'bottom', pos: '75%' },
   };
-  return positions[position];
+  return positions[position] || null;
 };
 
 const getThemeColor = (type: string) => {
@@ -104,14 +106,6 @@ export const AthleteCardComponent: React.FC<Props> = ({
   const cardBg = getCardBgColor(card.type);
   const themeColor = getThemeColor(card.type);
 
-  // 统一使用 BaseCard 的尺寸定义
-  const cardSize = {
-    tiny: { width: '99px', height: '65px' },    // 1.5x
-    small: { width: '132px', height: '86px' },  // 2x
-    medium: { width: '165px', height: '108px' }, // 2.5x
-    large: { width: '198px', height: '130px' }   // 3x - 匹配场地格子 198x130
-  };
-
   const textStrokeStyle: React.CSSProperties = {
     color: themeColor,
     WebkitTextStroke: '0.5px white',
@@ -128,7 +122,8 @@ export const AthleteCardComponent: React.FC<Props> = ({
     const iconColor = getIconColor(iconPos.type);
     const iconImage = getIconImage(iconPos.type);
     // 半圆直径为卡片高度的1/6
-    const halfIconDiameter = cardSize[size].height.replace('px', '') as unknown as number / 6;
+    const cardHeight = SIZE_CONFIG[size || 'medium'].height;
+    const halfIconDiameter = cardHeight / 6;
     const radius = halfIconDiameter / 2;
     
     // Check if this is a shot icon and if it's been used
@@ -204,40 +199,37 @@ export const AthleteCardComponent: React.FC<Props> = ({
   return (
     <div
       className="relative perspective-1000"
-      style={{
-        width: cardSize[size].width,
-        height: cardSize[size].height
-      }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <motion.div
-        layout
-        initial={false}
-        animate={{
-          rotateY: faceDown ? 180 : 0,
-          rotate: 0,
-          scale: selected ? 1.05 : 1,
-          y: selected ? -5 : 0
-        }}
-        whileHover={{}}
-        className={clsx(
-          "relative preserve-3d cursor-pointer transition-shadow overflow-hidden rounded-lg",
-          selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-20 shadow-lg",
-          disabled && "cursor-not-allowed"
-        )}
-        style={{
-          width: '100%',
-          height: '100%',
-          boxSizing: 'border-box'
-        }}
-        onClick={() => {
-          console.log('Player card clicked:', card.name, 'ID:', card.id);
-          onClick?.();
-        }}
-        draggable={draggable}
-        onDragStart={() => onDragStart?.(card)}
-        onDragEnd={() => onDragEnd?.()}
+      <BaseCard size={size} className="perspective-1000">
+        <motion.div
+          layout
+          initial={false}
+          animate={{
+            rotateY: faceDown ? 180 : 0,
+            rotate: 0,
+            scale: selected ? 1.05 : 1,
+            y: selected ? -5 : 0
+          }}
+          whileHover={{}}
+          className={clsx(
+            "relative preserve-3d cursor-pointer transition-shadow overflow-hidden rounded-lg",
+            selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-20 shadow-lg",
+            disabled && "cursor-not-allowed"
+          )}
+          style={{
+            width: '100%',
+            height: '100%',
+            boxSizing: 'border-box'
+          }}
+          onClick={() => {
+            logger.debug('Player card clicked:', card.name, 'ID:', card.id);
+            onClick?.();
+          }}
+          draggable={draggable}
+          onDragStart={() => onDragStart?.(card)}
+          onDragEnd={() => onDragEnd?.()}
       >
         {/* Front Face - 横版布局 左右各半 */}
         <div
@@ -345,6 +337,7 @@ export const AthleteCardComponent: React.FC<Props> = ({
           </div>
         </div>
       </motion.div>
+      </BaseCard>
     </div>
   );
 };

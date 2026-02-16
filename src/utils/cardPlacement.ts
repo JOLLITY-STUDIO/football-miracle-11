@@ -1,6 +1,7 @@
 import type { GameState } from '../game/gameLogic';
 import type { athleteCard } from '../data/cards';
 import type { FieldZone } from '../types/game';
+import { logger } from './logger';
 
 /**
  * Efficiently clone field zones using structured cloning
@@ -23,22 +24,17 @@ export const placeCard = (
   zone: number, 
   slot: number
 ): GameState => {
-  console.log('=== placeCard called ===');
-  console.log('Card:', card.name, 'ID:', card.id);
-  console.log('Zone:', zone, 'Slot:', slot);
-  console.log('Current turn:', state.currentTurn);
-  console.log('Player field zones:', state.playerField.map(z => z.zone));
-  console.log('AI field zones:', state.aiField.map(z => z.zone));
+  logger.game('PLACE_CARD', { card: card.name, cardId: card.id, zone, slot, turn: state.currentTurn });
   
   // Validate slot bounds
   if (slot < 0 || slot > 7) {
-    console.log('Slot out of bounds:', slot);
+    logger.warn('Slot out of bounds:', slot);
     return state;
   }
   
   // Cards occupy 2 slots, cannot start at last column
   if (slot === 7) {
-    console.log('Cannot place at slot 7 (would go out of bounds)');
+    logger.warn('Cannot place at slot 7 (would go out of bounds)');
     return state;
   }
   
@@ -50,62 +46,76 @@ export const placeCard = (
   const targetZoneIndex = newField.findIndex(z => z.zone === zone);
   
   if (targetZoneIndex === -1) {
-    console.log('Zone not found:', zone);
+    logger.warn('Zone not found:', zone);
     return state;
   }
   
   const targetZone = newField[targetZoneIndex];
+  if (!targetZone) {
+    logger.warn('Zone not found:', zone);
+    return state;
+  }
+  
   const slot1Index = targetZone.slots.findIndex(s => s.position === slot);
   const slot2Index = targetZone.slots.findIndex(s => s.position === slot + 1);
   
-  console.log('Slot1 index:', slot1Index, 'Slot2 index:', slot2Index);
+  logger.debug('Slot indices:', { slot1Index, slot2Index });
   
   // Ensure slots exist
   if (slot1Index === -1 || slot2Index === -1) {
-    console.log('Slots not found in zone');
+    logger.warn('Slots not found in zone');
     return state;
   }
   
   const slot1 = targetZone.slots[slot1Index];
   const slot2 = targetZone.slots[slot2Index];
   
-  console.log('Slot1:', { pos: slot1.position, hasCard: !!slot1.athleteCard });
-  console.log('Slot2:', { pos: slot2.position, hasCard: !!slot2.athleteCard });
+  if (!slot1 || !slot2) {
+    logger.warn('Slots not found');
+    return state;
+  }
+  
+  logger.debug('Slot check:', { 
+    slot1: { pos: slot1.position, hasCard: !!slot1.athleteCard },
+    slot2: { pos: slot2.position, hasCard: !!slot2.athleteCard }
+  });
   
   // Check if slots are empty
-  if (!slot1 || !slot2 || slot1.athleteCard || slot2.athleteCard) {
-    console.log('Cannot place - slots not empty or not found');
+  if (slot1.athleteCard || slot2.athleteCard) {
+    logger.warn('Cannot place - slots not empty');
     return state;
   }
   
   // Place card in both slots
   targetZone.slots[slot1Index] = { ...slot1, athleteCard: card };
   targetZone.slots[slot2Index] = { ...slot2, athleteCard: card };
-  console.log('Card placed successfully in slots', slot, 'and', slot + 1);
+  logger.game('CARD_PLACED', { cardName: card.name, slots: [slot, slot + 1] });
   
   // Remove card from hand
-  const sourceHand = isPlayerTurn ? state.playerHand : state.aiHand;
+  const sourceHand = isPlayerTurn ? state.playerAthleteHand : state.aiAthleteHand;
   const newHand = sourceHand.filter(c => c.id !== card.id);
   
-  console.log('New hand size:', newHand.length);
+  logger.debug('New hand size:', newHand.length);
   
   // Return new state with only modified fields
   const newState = {
     ...state,
     ...(isPlayerTurn ? {
       playerField: newField,
-      playerHand: newHand
+      playerAthleteHand: newHand
     } : {
       aiField: newField,
-      aiHand: newHand
+      aiAthleteHand: newHand
     }),
     message: `${card.name} placed on field`
   };
   
-  console.log('New state player field:', newState.playerField.map((z: any) => ({
-    zone: z.zone,
-    cards: z.slots.filter((s: any) => s.athleteCard).map((s: any) => ({ pos: s.position, card: s.athleteCard?.name }))
-  })));
+  logger.debug('Final state:', { 
+    playerField: newState.playerField.map(z => ({
+      zone: z.zone,
+      cards: z.slots.filter(s => s.athleteCard).map(s => ({ pos: s.position, card: s.athleteCard?.name }))
+    }))
+  });
   
   return newState;
 };

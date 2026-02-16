@@ -19,6 +19,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   phase,
   onCardSelect,
 }) => {
+  // BUG-2026-02-16-016: 优化手牌对齐 - 使用响应式容器宽度
   const settings = {
     rows: 1,
     cols: cards.length,
@@ -29,6 +30,17 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
     spacing: 20,
     startAngle: -15
   };
+  
+  // 计算容器宽度：确保在不同卡牌数量下都能居中
+  // 最小宽度为400px，最大宽度为屏幕宽度的80%
+  const calculateContainerWidth = () => {
+    const baseWidth = cards.length * (settings.cardWidth + settings.spacing);
+    const minWidth = 400;
+    const maxWidth = typeof window !== 'undefined' ? window.innerWidth * 0.8 : 1200;
+    return Math.max(minWidth, Math.min(baseWidth, maxWidth));
+  };
+  
+  const containerWidth = calculateContainerWidth();
   
   const calculateCardPosition = (col: number) => {
     const { cols, arcAngle, arcHeight, startAngle } = settings;
@@ -61,8 +73,19 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   };
   
   return (
-    <div id="athlete-card-group" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 pointer-events-auto z-100" style={{ height: '200px', width: 'fit-content' }}>
-      <div className="relative h-full flex justify-center items-center pt-4 perspective-1000" style={{ width: `${Math.max(cards.length * 100, 400)}px` }}>
+    <div 
+      id="athlete-card-group" 
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 pointer-events-auto z-100" 
+      style={{ 
+        height: '200px', 
+        width: `${containerWidth}px`,
+        maxWidth: '90vw' // 确保不超出屏幕
+      }}
+    >
+      <div 
+        className="relative h-full flex justify-center items-center pt-4 perspective-1000" 
+        style={{ width: '100%' }}
+      >
         <AnimatePresence>
           {cards.map((card: athleteCard, i: number) => {
             const { x, y, rotation } = calculateCardPosition(i);
@@ -93,15 +116,14 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 onClick={() => onCardSelect(card)}
-                whileHover={{}}
-                whileTap={{}}
+                whileHover={{ scale: isSelected ? 1.2 : 1.05 }}
+                whileTap={{ scale: isSelected ? 1.15 : 0.95 }}
                 style={{
                   position: 'absolute',
                   width: `${settings.cardWidth}px`,
                   height: `${settings.cardHeight}px`,
                   left: '50%',
                   top: '50%',
-                  transform: `translateX(-50%) translateY(-50%) translateX(${isSelected ? 0 : x}px) translateY(${isSelected ? -20 : y}px) rotate(${isSelected ? 0 : rotation}deg)`,
                   borderRadius: '8px',
                   cursor: 'pointer',
                   zIndex: isSelected ? 100 : i,
@@ -120,7 +142,7 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
         </AnimatePresence>
       </div>
       <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold whitespace-nowrap">
-        YOUR HAND: {cards.length}
+        YOUR HAND: {cards.length} {cards.length > 0 && '| SELECT A CARD TO PLACE'}
       </div>
     </div>
   );

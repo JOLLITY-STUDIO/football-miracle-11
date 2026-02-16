@@ -5,7 +5,7 @@ import { starathleteCards, baseathleteCards } from '../data/cards';
 export const startDraftRound = (state: GameState): GameState => {
   // Randomly select 3 star cards from the pool, filtering out already selected and discarded cards
   const shuffledStars = [...starathleteCards]
-    .filter(card => !state.playerHand.some(c => c.id === card.id) && !state.aiDraftHand.some(c => c.id === card.id) && !state.discardedDraftCards.some(c => c.id === card.id))
+    .filter(card => !state.playerAthleteHand.some(c => c.id === card.id) && !state.aiDraftHand.some(c => c.id === card.id) && !state.discardedDraftCards.some(c => c.id === card.id))
     .sort(() => Math.random() - 0.5);
   const draftCards = shuffledStars.slice(0, 3);
   
@@ -40,7 +40,7 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
     const selectedCard = state.availableDraftCards[cardIndex];
     if (!selectedCard) return state;
     
-    const newPlayerHand = [...state.playerHand, selectedCard];
+    const newPlayerHand = [...state.playerAthleteHand, selectedCard];
     
     // Remove selected card from available cards
     const remainingCards = state.availableDraftCards.filter((_, idx) => idx !== cardIndex) as athleteCard[];
@@ -54,7 +54,7 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
       // After player picks first, it's AI's turn
       return {
         ...state,
-        playerHand: newPlayerHand,
+        playerAthleteHand: newPlayerHand,
         availableDraftCards: remainingCards,
         draftStep: 2, // AI选择阶段
         message: `You selected ${selectedCard.name}. AI is choosing...`
@@ -63,7 +63,7 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
       // AI picked first then player, go to discard phase
       return {
         ...state,
-        playerHand: newPlayerHand,
+        playerAthleteHand: newPlayerHand,
         availableDraftCards: remainingCards,
         draftStep: 3, // Discard phase
         message: `You selected ${selectedCard.name}. Discarding remaining card...`
@@ -72,7 +72,7 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
       // Other cases, default to AI selection phase
       return {
         ...state,
-        playerHand: newPlayerHand,
+        playerAthleteHand: newPlayerHand,
         availableDraftCards: remainingCards,
         draftStep: 2, // AI selection phase
         message: `You selected ${selectedCard.name}. AI is choosing...`
@@ -132,7 +132,7 @@ export const discardDraftCard = (state: GameState): GameState => {
   const nextRound = state.draftRound + 1;
   
   // Check if draft is complete (both sides have selected 3 star cards)
-  if (state.playerHand.length >= 3 && state.aiDraftHand.length >= 3) {
+  if (state.playerAthleteHand.length >= 3 && state.aiDraftHand.length >= 3) {
     // Draft complete, add base player cards
     const playerBaseTeamCards = baseathleteCards.filter(card => {
       if (state.isHomeTeam) {
@@ -150,13 +150,13 @@ export const discardDraftCard = (state: GameState): GameState => {
       }
     });
     
-    const allPlayers = [...state.playerHand, ...playerBaseTeamCards];
+    const allPlayers = [...state.playerAthleteHand, ...playerBaseTeamCards];
     const allAiPlayers = [...state.aiDraftHand, ...aiBaseTeamCards];
     
     return {
       ...state,
-      playerHand: allPlayers,
-      aiHand: allAiPlayers,
+      playerAthleteHand: allPlayers,
+      aiAthleteHand: allAiPlayers,
       availableDraftCards: [],
       discardedDraftCards: newDiscardedDraftCards,
       phase: 'squadSelection',
@@ -167,7 +167,7 @@ export const discardDraftCard = (state: GameState): GameState => {
   
   // Proceed to next draft round
   const shuffledStars = [...starathleteCards]
-    .filter(card => !state.playerHand.some(c => c.id === card.id) && !state.aiDraftHand.some(c => c.id === card.id) && !newDiscardedDraftCards.some(c => c.id === card.id))
+    .filter(card => !state.playerAthleteHand.some((c: athleteCard) => c.id === card.id) && !state.aiDraftHand.some((c: athleteCard) => c.id === card.id) && !newDiscardedDraftCards.some((c: athleteCard) => c.id === card.id))
     .sort(() => Math.random() - 0.5);
   const nextDraftCards = shuffledStars.slice(0, 3) as athleteCard[];
   

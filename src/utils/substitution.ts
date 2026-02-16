@@ -1,5 +1,5 @@
 import type { GameState } from '../game/gameLogic';
-import type { athleteCard } from '../types/game';
+import type { athleteCard } from '../data/cards';
 
 export const performSubstitution = (
   state: GameState, 
@@ -27,7 +27,7 @@ export const performSubstitution = (
   delete newUsedShotIcons[outgoingCard.id]; // Clear the outgoing player's used icons
   
   // Add outgoing card to bench and remove incoming card from hand
-  const newHand = isPlayer ? [...state.playerHand] : [...state.aiHand];
+  const newHand = isPlayer ? [...state.playerAthleteHand] : [...state.aiAthleteHand];
   const newBench = isPlayer ? [...state.playerBench] : [...state.aiBench];
   
   const outgoingIndex = newHand.findIndex(card => card.id === incomingCard.id);
@@ -40,12 +40,12 @@ export const performSubstitution = (
     ...state,
     ...(isPlayer ? {
       playerField: newPlayerField,
-      playerHand: newHand,
+      playerAthleteHand: newHand,
       playerBench: newBench,
       playerUsedShotIcons: newUsedShotIcons
     } : {
-      aiField: newAiField,
-      aiHand: newHand,
+      aiField: newPlayerField,
+      aiAthleteHand: newHand,
       aiBench: newBench,
       aiUsedShotIcons: newUsedShotIcons
     }),

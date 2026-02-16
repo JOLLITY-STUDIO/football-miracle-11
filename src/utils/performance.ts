@@ -90,11 +90,12 @@ class PerformanceMonitor {
       if (!acc[metric.name]) {
         acc[metric.name] = [];
       }
-      acc[metric.name].push(metric.duration);
+      acc[metric.name]!.push(metric.duration);
       return acc;
     }, {} as Record<string, number[]>);
 
     Object.entries(grouped).forEach(([name, durations]) => {
+      if (!durations || durations.length === 0) return;
       const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
       const max = Math.max(...durations);
       const min = Math.min(...durations);

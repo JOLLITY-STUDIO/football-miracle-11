@@ -6,7 +6,7 @@ interface Props {
   onViewRecords: () => void;
   onCardGuide: () => void;
   onViewDemos: () => void;
-  onStartTutorial: () => void;
+  onStartTutorial?: () => void;
 }
 
 export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCardGuide, onViewDemos, onStartTutorial }) => {

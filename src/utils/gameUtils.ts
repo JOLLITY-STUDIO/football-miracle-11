@@ -32,7 +32,7 @@ export const countIcons = (field: FieldZone[], iconType: string): number => {
   field.forEach(zone => {
     zone.slots.forEach(slot => {
       if (slot.athleteCard) {
-        count += slot.athleteCard.icons.filter(i => i === iconType).length;
+        count += slot.athleteCard.icons.filter((i: string) => i === iconType).length;
       }
     });
   });
@@ -47,7 +47,7 @@ export const calculateActivatedIconPositions = (playerField: FieldZone[], aiFiel
       zone.slots.forEach(slot => {
         if (slot.athleteCard) {
           const card = slot.athleteCard;
-          card.iconPositions.forEach(iconPos => {
+          card.iconPositions.forEach((iconPos: any) => {
             activatedPositions.push({
               zone: zone.zone,
               position: slot.position

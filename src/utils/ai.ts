@@ -22,9 +22,9 @@ export const aiTurn = (state: GameState): GameState => {
   let newState = { ...state };
   
   // 1. Check if AI has cards in hand
-  if (newState.aiHand.length > 0) {
+  if (newState.aiAthleteHand.length > 0) {
     // 2. Try to place a card
-    const cardToPlace = newState.aiHand[0];
+    const cardToPlace = newState.aiAthleteHand[0];
     
     // Find a valid position to place the card
     if (cardToPlace) {
@@ -47,7 +47,7 @@ export const aiTurn = (state: GameState): GameState => {
             break;
           }
         }
-        if (newState.aiHand.length < state.aiHand.length) {
+        if (newState.aiAthleteHand.length < state.aiAthleteHand.length) {
           break;
         }
       }
@@ -78,8 +78,8 @@ export const processAiActionStep = (state: GameState): GameState => {
       
     case 'placeCard':
       // AI 行动阶段 - 放置卡片
-      if (newState.aiHand.length > 0) {
-        const cardToPlace = newState.aiHand[0];
+      if (newState.aiAthleteHand.length > 0) {
+        const cardToPlace = newState.aiAthleteHand[0];
         
         if (cardToPlace) {
           const validZones = getValidZones(cardToPlace.type);
@@ -100,7 +100,7 @@ export const processAiActionStep = (state: GameState): GameState => {
                 break;
               }
             }
-            if (newState.aiHand.length < state.aiHand.length) {
+            if (newState.aiAthleteHand.length < state.aiAthleteHand.length) {
               break;
             }
           }

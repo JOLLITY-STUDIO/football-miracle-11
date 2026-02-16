@@ -345,6 +345,46 @@ For example:
   - ✅ No diagnostic errors
   - ✅ Playwright config loads correctly
 
+### BUG-2026-02-16-016: Player hand cards not aligned with screen
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Status**: ✅ Fixed
+- **Impact Scope**: UI layout, User experience
+- **Impact Level**: Important
+- **Related Files**:
+  - `src/components/AthleteCardGroup.tsx`
+  - `src/components/GameBoard.tsx`
+- **Problem Description**: Player hand cards are not properly aligned with the screen, causing layout issues on different screen sizes
+- **Root Cause**: 
+  - Container used `width: fit-content` with fixed calculation
+  - No responsive width adjustment for different card counts
+  - Missing max-width constraint causing overflow on small screens
+- **Fix Solution**: 
+  - Implemented responsive container width calculation
+  - Changed from `absolute` to `fixed` positioning for better centering
+  - Added `calculateContainerWidth()` function with min/max constraints
+  - Added `maxWidth: '90vw'` to prevent screen overflow
+  - Enhanced hover/tap animations for better feedback
+  - Added operation hint text: "SELECT A CARD TO PLACE"
+- **Version**: 0.1.129
+- **Git Commit**: TBD
+- **Impact Analysis**:
+  - Hand cards now properly centered on all screen sizes
+  - Supports 1-10 cards with dynamic width calculation
+  - Minimum width: 400px, Maximum width: 80% of viewport
+  - Better visual feedback with enhanced animations
+  - Improved user guidance with hint text
+- **Regression Testing**: 
+  - ✅ Test with 1-10 cards in hand
+  - ✅ Test on different screen sizes (mobile, tablet, desktop)
+  - ✅ Test card selection and placement
+  - ✅ Verify centering on window resize
+- **Related Improvements**:
+  - Created `OperationGuide.tsx` component for better user guidance
+  - Created `FeedbackOverlay.tsx` for visual feedback system
+  - Created `TacticalIconDisplay.tsx` for tactical icon visualization
+  - Created `docs/UI_OPTIMIZATION_PLAN.md` for comprehensive UI improvements
+
 ## Bug Tracing Methods
 
 ### 1. Git Commit Message Format

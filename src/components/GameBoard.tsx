@@ -141,8 +141,8 @@ const {
   const [showShooterSelector, setShowShooterSelector] = useState(false);
   
   // Audio Feedback for card actions (hand changes)
-  const prevPlayerHandCount = useRef(gameState.playerHand.length);
-  const prevAiHandCount = useRef(gameState.aiHand.length);
+  const prevPlayerHandCount = useRef(gameState.playerAthleteHand.length);
+  const prevAiHandCount = useRef(gameState.aiAthleteHand.length);
   const prevPlayerSynergyCount = useRef(gameState.playerSynergyHand.length);
   const prevAiSynergyCount = useRef(gameState.aiSynergyHand.length);
 
@@ -158,20 +158,20 @@ const {
 
   useEffect(() => {
     // Player hand changes
-    if (gameState.playerHand.length < prevPlayerHandCount.current) {
+    if (gameState.playerAthleteHand.length < prevPlayerHandCount.current) {
       playSound('flip'); // Card played
-    } else if (gameState.playerHand.length > prevPlayerHandCount.current) {
+    } else if (gameState.playerAthleteHand.length > prevPlayerHandCount.current) {
       playSound('draw'); // Card drawn
     }
-    prevPlayerHandCount.current = gameState.playerHand.length;
+    prevPlayerHandCount.current = gameState.playerAthleteHand.length;
 
     // AI hand changes
-    if (gameState.aiHand.length < prevAiHandCount.current) {
+    if (gameState.aiAthleteHand.length < prevAiHandCount.current) {
       playSound('flip'); // Card played
-    } else if (gameState.aiHand.length > prevAiHandCount.current) {
+    } else if (gameState.aiAthleteHand.length > prevAiHandCount.current) {
       playSound('draw'); // Card drawn
     }
-    prevAiHandCount.current = gameState.aiHand.length;
+    prevAiHandCount.current = gameState.aiAthleteHand.length;
 
     // Synergy hand changes
     if (gameState.playerSynergyHand.length !== prevPlayerSynergyCount.current) {
@@ -183,7 +183,7 @@ const {
       playSound('draw');
     }
     prevAiSynergyCount.current = gameState.aiSynergyHand.length;
-  }, [gameState.athleteHand.length, gameState.aiAthleteHand.length, gameState.playerSynergyHand.length, gameState.aiSynergyHand.length]);
+  }, [gameState.playerAthleteHand.length, gameState.aiAthleteHand.length, gameState.playerSynergyHand.length, gameState.aiSynergyHand.length]);
   
   // Setup Animation Sequence Effects
   useEffect(() => {
@@ -211,15 +211,15 @@ const {
   }, [setupStep, dispatch]);
 
   // Sound effect for drawing cards
-  const prevHandSize = useRef(gameState.athleteHand.length);
+  const prevHandSize = useRef(gameState.playerAthleteHand.length);
   const prevSynergyHandSize = useRef(gameState.playerSynergyHand.length);
   
   useEffect(() => {
-    if (gameState.athleteHand.length > prevHandSize.current) {
+    if (gameState.playerAthleteHand.length > prevHandSize.current) {
       playSound('draw');
     }
-    prevHandSize.current = gameState.athleteHand.length;
-  }, [gameState.athleteHand.length]);
+    prevHandSize.current = gameState.playerAthleteHand.length;
+  }, [gameState.playerAthleteHand.length]);
 
   useEffect(() => {
     if (gameState.playerSynergyHand.length > prevSynergyHandSize.current) {
@@ -360,7 +360,7 @@ const {
   // Track AI newly placed cards for animation
   const prevAIHandRef = useRef<string[]>([]);
   useEffect(() => {
-    const currentAIHandIds = gameState.aiHand.map(c => c.id);
+    const currentAIHandIds = gameState.aiAthleteHand.map(c => c.id);
     const prevAIHandIds = prevAIHandRef.current;
     
     if (prevAIHandIds.length > currentAIHandIds.length) {
@@ -377,7 +377,7 @@ const {
     }
     
     prevAIHandRef.current = currentAIHandIds;
-  }, [gameState.aiHand, gameState.aiField]);
+  }, [gameState.aiAthleteHand, gameState.aiField]);
 
   const saveCurrentSnapshot = () => {
     const snapshot = {
@@ -385,7 +385,7 @@ const {
       aiScore: gameState.aiScore,
       playerField: gameState.playerField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, athleteCardId: s.athleteCard?.id || null })) })),
       aiField: gameState.aiField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, athleteCardId: s.athleteCard?.id || null })) })),
-      playerHand: gameState.athleteHand.map(c => c.id),
+      playerHand: gameState.playerAthleteHand.map(c => c.id),
       aiHand: gameState.aiAthleteHand.map(c => c.id),
       controlPosition: gameState.controlPosition,
       phase: gameState.phase,
@@ -657,7 +657,7 @@ const handleCardSelect = (card: athleteCard) => {
         onComplete={handleCompleteTutorial}
         onStepComplete={handleStepComplete}
         gameState={gameState}
-        playerHand={gameState.athleteHand}
+        playerHand={gameState.playerAthleteHand}
       />
       
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
@@ -1000,15 +1000,15 @@ const handleCardSelect = (card: athleteCard) => {
 
          {/* Top Center: Opponent Hand (Arc Layout - Same as Player) */}
          <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50" style={{ width: 'fit-content' }}>
-            <div className="relative h-full" style={{ width: `${Math.max(gameState.aiHand.length * 100, 400)}px` }}>
+            <div className="relative h-full" style={{ width: `${Math.max(gameState.aiAthleteHand.length * 100, 400)}px` }}>
               <AnimatePresence>
-                  {gameState.aiHand.map((card, i) => {
+                  {gameState.aiAthleteHand.map((card, i) => {
                     // Calculate arc position for AI hand (same as player hand)
                     const arcAngle = 30;
                     const arcHeight = 500;
                     const startAngle = -15;
                     
-                    const anglePerCard = gameState.aiHand.length > 1 ? arcAngle / (gameState.aiHand.length - 1) : 0;
+                    const anglePerCard = gameState.aiAthleteHand.length > 1 ? arcAngle / (gameState.aiAthleteHand.length - 1) : 0;
                     const currentAngle = startAngle + (i * anglePerCard);
                     const radius = arcHeight;
                     const radian = (currentAngle * Math.PI) / 180;
@@ -1059,7 +1059,7 @@ const handleCardSelect = (card: athleteCard) => {
                   })}
               </AnimatePresence>
               <div className="absolute top-20 left-1/2 -translate-x-1/2 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold whitespace-nowrap">
-                   OPP HAND: {gameState.aiHand.length}
+                   OPP HAND: {gameState.aiAthleteHand.length}
               </div>
             </div>
          </div>
@@ -1073,7 +1073,7 @@ const handleCardSelect = (card: athleteCard) => {
 
          {/* Bottom Center: Player Hand */}
          <AthleteCardGroup
-           cards={gameState.athleteHand}
+           cards={gameState.playerAthleteHand}
            selectedCard={gameState.selectedCard}
            setupStep={setupStep}
            phase={gameState.phase}
@@ -1373,11 +1373,11 @@ const handleCardSelect = (card: athleteCard) => {
                   </div>
                </div>
 
-               {gameState.athleteHand.length > 0 && (
+               {gameState.playerAthleteHand.length > 0 && (
                  <div className="mb-10">
                     <div className="text-[10px] text-white/30 uppercase tracking-[0.3em] mb-4 px-2 font-black border-l-2 border-green-500/50 ml-2">Players In Hand</div>
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-10 p-4 bg-black/20 rounded-2xl border border-white/5">
-                      {gameState.athleteHand.map(card => (
+                      {gameState.playerAthleteHand.map((card: athleteCard) => (
                         <div key={card.id} className="relative group flex flex-col items-center">
                           <motion.div 
                             whileHover={{ scale: 1.1, y: -5 }}
@@ -1609,7 +1609,7 @@ const handleCardSelect = (card: athleteCard) => {
 
       {gameState.phase === 'squadSelection' && (
         <SquadSelect
-          allPlayers={[...gameState.athleteHand, ...gameState.playerBench]}
+          allPlayers={[...gameState.playerAthleteHand, ...gameState.playerBench]}
           onConfirm={(starters, subs) => {
             dispatch({ type: 'FINISH_SQUAD_SELECT', starters, subs });
           }}

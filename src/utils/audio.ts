@@ -2,7 +2,7 @@ import { Howl, Howler } from 'howler';
 
 // Define sound types
 export type SoundType = 
-  | 'click' | 'draw' | 'flip' | 'whistle' | 'cheer' | 'goal' | 'error' 
+  | 'click' | 'draw' | 'flip' | 'whistle' | 'whistle_long' | 'cheer' | 'goal' | 'error' 
   | 'swosh' | 'slide' | 'star_pulse' | 'toss' | 'ding' | 'snap';
 
 class AudioManager {
@@ -21,6 +21,7 @@ class AudioManager {
       draw: new Howl({ src: [`${base}audio/card_flip_new.wav`], volume: 0.8, rate: 1.0, onloaderror: (id, err) => console.debug('Audio load error:', err) }), 
       flip: new Howl({ src: [`${base}audio/card_flip_new.wav`], volume: 0.8, rate: 1.2, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
       whistle: new Howl({ src: [`${base}audio/whistle_new.wav`], volume: 1.0, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
+      whistle_long: new Howl({ src: [`${base}audio/whistle_new.wav`], volume: 1.0, rate: 0.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
       cheer: new Howl({ src: [`${base}audio/cheer_new.wav`], volume: 0.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
       goal: new Howl({ src: [`${base}audio/goal_new.wav`], volume: 1.2, onloaderror: (id, err) => console.debug('Audio load error:', err) }),
       error: new Howl({ src: [`${base}audio/whistle_new.wav`], volume: 0.6, rate: 0.8, onloaderror: (id, err) => console.debug('Audio load error:', err) }),

@@ -185,8 +185,8 @@ export const useGameState = (
     const action: PerformShotAction = {
       type: 'PERFORM_SHOT',
       card: attacker,
-      zone,
-      slot,
+      slot: slot,
+      zone: zone,
       synergyCards
     };
     dispatch(action);
@@ -205,9 +205,24 @@ export const useGameState = (
   }, [dispatch, playSound]);
 
   const handleEndTurn = useCallback(() => {
+    // 验证玩家是否执行了至少一个动作（放置球员或射门）
+    if (gameState.currentTurn === 'player' && gameState.turnPhase === 'playerAction') {
+      const hasPlacedCard = gameState.currentAction === 'organizeAttack';
+      const hasAttemptedShot = gameState.pendingShot !== null;
+      
+      if (!hasPlacedCard && !hasAttemptedShot) {
+        setGameState(prev => ({ 
+          ...prev, 
+          message: 'You must either place a card or attempt a shot before ending your turn!' 
+        }));
+        playSound('error');
+        return;
+      }
+    }
+    
     dispatch({ type: 'END_TURN' });
     playSound('whistle');
-  }, [dispatch, playSound]);
+  }, [gameState.currentTurn, gameState.turnPhase, gameState.currentAction, gameState.pendingShot, dispatch, playSound, setGameState]);
 
   const handleSubstituteSelect = useCallback((card: athleteCard) => {
     if (gameState.playerSubstitutionsLeft <= 0) return;

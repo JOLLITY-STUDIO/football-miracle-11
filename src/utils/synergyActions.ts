@@ -1,5 +1,5 @@
 import type { GameState } from '../game/gameLogic';
-import type { SynergyCard, athleteCard } from '../types/game';
+import type { SynergyCard, athleteCard } from '../data/cards';
 
 export const useSynergy = (state: GameState, synergyCard: SynergyCard, targetCard: athleteCard): GameState => {
   const isPlayer = state.currentTurn === 'player';

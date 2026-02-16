@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { registerSW } from 'virtual:pwa-register';
+import { logger } from '../utils/logger';
 
 export function PWAStatus() {
   const [swReady, setSWReady] = useState(false);
@@ -15,7 +16,7 @@ export function PWAStatus() {
         setOfflineReady(true);
       },
       onRegistered(registration) {
-        console.log('Service Worker registered:', registration);
+        logger.info('Service Worker registered:', registration);
         setSWReady(true);
       },
       onRegisterError(error) {

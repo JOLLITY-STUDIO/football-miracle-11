@@ -1,6 +1,17 @@
 import type { GameState } from '../game/gameLogic';
 import { calculateDefensePower } from './gameUtils';
 
+// Import calculateAttackPower from gameUtils
+const calculateAttackPower = (card: any, zones: any[], usedShotIcons: number[] = []): number => {
+  let power = card.power || 0;
+  
+  const attackIcons = card.iconPositions?.filter((pos: any) => pos.type === 'attack') || [];
+  const availableAttackIcons = attackIcons.filter((_: any, index: number) => !usedShotIcons.includes(index));
+  power += availableAttackIcons.length;
+  
+  return power;
+};
+
 export const resolveShot = (state: GameState): GameState => {
   if (!state.pendingShot) return state;
   
@@ -22,15 +33,15 @@ export const resolveShot = (state: GameState): GameState => {
       (state.aiActiveSynergy.length * 2);
   }
   
-  let result: 'goal' | 'save' | 'miss';
+  let result: 'goal' | 'saved' | 'missed';
   if (!defender) {
     result = 'goal';
   } else if (attackPower > defensePower) {
     result = 'goal';
   } else if (attackPower === defensePower) {
-    result = 'save';
+    result = 'saved';
   } else {
-    result = 'miss';
+    result = 'missed';
   }
   
   let newState = { ...state };

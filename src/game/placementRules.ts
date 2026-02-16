@@ -71,7 +71,7 @@ export const ADJACENCY_REQUIREMENTS = {
  * @returns Array of valid zone numbers
  */
 export const getValidZones = (type: string): number[] => {
-  return VALID_ZONES[type as keyof typeof VALID_ZONES] || [];
+  return [...(VALID_ZONES[type as keyof typeof VALID_ZONES] || [])];
 };
 
 /**

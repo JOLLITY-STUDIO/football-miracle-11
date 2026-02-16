@@ -1,6 +1,7 @@
 import React from 'react';
 import type { athleteCard } from '../data/cards';
 import { CardPlacementService } from '../game/cardPlacementService';
+import { logger } from '../utils/logger';
 
 interface FieldCellHighlightProps {
   isAi: boolean;
@@ -51,7 +52,7 @@ export const FieldCellHighlight: React.FC<FieldCellHighlightProps> = ({
   const isHighlightVisible = validationResult.canHighlight;
 
   // Debug logging
-  console.log('FieldCellHighlight debug:', {
+  logger.debug('FieldCellHighlight debug:', {
     zone,
     colIdx,
     selectedCard: selectedCard?.name,
@@ -90,17 +91,17 @@ export const FieldCellHighlight: React.FC<FieldCellHighlightProps> = ({
   // Handle click event
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Click event triggered:', {
+    logger.debug('Click event triggered:', {
       zone,
       colIdx,
       isHighlightVisible,
       validationResult
     });
     if (isHighlightVisible) {
-      console.log('SVG Click at zone:', zone, 'col:', colIdx, 'placement start col:', startColForPlacement);
+      logger.debug('SVG Click at zone:', zone, 'col:', colIdx, 'placement start col:', startColForPlacement);
       onSlotClick(zone, startColForPlacement);
     } else {
-      console.log('Click ignored - not highlightable');
+      logger.debug('Click ignored - not highlightable');
     }
   };
 

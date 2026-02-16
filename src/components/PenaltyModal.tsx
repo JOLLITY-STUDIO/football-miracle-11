@@ -22,7 +22,7 @@ const PENALTY_POSITIONS = [
 
 // 获取防守卡的覆盖范围
 const getDefenseCoverage = (defenseCard: typeof penaltyDefenseCards[0]) => {
-  return penaltyDefenseCoverage[defenseCard.id] || [];
+  return penaltyDefenseCoverage[defenseCard.id as keyof typeof penaltyDefenseCoverage] || [];
 };
 
 // 获取守门员X轴偏移量
@@ -83,6 +83,7 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
 
     // Get player penalty card based on zone
     const athleteCard = penaltyCards[selectedZone - 1];
+    if (!athleteCard) return;
     
     // AI selects random defense card from shuffled deck
     const availableCards = shuffledDefenseCards.length > 0 ? shuffledDefenseCards : penaltyDefenseCards;
@@ -96,6 +97,7 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
     
     // Extract shot position from player card name (e.g., "点球-左上" -> "左上")
     const shotPosition = athleteCard.name.split('-')[1];
+    if (!shotPosition) return;
     
     // Check Result
     // Goal if shot position is NOT in defense coverage
@@ -283,7 +285,7 @@ export const PenaltyModal: React.FC<Props> = ({ isOpen, onComplete }) => {
                            
                            {/* Coverage */}
                            <div className="flex gap-1">
-                             {aiDefenseCard.coverage.map(c => (
+                             {getDefenseCoverage(aiDefenseCard).map((c: string) => (
                                <span key={c} className="w-6 h-6 rounded bg-orange-100 text-orange-800 flex items-center justify-center font-bold text-xs border border-orange-300">
                                  {c}
                                </span>

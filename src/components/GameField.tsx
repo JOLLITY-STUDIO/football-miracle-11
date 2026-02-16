@@ -8,6 +8,7 @@ import { FIELD_CONFIG } from '../config/fieldDimensions';
 import FieldIcons from './FieldIcons';
 import { createFieldContext, calculateCellCenter, calculateCellPosition, getFieldViewBox } from '../utils/coordinateCalculator';
 import { FieldCellHighlight } from './FieldCellHighlight';
+import { logger } from '../utils/logger';
 import { CardPlacementService } from '../game/cardPlacementService';
 import { calculateActivatedIconPositions } from '../utils/gameUtils';
 
@@ -92,7 +93,7 @@ const GameField: React.FC<GameFieldProps> = ({
     const ROWS = 4; // Each half only has 4 rows
     
     // Debug: log field data
-    console.log(`Rendering grid for ${isAi ? 'AI' : 'Player'}:`, {
+    logger.debug(`Rendering grid for ${isAi ? 'AI' : 'Player'}:`, {
       fieldDataLength: fieldData.length,
       zones: fieldData.map(z => z.zone),
       isAi

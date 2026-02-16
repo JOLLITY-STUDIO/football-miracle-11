@@ -1,17 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { gameReducer, createInitialState } from '../game/gameLogic';
-import { athleteCard } from '../types/game';
+import type { athleteCard } from '../data/cards';
 
 describe('Player State Tracking', () => {
   const createTestPlayer = (id: string, name: string, iconPositions: any[]): athleteCard => ({
     id,
     name,
-    position: 'CF',
+    realName: name,
+    type: 'fw' as const,
+    positionLabel: 'CF',
     power: 5,
+    isStar: false,
+    unlocked: true,
+    unlockCondition: 'Test',
+    icons: ['attack', 'defense'],
     iconPositions,
-    skills: ['shot'],
-    image: 'test.png',
-    rarity: 'common'
+    immediateEffect: 'none' as const,
+    skills: [{ type: 'attack', skillType: 'normal' }]
   });
 
   it('should track used shot icons when performing a shot', () => {
@@ -55,7 +60,21 @@ describe('Player State Tracking', () => {
       playerHand: [athleteCard],
       turnPhase: 'playerAction' as const,
       currentTurn: 'player' as const,
-      playerField: [{ cards: [athleteCard], active: true, synergyCards: [] }]
+      playerField: [{ 
+        zone: 0,
+        cards: [athleteCard], 
+        synergyCards: [],
+        slots: [
+          { position: 0, athleteCard },
+          { position: 1, athleteCard },
+          { position: 2, athleteCard: null },
+          { position: 3, athleteCard: null },
+          { position: 4, athleteCard: null },
+          { position: 5, athleteCard: null },
+          { position: 6, athleteCard: null },
+          { position: 7, athleteCard: null }
+        ]
+      }]
     };
 
     // First shot
@@ -107,7 +126,21 @@ describe('Player State Tracking', () => {
     const stateWithUsedIcons = {
       ...initialState,
       playerUsedShotIcons: { player1: [0] },
-      playerField: [{ cards: [outgoingCard], active: true, synergyCards: [] }],
+      playerField: [{ 
+        zone: 0,
+        cards: [outgoingCard], 
+        synergyCards: [],
+        slots: [
+          { position: 0, athleteCard: outgoingCard },
+          { position: 1, athleteCard: outgoingCard },
+          { position: 2, athleteCard: null },
+          { position: 3, athleteCard: null },
+          { position: 4, athleteCard: null },
+          { position: 5, athleteCard: null },
+          { position: 6, athleteCard: null },
+          { position: 7, athleteCard: null }
+        ]
+      }],
       playerHand: [incomingCard],
       turnPhase: 'playerAction' as const,
       currentTurn: 'player' as const

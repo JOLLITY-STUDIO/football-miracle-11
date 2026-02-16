@@ -1,8 +1,8 @@
 import type { GameState } from '../game/gameLogic';
-import type { athleteCard } from '../types/game';
+import type { athleteCard } from '../data/cards';
 
 export const performImmediateEffect = (state: GameState, card: athleteCard, zone: number, slot: number): GameState => {
-  const isPlayerTurn = state.currentTurn === 'home';
+  const isPlayerTurn = state.currentTurn === 'player';
   
   switch (card.immediateEffect) {
     case 'draw_synergy_1':
@@ -36,11 +36,10 @@ export const performImmediateEffect = (state: GameState, card: athleteCard, zone
 };
 
 const handleDrawSynergy = (state: GameState, count: number, isPlayerTurn: boolean, isBonus: boolean = false): GameState => {
-  const playerHand = isPlayerTurn ? state.playerHand : state.aiHand;
-  const playerDeck = isPlayerTurn ? state.playerSynergyDeck : state.aiSynergyDeck;
+  const playerHand = isPlayerTurn ? state.playerSynergyHand : state.aiSynergyHand;
   
-  const drawnCards = playerDeck.slice(0, count);
-  const newDeck = playerDeck.slice(count);
+  const drawnCards = state.synergyDeck.slice(0, count);
+  const newDeck = state.synergyDeck.slice(count);
   const newHand = [...playerHand, ...drawnCards];
   
   const message = isBonus 
@@ -50,59 +49,51 @@ const handleDrawSynergy = (state: GameState, count: number, isPlayerTurn: boolea
   return {
     ...state,
     ...(isPlayerTurn ? {
-      playerHand: newHand,
-      playerSynergyDeck: newDeck
+      playerSynergyHand: newHand
     } : {
-      aiHand: newHand,
-      aiSynergyDeck: newDeck
+      aiSynergyHand: newHand
     }),
+    synergyDeck: newDeck,
     message,
     matchLogs: [
       ...state.matchLogs,
       {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        type: 'action',
         phase: state.phase,
-        action: isBonus ? 'draw_synergy_bonus' : 'draw_synergy',
-        details: message
+        message: message
       }
     ]
   };
 };
 
 const handleDrawSynergyChoose = (state: GameState, count: number, isPlayerTurn: boolean): GameState => {
-  const playerDeck = isPlayerTurn ? state.playerSynergyDeck : state.aiSynergyDeck;
-  
-  const drawnCards = playerDeck.slice(0, count);
-  const newDeck = playerDeck.slice(count);
+  const drawnCards = state.synergyDeck.slice(0, count);
+  const newDeck = state.synergyDeck.slice(count);
   
   const message = `${isPlayerTurn ? 'Player' : 'AI'} drew ${count} synergy cards to choose from!`;
   
   return {
     ...state,
-    ...(isPlayerTurn ? {
-      playerSynergyDeck: newDeck,
-      pendingSynergySelection: drawnCards
-    } : {
-      aiSynergyDeck: newDeck,
-      pendingSynergySelection: drawnCards
-    }),
+    synergyDeck: newDeck,
+    synergyChoice: { cards: drawnCards, sourceCard: null as any },
     message,
     matchLogs: [
       ...state.matchLogs,
       {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        type: 'action',
         phase: state.phase,
-        action: 'draw_synergy_choose',
-        details: message
+        message: message
       }
     ]
   };
 };
 
 const handleStealSynergy = (state: GameState, isPlayerTurn: boolean): GameState => {
-  const opponentHand = isPlayerTurn ? state.aiHand : state.playerHand;
+  const opponentHand = isPlayerTurn ? state.aiSynergyHand : state.playerSynergyHand;
   
   if (opponentHand.length === 0) {
     return {
@@ -112,9 +103,10 @@ const handleStealSynergy = (state: GameState, isPlayerTurn: boolean): GameState 
   }
   
   const stolenCard = opponentHand[Math.floor(Math.random() * opponentHand.length)];
+  if (!stolenCard) return state;
   const newOpponentHand = opponentHand.filter(card => card.id !== stolenCard.id);
   
-  const playerHand = isPlayerTurn ? state.playerHand : state.aiHand;
+  const playerHand = isPlayerTurn ? state.playerSynergyHand : state.aiSynergyHand;
   const newPlayerHand = [...playerHand, stolenCard];
   
   const message = `${isPlayerTurn ? 'Player' : 'AI'} stole a synergy card!`;
@@ -122,21 +114,21 @@ const handleStealSynergy = (state: GameState, isPlayerTurn: boolean): GameState 
   return {
     ...state,
     ...(isPlayerTurn ? {
-      playerHand: newPlayerHand,
-      aiHand: newOpponentHand
+      playerSynergyHand: newPlayerHand,
+      aiSynergyHand: newOpponentHand
     } : {
-      aiHand: newPlayerHand,
-      playerHand: newOpponentHand
+      aiSynergyHand: newPlayerHand,
+      playerSynergyHand: newOpponentHand
     }),
     message,
     matchLogs: [
       ...state.matchLogs,
       {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        type: 'action',
         phase: state.phase,
-        action: 'steal_synergy',
-        details: message
+        message: message
       }
     ]
   };
@@ -147,21 +139,20 @@ const handleInstantShot = (state: GameState, card: athleteCard, zone: number, sl
   
   return {
     ...state,
-    pendingInstantShot: {
+    instantShotMode: {
       card,
       zone,
-      slot,
-      isPlayerTurn
+      slot
     },
     message,
     matchLogs: [
       ...state.matchLogs,
       {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        type: 'action',
         phase: state.phase,
-        action: 'instant_shot_ready',
-        details: message
+        message: message
       }
     ]
   };
@@ -172,16 +163,15 @@ const handleIgnoreDefense = (state: GameState, card: athleteCard, zone: number, 
   
   return {
     ...state,
-    ignoreDefenseThisTurn: true,
     message,
     matchLogs: [
       ...state.matchLogs,
       {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        type: 'action',
         phase: state.phase,
-        action: 'ignore_defense',
-        details: message
+        message: message
       }
     ]
   };
@@ -202,11 +192,11 @@ const handleMoveControl = (state: GameState, steps: number, isPlayerTurn: boolea
     matchLogs: [
       ...state.matchLogs,
       {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        type: 'action',
         phase: state.phase,
-        action: 'move_control',
-        details: message
+        message: message
       }
     ]
   };
