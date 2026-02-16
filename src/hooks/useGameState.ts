@@ -166,6 +166,18 @@ export const useGameState = (
       return;
     }
 
+    // 检查协同卡牌库是否耗尽
+    if (gameState.synergyDeck.length === 0) {
+      // 协同卡牌库耗尽，触发伤停补时
+      setGameState(prev => ({
+        ...prev,
+        isStoppageTime: true,
+        message: 'Synergy deck exhausted! Stoppage time activated!'
+      }));
+      playSound('error');
+      return;
+    }
+
     const controlState = getControlState(gameState.controlPosition);
     const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
     

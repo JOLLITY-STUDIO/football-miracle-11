@@ -38,6 +38,27 @@ export const performImmediateEffect = (state: GameState, card: athleteCard, zone
 const handleDrawSynergy = (state: GameState, count: number, isPlayerTurn: boolean, isBonus: boolean = false): GameState => {
   const playerHand = isPlayerTurn ? state.playerSynergyHand : state.aiSynergyHand;
   
+  // 检查协同卡牌库是否耗尽
+  if (state.synergyDeck.length === 0) {
+    // 协同卡牌库耗尽，触发伤停补时
+    const message = 'Synergy deck exhausted! Stoppage time activated!';
+    return {
+      ...state,
+      isStoppageTime: true,
+      message,
+      matchLogs: [
+        ...state.matchLogs,
+        {
+          id: Date.now().toString(),
+          timestamp: new Date(),
+          type: 'action',
+          phase: state.phase,
+          message: message
+        }
+      ]
+    };
+  }
+  
   const drawnCards = state.synergyDeck.slice(0, count);
   const newDeck = state.synergyDeck.slice(count);
   const newHand = [...playerHand, ...drawnCards];
@@ -69,6 +90,27 @@ const handleDrawSynergy = (state: GameState, count: number, isPlayerTurn: boolea
 };
 
 const handleDrawSynergyChoose = (state: GameState, count: number, isPlayerTurn: boolean): GameState => {
+  // 检查协同卡牌库是否耗尽
+  if (state.synergyDeck.length === 0) {
+    // 协同卡牌库耗尽，触发伤停补时
+    const message = 'Synergy deck exhausted! Stoppage time activated!';
+    return {
+      ...state,
+      isStoppageTime: true,
+      message,
+      matchLogs: [
+        ...state.matchLogs,
+        {
+          id: Date.now().toString(),
+          timestamp: new Date(),
+          type: 'action',
+          phase: state.phase,
+          message: message
+        }
+      ]
+    };
+  }
+  
   const drawnCards = state.synergyDeck.slice(0, count);
   const newDeck = state.synergyDeck.slice(count);
   

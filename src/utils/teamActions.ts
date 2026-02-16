@@ -7,6 +7,7 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
   let newSynergyDeck = [...state.synergyDeck];
   let newPlayerSynergyHand = [...state.playerSynergyHand];
   let newAiSynergyHand = [...state.aiSynergyHand];
+  let isStoppageTime = state.isStoppageTime;
   
   switch (action) {
     case 'pass': {
@@ -23,24 +24,31 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
         });
       });
       
-      // 根据pass图标数量抽取协同卡
-      const cardsToDraw = Math.min(passIconCount, newSynergyDeck.length);
-      for (let i = 0; i < cardsToDraw; i++) {
-        if (newSynergyDeck.length > 0) {
-          const drawnCard = newSynergyDeck.shift();
-          if (drawnCard) {
-            if (state.currentTurn === 'player') {
-              newPlayerSynergyHand.push(drawnCard);
-            } else {
-              newAiSynergyHand.push(drawnCard);
+      // 检查协同卡牌库是否耗尽
+      if (newSynergyDeck.length === 0) {
+        // 协同卡牌库耗尽，触发伤停补时
+        isStoppageTime = true;
+        message = 'Synergy deck exhausted! Stoppage time activated!';
+      } else {
+        // 根据pass图标数量抽取协同卡
+        const cardsToDraw = Math.min(passIconCount, newSynergyDeck.length);
+        for (let i = 0; i < cardsToDraw; i++) {
+          if (newSynergyDeck.length > 0) {
+            const drawnCard = newSynergyDeck.shift();
+            if (drawnCard) {
+              if (state.currentTurn === 'player') {
+                newPlayerSynergyHand.push(drawnCard);
+              } else {
+                newAiSynergyHand.push(drawnCard);
+              }
             }
           }
         }
+        
+        message = cardsToDraw > 0 
+          ? `Pass action performed. Drew ${cardsToDraw} synergy card(s).` 
+          : 'Pass action performed. No pass icons on field.';
       }
-      
-      message = cardsToDraw > 0 
-        ? `Pass action performed. Drew ${cardsToDraw} synergy card(s).` 
-        : 'Pass action performed. No pass icons on field.';
       break;
     }
       
@@ -84,6 +92,7 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
     playerSynergyHand: newPlayerSynergyHand,
     aiSynergyHand: newAiSynergyHand,
     message,
+    isStoppageTime,
     turnPhase: 'playerAction'
   };
 };

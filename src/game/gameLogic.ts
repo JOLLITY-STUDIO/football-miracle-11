@@ -225,11 +225,13 @@ export type GameAction =
   | { type: 'PENALTY_COMPLETE'; playerPoints: number; aiPoints: number };
 
 export const isHalfTime = (state: GameState): boolean => {
-  return state.phase === 'firstHalf' && state.turnCount >= 10;
+  // Half-time occurs when stoppage time is active and the turn is ending
+  return state.phase === 'firstHalf' && state.isStoppageTime;
 };
 
 export const isFullTime = (state: GameState): boolean => {
-  return state.phase === 'secondHalf' && state.turnCount >= 10;
+  // Full-time occurs when second half is in stoppage time and the turn is ending
+  return state.phase === 'secondHalf' && state.isStoppageTime;
 };
 
 const addLog = (state: GameState, entry: Omit<MatchLogEntry, 'id' | 'timestamp'>): MatchLogEntry[] => {
@@ -693,6 +695,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       const defenderHand = isPlayerDefending ? state.playerSynergyHand : state.aiSynergyHand;
       
       let availableCards: SynergyCard[] = [];
+      let isStoppageTime = state.isStoppageTime;
+      let message = isPlayerDefending ? 'Select synergy cards to defend' : 'AI is selecting defense synergy cards...';
       
       if (defenderHand.length > 0) {
         availableCards = [...defenderHand];
@@ -702,6 +706,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           if (drawnCard) {
             availableCards = [drawnCard];
           }
+        } else {
+          // 协同卡牌库耗尽，触发伤停补时
+          isStoppageTime = true;
+          message = 'Synergy deck exhausted! Stoppage time activated!';
         }
       }
       
@@ -710,7 +718,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         defenderSynergySelection: true,
         defenderAvailableSynergyCards: availableCards,
         defenderSelectedSynergyCards: [],
-        message: isPlayerDefending ? 'Select synergy cards to defend' : 'AI is selecting defense synergy cards...'
+        isStoppageTime,
+        message
       };
     }
     
