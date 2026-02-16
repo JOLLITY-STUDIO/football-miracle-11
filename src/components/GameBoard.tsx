@@ -183,7 +183,7 @@ const {
       playSound('draw');
     }
     prevAiSynergyCount.current = gameState.aiSynergyHand.length;
-  }, [gameState.playerHand.length, gameState.aiHand.length, gameState.playerSynergyHand.length, gameState.aiSynergyHand.length]);
+  }, [gameState.athleteHand.length, gameState.aiAthleteHand.length, gameState.playerSynergyHand.length, gameState.aiSynergyHand.length]);
   
   // Setup Animation Sequence Effects
   useEffect(() => {
@@ -211,15 +211,15 @@ const {
   }, [setupStep, dispatch]);
 
   // Sound effect for drawing cards
-  const prevHandSize = useRef(gameState.playerHand.length);
+  const prevHandSize = useRef(gameState.athleteHand.length);
   const prevSynergyHandSize = useRef(gameState.playerSynergyHand.length);
   
   useEffect(() => {
-    if (gameState.playerHand.length > prevHandSize.current) {
+    if (gameState.athleteHand.length > prevHandSize.current) {
       playSound('draw');
     }
-    prevHandSize.current = gameState.playerHand.length;
-  }, [gameState.playerHand.length]);
+    prevHandSize.current = gameState.athleteHand.length;
+  }, [gameState.athleteHand.length]);
 
   useEffect(() => {
     if (gameState.playerSynergyHand.length > prevSynergyHandSize.current) {
@@ -385,8 +385,8 @@ const {
       aiScore: gameState.aiScore,
       playerField: gameState.playerField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, athleteCardId: s.athleteCard?.id || null })) })),
       aiField: gameState.aiField.map(z => ({ zone: z.zone, slots: z.slots.map(s => ({ position: s.position, athleteCardId: s.athleteCard?.id || null })) })),
-      playerHand: gameState.playerHand.map(c => c.id),
-      aiHand: gameState.aiHand.map(c => c.id),
+      playerHand: gameState.athleteHand.map(c => c.id),
+      aiHand: gameState.aiAthleteHand.map(c => c.id),
       controlPosition: gameState.controlPosition,
       phase: gameState.phase,
     };
@@ -657,7 +657,7 @@ const handleCardSelect = (card: athleteCard) => {
         onComplete={handleCompleteTutorial}
         onStepComplete={handleStepComplete}
         gameState={gameState}
-        playerHand={gameState.playerHand}
+        playerHand={gameState.athleteHand}
       />
       
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
@@ -1073,7 +1073,7 @@ const handleCardSelect = (card: athleteCard) => {
 
          {/* Bottom Center: Player Hand */}
          <AthleteCardGroup
-           cards={gameState.playerHand}
+           cards={gameState.athleteHand}
            selectedCard={gameState.selectedCard}
            setupStep={setupStep}
            phase={gameState.phase}
@@ -1373,11 +1373,11 @@ const handleCardSelect = (card: athleteCard) => {
                   </div>
                </div>
 
-               {gameState.playerHand.length > 0 && (
+               {gameState.athleteHand.length > 0 && (
                  <div className="mb-10">
                     <div className="text-[10px] text-white/30 uppercase tracking-[0.3em] mb-4 px-2 font-black border-l-2 border-green-500/50 ml-2">Players In Hand</div>
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-10 p-4 bg-black/20 rounded-2xl border border-white/5">
-                      {gameState.playerHand.map(card => (
+                      {gameState.athleteHand.map(card => (
                         <div key={card.id} className="relative group flex flex-col items-center">
                           <motion.div 
                             whileHover={{ scale: 1.1, y: -5 }}
@@ -1609,7 +1609,7 @@ const handleCardSelect = (card: athleteCard) => {
 
       {gameState.phase === 'squadSelection' && (
         <SquadSelect
-          allPlayers={[...gameState.playerHand, ...gameState.playerBench]}
+          allPlayers={[...gameState.athleteHand, ...gameState.playerBench]}
           onConfirm={(starters, subs) => {
             dispatch({ type: 'FINISH_SQUAD_SELECT', starters, subs });
           }}
