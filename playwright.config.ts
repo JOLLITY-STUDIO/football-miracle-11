@@ -5,9 +5,11 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false, // 游戏测试需要顺序执�?  forbidOnly: !!process.env.CI,
+  fullyParallel: false, // 游戏测试需要顺序执行
+  forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1, // 游戏状态敏�?单线程执�?  reporter: [
+  workers: 1, // 游戏状态敏感，单线程执行
+  reporter: [
     ['html', { outputFolder: 'test-results/html' }],
     ['json', { outputFile: 'test-results/results.json' }],
     ['list']

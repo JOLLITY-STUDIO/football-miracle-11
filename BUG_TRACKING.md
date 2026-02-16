@@ -266,6 +266,85 @@ For example:
   - ✅ Duel overlay displays correctly
   - ✅ All duel phases work as expected
 
+### BUG-2026-02-16-013: Hand cards not centered horizontally
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Impact Scope**: UI layout, User experience
+- **Related Files**:
+  - `src/components/AthleteCardGroup.tsx`
+  - `src/components/GameBoard.tsx`
+- **Problem Description**: Player and AI hand cards not centered on screen, appearing offset to one side
+- **Root Cause**: 
+  - Container used `w-full` causing it to span entire width
+  - Inner container with `w-fit` + absolute positioned children resulted in 0 width
+  - Card positioning based on `left: 50%` referenced wrong center point
+- **Fix Solution**: 
+  - Changed outer container to `width: fit-content`
+  - Set inner container dynamic width: `${Math.max(cards.length * 100, 400)}px`
+  - Maintained `left-1/2 -translate-x-1/2` for true centering
+- **Version**: 0.1.128
+- **Git Commit**: eca94aa
+- **Impact Analysis**:
+  - Player hand correctly centered at bottom
+  - AI hand correctly centered at top
+  - Supports 1-10 cards with dynamic width
+  - Maintains original arc layout and animations
+- **Regression Testing**: 
+  - ✅ Visual check of centering
+  - ✅ Different card count tests
+  - ✅ Responsive layout tests
+  - ✅ Card interaction functionality
+
+### BUG-2026-02-16-014: Game crashes on startup - undefined property 'length'
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Impact Scope**: Critical - Game unplayable
+- **Related Files**:
+  - `src/components/GameBoard.tsx`
+- **Problem Description**: `Cannot read properties of undefined (reading 'length')` at GameBoard.tsx:144
+- **Root Cause**: Used incorrect property names `playerHand`/`aiHand` instead of correct `athleteHand`/`aiAthleteHand`
+- **Fix Solution**: 
+  - Corrected all `gameState.playerHand` → `gameState.athleteHand`
+  - Corrected all `gameState.aiHand` → `gameState.aiAthleteHand`
+  - Fixed 7 references across the file
+- **Version**: 0.1.128
+- **Git Commit**: 8bea09c
+- **Impact Analysis**:
+  - Game now starts successfully
+  - All hand-related features work correctly
+  - Audio feedback for card actions restored
+  - AI hand tracking restored
+- **Regression Testing**: 
+  - ✅ Game launches without errors
+  - ✅ Card drawing works
+  - ✅ Card playing works
+  - ✅ AI actions work correctly
+
+### BUG-2026-02-16-015: TypeScript error in playwright.config.ts
+- **Discovery Date**: 2026-02-16
+- **Fix Date**: 2026-02-16
+- **Impact Scope**: Development environment, Testing
+- **Related Files**:
+  - `playwright.config.ts`
+  - `package.json`
+- **Problem Description**: `Cannot find name 'process'` - TypeScript doesn't recognize Node.js global object
+- **Root Cause**: 
+  - Missing `@types/node` package
+  - File contained corrupted characters (乱码)
+- **Fix Solution**: 
+  - Installed `@types/node` package
+  - Fixed corrupted Chinese characters in comments
+- **Version**: 0.1.128
+- **Git Commit**: TBD
+- **Impact Analysis**:
+  - TypeScript compilation succeeds
+  - Playwright tests can run
+  - No runtime changes
+- **Regression Testing**: 
+  - ✅ TypeScript compilation succeeds
+  - ✅ No diagnostic errors
+  - ✅ Playwright config loads correctly
+
 ## Bug Tracing Methods
 
 ### 1. Git Commit Message Format
