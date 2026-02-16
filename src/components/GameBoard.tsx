@@ -999,8 +999,8 @@ const handleCardSelect = (card: athleteCard) => {
 
 
          {/* Top Center: Opponent Hand (Arc Layout - Same as Player) */}
-         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50">
-            <div className="relative w-fit h-full">
+         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 h-48 pointer-events-auto flex justify-center items-start pt-4 perspective-1000 z-50" style={{ width: 'fit-content' }}>
+            <div className="relative h-full" style={{ width: `${Math.max(gameState.aiHand.length * 100, 400)}px` }}>
               <AnimatePresence>
                   {gameState.aiHand.map((card, i) => {
                     // Calculate arc position for AI hand (same as player hand)
