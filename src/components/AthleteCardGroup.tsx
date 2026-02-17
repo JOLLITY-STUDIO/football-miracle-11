@@ -63,8 +63,8 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
     // cos(0) = 1（中间调整最大，最低），cos(±90) = 0（两边调整最小，最高）
     const baseY = -Math.cos(radian) * radius + radius;
     const heightAdjustment = Math.cos(radian) * 80;
-    // 调整y值，使卡片整体下移一半卡牌高度（43px）
-    const y = baseY - heightAdjustment + 43;
+    // 调整y值，使卡片整体下移更多，确保不挡住球场
+    const y = baseY - heightAdjustment + 60;
     
     // 计算旋转角度，保持弧形的倾斜效果
     const rotation = currentAngle;
@@ -75,8 +75,9 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
   return (
     <div 
       id="athlete-card-group" 
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[50]" 
+      className="fixed left-1/2 -translate-x-1/2 z-[50]" 
       style={{ 
+        bottom: '10px', // 进一步向下调整，确保不挡住球场
         height: '200px', 
         width: `${containerWidth}px`,
         maxWidth: '90vw', // 确保不超出屏幕
@@ -94,13 +95,14 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
             
             return (
               <motion.div
-                key={card.id}
+                key={`player-hand-${card.id}-${i}`}
                 layoutId={`card-${card.id}`}
                 initial={{
                   opacity: 0,
                   scale: 0.8,
-                  x: 0,
-                  y: 0
+                  x: 1600, // 抽卡区X位置
+                  y: 540,  // 抽卡区Y位置
+                  rotate: 0
                 }}
                 animate={{
                   opacity: 1,
@@ -115,7 +117,12 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
                   x: 0,
                   y: 0
                 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 200, 
+                  damping: 20,
+                  duration: 0.8
+                }}
                 onClick={() => onCardSelect(card)}
                 whileHover={{ scale: isSelected ? 1.2 : 1.05 }}
                 whileTap={{ scale: isSelected ? 1.15 : 0.95 }}

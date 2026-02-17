@@ -32,6 +32,7 @@ import {
 import {
   countIcons
 } from '../utils/gameUtils';
+import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
 import { useGameAudio } from '../hooks/useGameAudio';
 import { useCameraView } from '../hooks/useCameraView';
 import { useGameState } from '../hooks/useGameState';
@@ -142,6 +143,7 @@ const {
   const [showShooterSelector, setShowShooterSelector] = useState(false);
   const [showCardPreview, setShowCardPreview] = useState(false);
   const [previewCard, setPreviewCard] = useState<athleteCard | null>(null);
+  const [homeAwaySelected, setHomeAwaySelected] = useState(false);
   
   // Audio Feedback for card actions (hand changes)
   const prevPlayerHandCount = useRef(gameState.playerAthleteHand.length);
@@ -149,15 +151,21 @@ const {
   const prevPlayerSynergyCount = useRef(gameState.playerSynergyHand.length);
   const prevAiSynergyCount = useRef(gameState.aiSynergyHand.length);
 
-  // Calculate if there are any shootable players (players with attack icons and remaining shot markers)
-  const hasShootablePlayers = gameState.playerField.some(zone => {
-    return zone.slots.some(slot => {
-      if (!slot.athleteCard) return false;
-      const attackIconCount = slot.athleteCard.icons.filter((icon: string) => icon === 'attack').length;
-      const usedShotMarkers = slot.shotMarkers || 0;
-      return attackIconCount > usedShotMarkers;
+  // Calculate if there are any shootable players (players with attack icons, remaining shot markers, and complete attack icons on field)
+  const hasShootablePlayers = () => {
+    // First check if there are players with attack icons and remaining shot markers
+    const hasPlayersWithAttackIcons = gameState.playerField.some(zone => {
+      return zone.slots.some(slot => {
+        if (!slot.athleteCard) return false;
+        const attackIconCount = slot.athleteCard.icons.filter((icon: string) => icon === 'attack').length;
+        const usedShotMarkers = slot.shotMarkers || 0;
+        return attackIconCount > usedShotMarkers;
+      });
     });
-  });
+    
+    // Then check if there are complete attack icons on the field
+    return hasPlayersWithAttackIcons && hasAttackIconsOnField();
+  };
 
   useEffect(() => {
     // Player hand changes
@@ -202,13 +210,11 @@ const {
       const timer = setTimeout(() => setSetupStep(3), 1500);
       return () => clearTimeout(timer);
     } else if (setupStep === 3) {
-      // Step 3: Card dealing
-      dispatch({ type: 'SET_DEALING', isDealing: true });
+      // Step 3: Card dealing preparation
       playSound('draw');
       const timer = setTimeout(() => {
-        dispatch({ type: 'SET_DEALING', isDealing: false });
         setSetupStep(4);
-      }, 3000);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [setupStep, dispatch]);
@@ -230,6 +236,46 @@ const {
     }
     prevSynergyHandSize.current = gameState.playerSynergyHand.length;
   }, [gameState.playerSynergyHand.length]);
+
+  // Card dealing animation effect
+  useEffect(() => {
+    let dealingInterval: NodeJS.Timeout;
+    let completionTimer: NodeJS.Timeout;
+    
+    if (gameState.isDealing) {
+      // Start dealing cards with animation
+      dealingInterval = setInterval(() => {
+        dispatch({ type: 'DRAW_CARD' });
+      }, 300); // Draw a card every 300ms
+      
+      // 移除强制超时，由DRAW_CARD逻辑自动停止
+      // 当所有卡片都被抽取后，isDealing会自动设为false
+    }
+    
+    return () => {
+      if (dealingInterval) {
+        clearInterval(dealingInterval);
+      }
+      if (completionTimer) {
+        clearTimeout(completionTimer);
+      }
+    };
+  }, [gameState.isDealing, dispatch]);
+
+  // Draft round start is now handled by DraftPhase component
+  // Removed duplicate logic to prevent double drafting
+
+  // Start card dealing after home/away selection
+  useEffect(() => {
+    if (gameState.phase === 'draft' && !homeAwaySelected) {
+      // Check if home/away has been selected (rock paper scissors completed)
+      if (gameState.message.includes('won the Rock Paper Scissors')) {
+        // Home/away selection completed
+        setHomeAwaySelected(true);
+        // Card dealing is already handled by the ROCK_PAPER_SCISSORS action
+      }
+    }
+  }, [gameState.phase, gameState.message, homeAwaySelected, dispatch]);
 
   // Auto-scaling logic to fit screen
   const BASE_WIDTH = 2000;
@@ -414,30 +460,39 @@ const {
     return result;
   };
 
-  // Check if there are attack icons on the field
+  // Check if there are complete attack icons on the field
   const hasAttackIconsOnField = () => {
     const field = gameState.isHomeTeam ? gameState.playerField : gameState.aiField;
-    for (const zone of field) {
-      for (const slot of zone.slots) {
-        if (slot.athleteCard && slot.athleteCard.icons.includes('attack')) {
-          return true;
-        }
-      }
-    }
-    return false;
+    const matcher = new TacticalIconMatcher(field);
+    const completeIcons = matcher.getCompleteIcons();
+    return completeIcons.some(icon => icon.type === 'attack');
   };
 
   // Handle global shoot button click
   const handleShoot = () => {
-    if (!hasShootablePlayers) {
+    if (!hasShootablePlayers()) {
       setGameState(prev => ({ ...prev, message: 'No shootable players available!' }));
       playSound('error');
       return;
     }
-    // Open shooter selector
-    setShowShooterSelector(true);
-    setSelectedShootPlayer(null);
-    playSound('whistle');
+    // Find first player with attack icon and trigger shoot duel
+    const playerWithAttackIcon = gameState.playerField.find(zone => {
+      return zone.slots.find(slot => {
+        return slot.athleteCard && slot.athleteCard.icons.includes('attack');
+      });
+    });
+    
+    if (playerWithAttackIcon) {
+      const slotWithAttackIcon = playerWithAttackIcon.slots.find(slot => {
+        return slot.athleteCard && slot.athleteCard.icons.includes('attack');
+      });
+      
+      if (slotWithAttackIcon) {
+        // Trigger shoot duel
+        handleAttack(playerWithAttackIcon.zone, slotWithAttackIcon.position);
+        playSound('whistle');
+      }
+    }
   };
 
   // Handle shooter selection
@@ -455,15 +510,23 @@ const {
     playSound('click');
   };
 
-const handleCardSelect = (card: athleteCard) => {
-  
-  if (gameState.currentTurn !== 'player') {
-    return;
-  }
-  // 玩家在任何阶段都可以选择卡片，只是在某些阶段不能放置
-  playSound('draw');
-  dispatch({ type: 'SELECT_PLAYER_CARD', card: gameState.selectedCard?.id === card.id ? null : card });
-};
+  // Reset shoot mode when duel ends
+  useEffect(() => {
+    if (gameState.duelPhase === 'none' && shootMode) {
+      setShootMode(false);
+      setSelectedShootPlayer(null);
+    }
+  }, [gameState.duelPhase]);
+
+  const handleCardSelect = (card: athleteCard) => {
+    
+    if (gameState.currentTurn !== 'player') {
+      return;
+    }
+    // 玩家在任何阶段都可以选择卡片，只是在某些阶段不能放置
+    playSound('draw');
+    dispatch({ type: 'SELECT_PLAYER_CARD', card: gameState.selectedCard?.id === card.id ? null : card });
+  };
 
   const handleSynergyChoiceSelect = (keepIndex: number) => {
     dispatch({ type: 'SYNERGY_CHOICE_SELECT', index: keepIndex });
@@ -666,11 +729,47 @@ const handleCardSelect = (card: athleteCard) => {
     <div className="h-screen w-screen bg-black overflow-hidden relative font-['Roboto'] select-none text-white">
       
       {/* 0. 3D Environment Background (Void) */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000000_100%)]">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_#1a1a2e_0%,_#16213e_40%,_#0f3460_70%,_#000000_100%)]">
       </div>
+      
+      {/* 1. Starfield Layer */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(100)].map((_, i) => (
+          <div 
+            key={i}
+            className="absolute rounded-full bg-white animate-pulse"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              width: `${Math.random() * 2 + 1}px`,
+              height: `${Math.random() * 2 + 1}px`,
+              opacity: Math.random() * 0.6 + 0.2,
+              animationDuration: `${Math.random() * 3 + 2}s`,
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* 2. Nebula Layer */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.4]">
+        <div className="absolute inset-0 mix-blend-screen" style={{ 
+          backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(120,119,198,0.3), transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,119,198,0.2), transparent 40%), radial-gradient(circle at 40% 80%, rgba(119,255,214,0.2), transparent 40%)' 
+        }} />
+      </div>
+      
+      {/* 3. Grid Layer */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-[0.35] mix-blend-multiply" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #3b2f2f 0px, #3b2f2f 6px, #4b3833 6px, #4b3833 12px)' }} />
-        <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.05), transparent 40%), radial-gradient(circle at 70% 80%, rgba(0,0,0,0.3), transparent 50%)' }} />
+        <div className="absolute inset-0 opacity-[0.2] mix-blend-overlay" style={{ 
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundSize: '50px 50px'
+        }} />
+      </div>
+      
+      {/* 4. Depth Fog Layer */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.3]">
+        <div className="absolute inset-0" style={{ 
+          backgroundImage: 'radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.8) 100%)' 
+        }} />
       </div>
 
       {/* Tutorial Guide */}
@@ -687,8 +786,7 @@ const handleCardSelect = (card: athleteCard) => {
       />
       
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
-      {gameState.phase !== 'coinToss' && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
+      <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
         <div 
           className={clsx("relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center pointer-events-auto")}
           style={{
@@ -712,9 +810,14 @@ const handleCardSelect = (card: athleteCard) => {
                 <div className="absolute inset-0 border-b border-r border-black/50 rounded-xl pointer-events-none" />
 
                 {/* Card Dealing Animations */}
-                <CardDealer isDealing={gameState.isDealing} type="player" />
-                <CardDealer isDealing={gameState.isDealing} type="ai" />
-                <CardDealer isDealing={gameState.isDealing} type="synergy" />
+                {/* Only show one dealer at a time to avoid duplicate animations */}
+                {gameState.isDealing && (
+                  <CardDealer 
+                    isDealing={gameState.isDealing} 
+                    type={gameState.dealingDirection === 'player' ? 'player' : 'ai'} 
+                    count={1} // Show single card animation
+                  />
+                )}
 
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ left: '14px', top: '14px' }} />
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ right: '14px', top: '14px' }} />
@@ -771,6 +874,25 @@ const handleCardSelect = (card: athleteCard) => {
                   selectedShootPlayer={selectedShootPlayer}
                   onCloseShootMode={handleCloseShootMode}
                   onCompleteIconsCalculated={handleCompleteIconsCalculated}
+                  onIconClick={(icon) => {
+                    // 找到第一个有进攻图标的球员位置
+                    const playerWithAttackIcon = gameState.playerField.find(zone => {
+                      return zone.slots.find(slot => {
+                        return slot.athleteCard && slot.athleteCard.icons.includes('attack');
+                      });
+                    });
+                    
+                    if (playerWithAttackIcon) {
+                      const slotWithAttackIcon = playerWithAttackIcon.slots.find(slot => {
+                        return slot.athleteCard && slot.athleteCard.icons.includes('attack');
+                      });
+                      
+                      if (slotWithAttackIcon) {
+                        // 触发射门对决
+                        handleAttack(playerWithAttackIcon.zone, slotWithAttackIcon.position);
+                      }
+                    }
+                  }}
                   viewSettings={viewSettings}
                 />
 
@@ -782,7 +904,9 @@ const handleCardSelect = (card: athleteCard) => {
                   pressCount={pressCount}
                   synergyDeckCount={gameState.synergyDeck.length}
                   onTeamAction={(type) => {
-                    dispatch({ type: 'TEAM_ACTION', action: type });
+                    // 使用完整图标的数量作为iconCount参数
+                    const iconCount = type === 'pass' ? completePassCount : completePressCount;
+                    dispatch({ type: 'TEAM_ACTION', action: type, iconCount });
                     playSound('click');
                   }}
 
@@ -817,13 +941,12 @@ const handleCardSelect = (card: athleteCard) => {
              </div>
         </div>
         </div>
-      )}
 
       {/* SVG 3D Click Handling - No need for 2D overlay */}
       {/* Click handling is now handled directly in the SVG 3D implementation */}
 
       {/* Left Side Controls - Vertically Centered */}
-      {showLeftControls && gameState.phase !== 'coinToss' && (
+      {showLeftControls && (
         <div className="fixed top-1/2 left-4 -translate-y-1/2 z-[60] flex flex-col gap-2 items-center pointer-events-none">
         {/* 1. Exit/Surrender Button */}
         <button 
@@ -899,7 +1022,6 @@ const handleCardSelect = (card: athleteCard) => {
       )}
 
 
-
       {/* Camera Controls Panel */}
       <AnimatePresence>
         {showViewControls && gameState.phase !== 'coinToss' && (
@@ -921,7 +1043,8 @@ const handleCardSelect = (card: athleteCard) => {
                 onClick={() => setShowViewControls(false)} 
                 className="text-white/40 hover:text-white text-xs pointer-events-auto p-1"
               >
-                �?              </button>
+                ×
+              </button>
             </div>
             
             <div className="space-y-4 cursor-default" onPointerDown={(e) => e.stopPropagation()}>
@@ -1029,8 +1152,9 @@ const handleCardSelect = (card: athleteCard) => {
 
          {/* Top Center: Opponent Hand (Arc Layout - Same as Player) */}
          <div 
-           className="fixed top-0 left-1/2 -translate-x-1/2 z-[50]" 
+           className="fixed left-1/2 -translate-x-1/2 z-[50]" 
            style={{ 
+             top: '-100px', // 进一步向上调整，确保不挡住球场
              height: '200px', 
              width: `${Math.max(gameState.aiAthleteHand.length * (132 + 20), 400)}px`,
              maxWidth: '90vw', // 确保不超出屏幕
@@ -1057,17 +1181,18 @@ const handleCardSelect = (card: athleteCard) => {
                     const x = Math.sin(radian) * radius;
                     const baseY = -Math.cos(radian) * radius + radius;
                     const heightAdjustment = Math.cos(radian) * 80;
-                    const y = -(baseY - heightAdjustment + 43); // Negative y to place at top
+                    const y = -(baseY - heightAdjustment + 150); // Further increased to move higher, ensure no overlap with field
                     const rotation = currentAngle; // Same rotation as player hand
                     
                     return (
                       <motion.div
-                        key={card.id}
+                        key={`ai-hand-${card.id}`}
                         initial={{
                           opacity: 0,
                           scale: 0.8,
-                          x: 0,
-                          y: 0
+                          x: 1600, // 抽卡区X位置
+                          y: 540,  // 抽卡区Y位置
+                          rotate: 0
                         }}
                         animate={setupStep >= 3 ? { 
                           opacity: 1, 
@@ -1078,8 +1203,8 @@ const handleCardSelect = (card: athleteCard) => {
                         } : {
                           opacity: 0,
                           scale: 0.8,
-                          x: 0,
-                          y: 0
+                          x: 1600,
+                          y: 540
                         }}
                         exit={{
                           opacity: 0,
@@ -1167,7 +1292,7 @@ const handleCardSelect = (card: athleteCard) => {
               </div>
               <div className="text-sm font-bold text-yellow-400 mb-1">
                 {gameState.turnPhase === 'teamAction' ? 'Team Action' : 
-                 gameState.turnPhase === 'playerAction' ? 'Athlete Action' : ''}
+                 gameState.turnPhase === 'athleteAction' ? 'Athlete Action' : ''}
               </div>
               <div className="text-xs text-gray-300 max-w-[200px] leading-tight ml-auto h-8 flex items-center justify-end">
                 {gameState.message}
@@ -1194,7 +1319,7 @@ const handleCardSelect = (card: athleteCard) => {
                 <div className="flex flex-col gap-4">
                   <button
                       data-testid="team-action-pass"
-                      onClick={() => handleTeamAction('pass')}
+                      onClick={() => handleTeamAction('pass', passCount)}
                       disabled={passCount === 0}
                       className="w-full h-24 bg-gradient-to-br from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
                     >
@@ -1208,7 +1333,7 @@ const handleCardSelect = (card: athleteCard) => {
                     </button>
                     <button
                         data-testid="team-action-press"
-                        onClick={() => handleTeamAction('press')}
+                        onClick={() => handleTeamAction('press', pressCount)}
                         disabled={pressCount === 0}
                         className="w-full h-24 bg-gradient-to-br from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
                       >
@@ -1254,7 +1379,7 @@ const handleCardSelect = (card: athleteCard) => {
                         onClick={() => {
                           handleShoot();
                         }}
-                        disabled={!hasShootablePlayers}
+                        disabled={!hasShootablePlayers()}
                         className="py-3 px-4 bg-[#F82D45] hover:bg-[#E72940] disabled:from-stone-800/50 disabled:to-stone-900/50 disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(248,45,69,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
@@ -1322,30 +1447,40 @@ const handleCardSelect = (card: athleteCard) => {
       {/* Modals & Overlays */}
       <AnimatePresence>
 
-        {/* Coin Toss Modal */}
+        {/* Coin Toss HUD */}
         {gameState.phase === 'coinToss' && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-[100]"
-          >
+          <AnimatePresence>
             {!rpsInProgress ? (
               <motion.div 
-                initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-                className="bg-[#1a1a1a] p-10 rounded-3xl border-2 border-green-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] text-center"
+                initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100]"
               >
-                <h2 className="text-4xl font-['Russo_One'] text-white mb-8 tracking-wider">ROCK PAPER SCISSORS</h2>
-                <p className="text-gray-400 mb-10 text-lg">Play to determine Home/Away team</p>
-                <button 
-                  onClick={startToss}
-                  className="px-12 py-5 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-black font-black text-2xl rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
+                <motion.div 
+                  initial={{ scale: 0.9 }} animate={{ scale: 1 }}
+                  className="bg-[#1a1a1a] p-8 rounded-3xl border-2 border-green-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] text-center min-w-[400px]"
                 >
-                  Play Game
-                </button>
+                  <h2 className="text-3xl font-['Russo_One'] text-white mb-6 tracking-wider">ROCK PAPER SCISSORS</h2>
+                  <p className="text-gray-400 mb-8 text-base">Play to determine Home/Away team</p>
+                  <button 
+                    onClick={startToss}
+                    className="px-10 py-4 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-black font-black text-xl rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
+                  >
+                    Play Game
+                  </button>
+                </motion.div>
               </motion.div>
             ) : (
-              <RockPaperScissors onComplete={handleRockPaperScissorsComplete} />
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-[200] flex items-center justify-center"
+              >
+                <RockPaperScissors onComplete={handleRockPaperScissorsComplete} />
+              </motion.div>
             )}
-          </motion.div>
+          </AnimatePresence>
         )}
 
         {/* Immediate Effect Modal */}
@@ -1432,12 +1567,12 @@ const handleCardSelect = (card: athleteCard) => {
                   </div>
                </div>
 
-               {gameState.playerAthleteHand.length > 0 && (
+               {gameState.playerAthleteHand.length > 0 && gameState.substitutionMode && (
                  <div className="mb-10">
                     <div className="text-[10px] text-white/30 uppercase tracking-[0.3em] mb-4 px-2 font-black border-l-2 border-green-500/50 ml-2">Players In Hand</div>
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-10 p-4 bg-black/20 rounded-2xl border border-white/5">
                       {gameState.playerAthleteHand.map((card: athleteCard) => (
-                        <div key={card.id} className="relative group flex flex-col items-center">
+                        <div key={`sub-${card.id}`} className="relative group flex flex-col items-center">
                           <motion.div 
                             whileHover={{ scale: 1.1, y: -5 }}
                             whileTap={{ scale: 0.95 }}
@@ -1635,7 +1770,7 @@ const handleCardSelect = (card: athleteCard) => {
                 <div className="text-3xl">🎴</div>
                 <div>
                   <div className="text-red-300 text-xs font-bold tracking-wider">OPPONENT PLAYED</div>
-                  <div className="text-white text-lg font-black">{aiJustPlacedCard.name}</div>
+                  <div className="text-white text-lg font-black">{aiJustPlacedCard.nickname}</div>
                   <div className="text-red-200 text-sm">{aiJustPlacedCard.positionLabel} - {aiJustPlacedCard.type}</div>
                 </div>
               </div>

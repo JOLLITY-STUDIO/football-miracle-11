@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useMemo } from 'react';
 import { clsx } from 'clsx';
 import type { FieldZone } from '../types/game';
 import type { AthleteCard } from '../data/cards';
@@ -13,6 +13,7 @@ import { FieldInteractionLayer } from './FieldInteractionLayer';
 import { logger } from '../utils/logger';
 import { CardPlacementService } from '../game/cardPlacementService';
 import { calculateActivatedIconPositions } from '../utils/gameUtils';
+import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
 
 interface GameFieldProps {
   playerField: FieldZone[];
@@ -32,6 +33,7 @@ interface GameFieldProps {
   hoveredZone?: number | null;
   hoveredSlot?: number | null;
   onCompleteIconsCalculated?: (counts: Record<string, number>) => void;
+  onIconClick?: (icon: any) => void;
   handleCellMouseEnter?: (zone: number, slot: number) => void;
   handleCellMouseLeave?: () => void;
   currentTurn?: 'player' | 'ai';
@@ -67,9 +69,21 @@ const GameField: React.FC<GameFieldProps> = ({
   onInstantShotClick,
   instantShotMode,
   rotation = 0,
-  onCompleteIconsCalculated
+  onCompleteIconsCalculated,
+  onIconClick
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // 计算完整图标
+  const playerCompleteIcons = useMemo(() => {
+    const matcher = new TacticalIconMatcher(playerField);
+    return matcher.getCompleteIcons();
+  }, [playerField]);
+
+  // 检查是否有完整的进攻图标
+  const hasCompleteAttackIcons = useMemo(() => {
+    return playerCompleteIcons.some(icon => icon.type === 'attack');
+  }, [playerCompleteIcons]);
 
   // Helper function to check if card can be placed at specific slot
   const canPlaceCardAtSlot = useCallback((
@@ -239,7 +253,14 @@ const GameField: React.FC<GameFieldProps> = ({
                   }
 
                   // Calculate cell position (absolute positioning within the field container)
-                  const { x: cellX, y: cellY } = calculateCellPosition(fieldContext, row, colIdx);
+                  let { x: cellX, y: cellY } = calculateCellPosition(fieldContext, row, colIdx);
+                  
+                  // Adjust position for rotated AI cards to prevent overflow
+                  if (halfId === 'top' && zoneHalfConfig.display.cardRotation === 180) {
+                    // For AI cards rotated 180 degrees, adjust left position to account for card width
+                    // This prevents the card from overflowing the field boundary after rotation
+                    cellX -= CELL_WIDTH; // Subtract one cell width to compensate for rotation
+                  }
 
                   // Render Card if it exists and we are at start of card (check if previous column has same card)
                   const prevSlot = zone.slots.find(s => s.position === colIdx - 1);
@@ -334,40 +355,10 @@ const GameField: React.FC<GameFieldProps> = ({
                               </div>
                             )}
                             
-                            {/* Attack Button Overlay */}
-                            {zoneHalfConfig.interaction.interactive && card.icons.includes('attack') && (shootMode || (canPlaceCards)) && (
-                              <svg
-                                data-testid="shoot-button"
-                                width="80"
-                                height="32"
-                                viewBox="0 0 80 32"
-                                className={`absolute -bottom-4 left-1/2 -translate-x-1/2 z-30 cursor-pointer ${shootMode ? 'animate-pulse' : 'animate-bounce'}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onAttackClick(zone.zone, colIdx);
-                                }}
-                              >
-                                <defs>
-                                  <linearGradient id={`attackButtonGradient-${zone.zone}-${colIdx}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor={shootMode ? "#f59e0b" : "#dc2626"} />
-                                    <stop offset="100%" stopColor={shootMode ? "#d97706" : "#b91c1c"} />
-                                  </linearGradient>
-                                </defs>
-                                {/* Button Background */}
-                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill={`url(#attackButtonGradient-${zone.zone}-${colIdx})`} stroke="white" strokeWidth={shootMode ? 3 : 2} />
-                                {/* Button Shadow */}
-                                <rect x="0" y="0" width="80" height="32" rx="16" ry="16" fill="none" stroke={shootMode ? "rgba(245,158,11,0.8)" : "rgba(220,38,38,0.8)"} strokeWidth={shootMode ? 6 : 4} filter="blur(2px)" />
-                                {/* Soccer Ball Icon */}
-                                <text x="20" y="22" textAnchor="middle" fill="white" fontSize="14" fontFamily="sans-serif">⚽</text>
-                                {/* Attack Power */}
-                                <text x="60" y="22" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="sans-serif">
-                                  {Math.max(0, card.icons.filter((i: string) => i === 'attack').length - (slot.shotMarkers || 0))}
-                                </text>
-                              </svg>
-                            )}
+                            {/* Attack Button Overlay - Removed to unify shooting through shoot button */}
                             
                             {/* Shoot Mode Highlight */}
-                            {zoneHalfConfig.interaction.interactive && shootMode && card.icons.includes('attack') && (
+                            {zoneHalfConfig.interaction.interactive && shootMode && card.icons.includes('attack') && hasCompleteAttackIcons && (
                               <div className="absolute inset-0 bg-yellow-500/30 z-10 pointer-events-none animate-pulse" />
                             )}
                          </motion.div>
@@ -481,6 +472,7 @@ const GameField: React.FC<GameFieldProps> = ({
             playerField={playerField}
             aiField={aiField}
             onIconCountsCalculated={onCompleteIconsCalculated}
+            onIconClick={onIconClick}
           />
         )}
         

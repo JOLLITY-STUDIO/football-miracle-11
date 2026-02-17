@@ -4,15 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface CardDealerProps {
   isDealing: boolean;
   type: 'player' | 'ai' | 'synergy';
+  count?: number; // 可选的真实卡片数量
 }
 
-export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type }) => {
+export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type, count }) => {
   if (!isDealing) return null;
 
   // Configuration for different types of cards (relative to 1920x1080 container)
   const config = {
     player: {
-      count: 10,
+      count: count || 10,
       color: '#1e3a8a', // Blue
       label: 'PLAYER',
       startX: 1600,
@@ -21,7 +22,7 @@ export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type }) => {
       targetY: 1000,
     },
     ai: {
-      count: 10,
+      count: count || 10,
       color: '#7f1d1d', // Red
       label: 'OPPONENT',
       startX: 1600,
@@ -30,7 +31,7 @@ export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type }) => {
       targetY: 80,
     },
     synergy: {
-      count: 5,
+      count: count || 5,
       color: '#106327', // Green
       label: 'SYNERGY',
       startX: 1600,
@@ -40,28 +41,31 @@ export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type }) => {
     }
   };
 
-  const { count, color, label, startX, startY, targetX, targetY } = config[type];
+  const { count: cardCount, color, label, startX, startY, targetX, targetY } = config[type];
+
+  // 限制最大显示数量，避免动画过于拥挤
+  const displayCount = Math.min(cardCount, 15);
 
   return (
     <AnimatePresence>
-      {Array.from({ length: count }).map((_, i) => (
+      {Array.from({ length: displayCount }).map((_, i) => (
         <motion.div
-          key={`${type}-${i}`}
+          key={`${type}-${i}-${count}`}
           initial={{ 
             x: startX,
             y: startY,
-            z: 50 + (i * 2),
+            z: 200 + (i * 2),
             rotateY: 0,
             rotateZ: 0,
             opacity: 0,
             scale: 0.2
           }}
           animate={{ 
-            x: [startX, startX, targetX + (i - count/2) * 40],
+            x: [startX, startX, targetX + (i - displayCount/2) * 40],
             y: [startY, startY - 100, targetY],
-            z: [50, 200, 0],
+            z: [200, 250, 200],
             rotateY: [0, 90, 180],
-            rotateZ: [0, 15, (i - count/2) * 2],
+            rotateZ: [0, 15, (i - displayCount/2) * 2],
             opacity: [0, 1, 1, 0],
             scale: [0.2, 1.2, 1.0, 0.8]
           }}
@@ -70,12 +74,10 @@ export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type }) => {
             delay: i * 0.15,
             ease: "easeInOut"
           }}
-          className="absolute w-[132px] h-[86px] rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center border-2 border-white/30 z-[200] pointer-events-none transform-style-3d overflow-hidden"
+          className="fixed w-[132px] h-[86px] rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center border-2 border-white/30 z-[200] pointer-events-none transform-style-3d overflow-hidden"
           style={{ 
             backgroundColor: color,
-            backfaceVisibility: 'hidden',
-            left: 0,
-            top: 0
+            backfaceVisibility: 'hidden'
           }}
         >
           {/* Card Back Pattern */}

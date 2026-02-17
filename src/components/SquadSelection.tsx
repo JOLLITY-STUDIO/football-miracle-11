@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { athleteCard } from '../data/cards';
 import type { Team } from '../data/teams';
 import type { FieldZone } from '../types/game';
@@ -113,13 +114,13 @@ const FormationView: React.FC<{
   const isComplete = placedCards.size === 10;
 
   return (
-    <div className="squad-selection formation-mode">
+    <div className="squad-selection formation-mode p-6">
       <div className="selection-header">
         <h2>Set Formation</h2>
         <p>Place your 10 starters on the field</p>
       </div>
 
-      <div className="flex gap-8 p-8 h-[600px]">
+      <div className="flex gap-8 p-4 h-[500px]">
         {/* Left: Unplaced Cards */}
         <div className="w-1/3 bg-stone-900/50 p-4 rounded-xl overflow-y-auto">
           <h3 className="text-white mb-4">Bench ({starters.length - placedCards.size} left)</h3>
@@ -171,9 +172,9 @@ const FormationView: React.FC<{
                    >
                      {card ? (
                        <div className="w-20 h-28 bg-stone-800 rounded border border-white/20 flex flex-col items-center justify-center shadow-lg" onClick={(e) => { e.stopPropagation(); handleCardClick(card); }}>
-                          <span className="text-xl">{card.isStar ? '⭐' : '👤'}</span>
-                          <span className="text-[10px] text-white text-center px-1 leading-tight mt-1">{card.realName}</span>
-                          <span className="text-[9px] text-stone-400">{card.positionLabel}</span>
+                            <span className="text-xl">{card.isStar ? '⭐' : '👤'}</span>
+                            <span className="text-[10px] text-white text-center px-1 leading-tight mt-1">{card.realName}</span>
+                            <span className="text-[9px] text-stone-400">{card.positionLabel}</span>
                        </div>
                      ) : (
                        <div className="w-4 h-4 rounded-full bg-white/5" />
@@ -252,113 +253,151 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
 
   if (step === 'formation') {
     return (
-      <FormationView 
-        starters={selectedStarters} 
-        onBack={() => setStep('select')} 
-        onConfirm={(field) => onComplete(selectedStarters, selectedSubstitutes, field)} 
-      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        {/* Backdrop with blur */}
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+        {/* Formation View Content */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative z-10 w-full max-w-6xl max-h-[90vh] overflow-y-auto"
+        >
+          <FormationView 
+            starters={selectedStarters} 
+            onBack={() => setStep('select')} 
+            onConfirm={(field) => onComplete(selectedStarters, selectedSubstitutes, field)} 
+          />
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="squad-selection">
-      <div className="selection-header">
-        <h2>Squad Selection</h2>
-        <p>{team.name} - Select 10 starters and 3 substitutes</p>
-      </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
+      {/* Backdrop with blur */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      <div className="selection-status">
-        <div className="status-item starters-count">
-          <span className="label">Starters</span>
-          <span className={`count ${selectedStarters.length === 10 ? 'complete' : ''}`}>
-            {selectedStarters.length}/10
-          </span>
-        </div>
-        <div className="status-item subs-count">
-          <span className="label">Substitutes</span>
-          <span className={`count ${selectedSubstitutes.length === 3 ? 'complete' : ''}`}>
-            {selectedSubstitutes.length}/3
-          </span>
-        </div>
-      </div>
-
-      <div className="selection-content">
-        <div className="available-players">
-          <h3>Available Players ({allPlayers.length})</h3>
-          <div className="players-grid">
-            {allPlayers.map(player => {
-              const status = getSelectionStatus(player);
-              return (
-                <div
-                  key={player.id}
-                  className={`player-card ${status} ${player.isStar ? 'star' : ''}`}
-                  onClick={() => handleTogglePlayer(player)}
-                >
-                  {player.isStar && <div className="star-badge">⭐</div>}
-                  <div className="player-name">{player.realName}</div>
-                  <div className="player-position">{player.positionLabel}</div>
-                  <div className="player-stats">
-                    <span className="atk">ATK:{player.icons.filter(i => i === 'attack').length}</span>
-                    <span className="def">DEF:{player.icons.filter(i => i === 'defense').length}</span>
-                  </div>
-                  {status === 'starter' && <div className="selection-badge">START</div>}
-                  {status === 'substitute' && <div className="selection-badge sub">SUB</div>}
-                  <div className="player-actions">
-                    {status === 'substitute' && selectedStarters.length < 10 && (
-                      <button onClick={(e) => { e.stopPropagation(); handleSetAsStarter(player); }}>
-                        Move to Starter
-                      </button>
-                    )}
-                    {status === 'starter' && selectedSubstitutes.length < 3 && (
-                      <button onClick={(e) => { e.stopPropagation(); handleSetAsSubstitute(player); }}>
-                        Move to Sub
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+      {/* Squad Selection Content */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="relative z-10 w-full max-w-6xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="squad-selection p-6">
+          <div className="selection-header">
+            <h2>Squad Selection</h2>
+            <p>{team.name} - Select 10 starters and 3 substitutes</p>
           </div>
-        </div>
 
-        <div className="selected-squad">
-          <div className="squad-section">
-            <h3>Starters ({selectedStarters.length}/10)</h3>
-            <div className="squad-list">
-              {selectedStarters.map(player => (
-                <div key={player.id} className="squad-item starter">
-                  {player.isStar && <span className="star-icon">⭐</span>}
-                  <span className="name">{player.realName}</span>
-                  <span className="position">{player.positionLabel}</span>
-                </div>
-              ))}
+          <div className="selection-status">
+            <div className="status-item starters-count">
+              <span className="label">Starters</span>
+              <span className={`count ${selectedStarters.length === 10 ? 'complete' : ''}`}>
+                {selectedStarters.length}/10
+              </span>
+            </div>
+            <div className="status-item subs-count">
+              <span className="label">Substitutes</span>
+              <span className={`count ${selectedSubstitutes.length === 3 ? 'complete' : ''}`}>
+                {selectedSubstitutes.length}/3
+              </span>
             </div>
           </div>
-          <div className="squad-section">
-            <h3>Substitutes ({selectedSubstitutes.length}/3)</h3>
-            <div className="squad-list">
-              {selectedSubstitutes.map(player => (
-                <div key={player.id} className="squad-item sub">
-                  {player.isStar && <span className="star-icon">⭐</span>}
-                  <span className="name">{player.realName}</span>
-                  <span className="position">{player.positionLabel}</span>
+
+          <div className="selection-content">
+            <div className="available-players">
+              <h3>Available Players ({allPlayers.length})</h3>
+              <div className="players-grid">
+                {allPlayers.map(player => {
+                  const status = getSelectionStatus(player);
+                  return (
+                    <div
+                      key={player.id}
+                      className={`player-card ${status} ${player.isStar ? 'star' : ''}`}
+                      onClick={() => handleTogglePlayer(player)}
+                    >
+                      {player.isStar && <div className="star-badge">⭐</div>}
+                      <div className="player-name">{player.realName}</div>
+                      <div className="player-position">{player.positionLabel}</div>
+                      <div className="player-stats">
+                        <span className="atk">ATK:{player.icons.filter(i => i === 'attack').length}</span>
+                        <span className="def">DEF:{player.icons.filter(i => i === 'defense').length}</span>
+                      </div>
+                      {status === 'starter' && <div className="selection-badge">START</div>}
+                      {status === 'substitute' && <div className="selection-badge sub">SUB</div>}
+                      <div className="player-actions">
+                        {status === 'substitute' && selectedStarters.length < 10 && (
+                          <button onClick={(e) => { e.stopPropagation(); handleSetAsStarter(player); }}>
+                            Move to Starter
+                          </button>
+                        )}
+                        {status === 'starter' && selectedSubstitutes.length < 3 && (
+                          <button onClick={(e) => { e.stopPropagation(); handleSetAsSubstitute(player); }}>
+                            Move to Sub
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="selected-squad">
+              <div className="squad-section">
+                <h3>Starters ({selectedStarters.length}/10)</h3>
+                <div className="squad-list">
+                  {selectedStarters.map(player => (
+                    <div key={player.id} className="squad-item starter">
+                      {player.isStar && <span className="star-icon">⭐</span>}
+                      <span className="name">{player.realName}</span>
+                      <span className="position">{player.positionLabel}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div className="squad-section">
+                <h3>Substitutes ({selectedSubstitutes.length}/3)</h3>
+                <div className="squad-list">
+                  {selectedSubstitutes.map(player => (
+                    <div key={player.id} className="squad-item sub">
+                      {player.isStar && <span className="star-icon">⭐</span>}
+                      <span className="name">{player.realName}</span>
+                      <span className="position">{player.positionLabel}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="selection-actions">
-        <button
-          className={`confirm-btn ${canComplete ? 'enabled' : 'disabled'}`}
-          onClick={() => canComplete && onComplete(selectedStarters, selectedSubstitutes)}
-          disabled={!canComplete}
-        >
-          {canComplete ? 'Start Match' : `Need ${10 - selectedStarters.length} starters and ${3 - selectedSubstitutes.length} substitutes`}
-        </button>
-      </div>
-    </div>
+          <div className="selection-actions">
+            <button
+              className={`confirm-btn ${canComplete ? 'enabled' : 'disabled'}`}
+              onClick={() => canComplete && onComplete(selectedStarters, selectedSubstitutes)}
+              disabled={!canComplete}
+            >
+              {canComplete ? 'Start Match' : `Need ${10 - selectedStarters.length} starters and ${3 - selectedSubstitutes.length} substitutes`}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

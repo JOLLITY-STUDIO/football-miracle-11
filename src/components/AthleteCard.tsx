@@ -88,7 +88,7 @@ const getThemeColor = (type: string) => {
   }
 };
 
-export const AthleteCardComponent: React.FC<Props> = ({ 
+const AthleteCardComponent: React.FC<Props> = ({ 
   card, 
   onClick, 
   onMouseEnter,
@@ -115,6 +115,17 @@ export const AthleteCardComponent: React.FC<Props> = ({
     fontWeight: '900',
     letterSpacing: '0.05em'
   };
+
+  // 计算自适应字体大小的函数
+  const calculateFontSize = (text: string, maxLength: number, baseSize: number, minSize: number): number => {
+    if (!text) return baseSize;
+    const ratio = Math.min(1, maxLength / text.length);
+    return Math.max(minSize, baseSize * ratio);
+  };
+
+  // 计算自适应字体大小
+  const nicknameFontSize = calculateFontSize(card.nickname, 10, 0.75, 0.5); // 10字符限制，基础12px，最小8px
+  const realNameFontSize = calculateFontSize(card.realName, 15, 0.5625, 0.4375); // 15字符限制，基础9px，最小7px
 
   // 计算半圆图标大小，用于边距设置
   const cardWidth = SIZE_CONFIG[size || 'medium'].width;
@@ -297,14 +308,22 @@ export const AthleteCardComponent: React.FC<Props> = ({
               </div>
               
               {/* 绰号 */}
-              <div className="text-xs font-black tracking-widest leading-none" style={textStrokeStyle}>
+              <div className="font-black tracking-widest leading-none whitespace-nowrap overflow-hidden text-ellipsis" style={{ 
+                ...textStrokeStyle, 
+                maxWidth: '100%',
+                fontSize: `${nicknameFontSize}rem`
+              }}>
                 {card.nickname}
               </div>
 
               {/* 球员名字 */}
               <div 
-                className="text-[9px] font-bold text-center leading-tight truncate px-1" 
-                style={{ ...textStrokeStyle, maxWidth: `calc(100% - ${iconRadius}px)` }}
+                className="font-bold text-center leading-tight truncate px-1" 
+                style={{ 
+                  ...textStrokeStyle, 
+                  maxWidth: `calc(100% - ${iconRadius}px)`,
+                  fontSize: `${realNameFontSize}rem`
+                }}
               >
                 {card.realName}
               </div>
@@ -335,24 +354,19 @@ export const AthleteCardComponent: React.FC<Props> = ({
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
           {/* 统一卡牌背面设计 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center overflow-hidden">
-            {/* 大五角星背景 */}
-            <div className="absolute inset-0 flex items-center justify-center z-0">
-              <div className="w-full h-full flex items-center justify-center transform rotate-90">
-                {/* SVG 金色五角�?*/}
-                <svg width="200" height="200" viewBox="0 0 100 100">
-                  <path 
-                    d="M50 0 L63 38 L100 38 L69 61 L81 100 L50 76 L19 100 L31 61 L0 38 L37 38 Z" 
-                    fill="#fbbf24"
-                    stroke="#fcd34d"
-                    strokeWidth="6"
-                  />
-                </svg>
-              </div>
-            </div>
+          <div className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden">
+            {/* 球服图标 */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div className="w-20 h-20 rounded-full border-4 border-yellow-400/30 flex items-center justify-center bg-black/30">
-                <img src="/icons/synergy_plus_ring.svg" alt="Card Back" className="w-14 h-14 opacity-90" />
+              <div className="w-32 h-32 flex items-center justify-center">
+                {variant === 'home' && (
+                  <span className="text-6xl" style={{ color: '#3b82f6' }}>👕</span>
+                )}
+                {variant === 'away' && (
+                  <span className="text-6xl" style={{ color: '#ef4444' }}>👕</span>
+                )}
+                {card.isStar && (
+                  <span className="text-6xl" style={{ color: '#fbbf24' }}>👕</span>
+                )}
               </div>
             </div>
           </div>
@@ -362,6 +376,9 @@ export const AthleteCardComponent: React.FC<Props> = ({
     </div>
   );
 };
+
+export { AthleteCardComponent };
+export { AthleteCardComponent as AthleteCard };
 
 
 

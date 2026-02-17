@@ -85,7 +85,7 @@ function calculateConnections(field: FieldZone[]): Connection[] {
 
             // 检查是否有匹配的图标
             const hasMatch = adjacentSlot.athleteCard.iconPositions.some(
-              pos => pos.position === matchingPos && pos.type === iconWithPos.type
+              (pos: { position: string; type: string }) => pos.position === matchingPos && pos.type === iconWithPos.type
             );
 
             if (hasMatch) {

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { SynergyPanel } from './SynergyPanel';
 import { BaseCard } from './BaseCard';
 import { SynergyCardComponent } from './SynergyCard';
-import { penaltyCards, type SynergyCard } from '../data/cards';
+import { AthleteCardComponent } from './AthleteCard';
+import { penaltyCards, penaltyDefenseCards, type SynergyCard, type athleteCard, starathleteCards, baseathleteCards } from '../data/cards';
 
 interface Props {
   aiSynergyHand: SynergyCard[];
@@ -176,6 +177,103 @@ export const RightPanel: React.FC<Props> = ({
                     </div>
                   </div>
                 ))}
+                {/* Penalty Attack Count */}
+                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {penaltyCards.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Athlete Card Decks - Face Down */}
+            <div className="flex flex-col gap-3">
+              {/* Star Card Deck */}
+              <div className="relative flex flex-col items-center group">
+                <span className="text-[10px] text-white/40 font-bold mb-1 uppercase tracking-tighter">Star Cards</span>
+                <div className="relative" style={{ width: `${STACK_W}px`, height: `${STACK_H}px` }}>
+                  {[2, 1, 0].map((i) => (
+                    <div 
+                      key={i}
+                      className="absolute inset-0 border-[2px] border-black/80 rounded-lg shadow-md overflow-hidden transition-transform group-hover:translate-y-[-2px]"
+                      style={{ 
+                        transform: `translate(${i * -1.5}px, ${i * -2}px)`,
+                        zIndex: 10 - i,
+                        boxShadow: i === 0 ? '0 4px 6px -1px rgba(0, 0, 0, 0.5)' : 'none'
+                      }}
+                    >
+                      <AthleteCardComponent
+                        card={{ id: `temp_star_${i}`, nickname: '', realName: '', type: 'fw', positionLabel: '', isStar: true, unlocked: true, unlockCondition: '', icons: [], iconPositions: [], immediateEffect: 'none' }} as athleteCard
+                        size="large"
+                        faceDown={true}
+                        variant="home"
+                        disabled={true}
+                      />
+                    </div>
+                  ))}
+                  {/* Star Card Count */}
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    {starathleteCards.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Home Team Card Deck */}
+              <div className="relative flex flex-col items-center group">
+                <span className="text-[10px] text-white/40 font-bold mb-1 uppercase tracking-tighter">Home Cards</span>
+                <div className="relative" style={{ width: `${STACK_W}px`, height: `${STACK_H}px` }}>
+                  {[2, 1, 0].map((i) => (
+                    <div 
+                      key={i}
+                      className="absolute inset-0 border-[2px] border-black/80 rounded-lg shadow-md overflow-hidden transition-transform group-hover:translate-y-[-2px]"
+                      style={{ 
+                        transform: `translate(${i * -1.5}px, ${i * -2}px)`,
+                        zIndex: 10 - i,
+                        boxShadow: i === 0 ? '0 4px 6px -1px rgba(0, 0, 0, 0.5)' : 'none'
+                      }}
+                    >
+                      <AthleteCardComponent
+                        card={{ id: `temp_home_${i}`, nickname: '', realName: '', type: 'fw', positionLabel: '', isStar: false, unlocked: true, unlockCondition: '', icons: [], iconPositions: [], immediateEffect: 'none' }} as athleteCard
+                        size="large"
+                        faceDown={true}
+                        variant="home"
+                        disabled={true}
+                      />
+                    </div>
+                  ))}
+                  {/* Home Card Count */}
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    {baseathleteCards.filter(card => card.id.startsWith('H')).length + starathleteCards.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Away Team Card Deck */}
+              <div className="relative flex flex-col items-center group">
+                <span className="text-[10px] text-white/40 font-bold mb-1 uppercase tracking-tighter">Away Cards</span>
+                <div className="relative" style={{ width: `${STACK_W}px`, height: `${STACK_H}px` }}>
+                  {[2, 1, 0].map((i) => (
+                    <div 
+                      key={i}
+                      className="absolute inset-0 border-[2px] border-black/80 rounded-lg shadow-md overflow-hidden transition-transform group-hover:translate-y-[-2px]"
+                      style={{ 
+                        transform: `translate(${i * -1.5}px, ${i * -2}px)`,
+                        zIndex: 10 - i,
+                        boxShadow: i === 0 ? '0 4px 6px -1px rgba(0, 0, 0, 0.5)' : 'none'
+                      }}
+                    >
+                      <AthleteCardComponent
+                        card={{ id: `temp_away_${i}`, nickname: '', realName: '', type: 'fw', positionLabel: '', isStar: false, unlocked: true, unlockCondition: '', icons: [], iconPositions: [], immediateEffect: 'none' }} as athleteCard
+                        size="large"
+                        faceDown={true}
+                        variant="away"
+                        disabled={true}
+                      />
+                    </div>
+                  ))}
+                  {/* Away Card Count */}
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    {baseathleteCards.filter(card => card.id.startsWith('A')).length + starathleteCards.length}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -297,6 +395,10 @@ export const RightPanel: React.FC<Props> = ({
                     </div>
                   </div>
                 ))}
+                {/* Penalty Defense Count */}
+                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {penaltyDefenseCards.length}
+                </div>
               </div>
             </div>
           </div>

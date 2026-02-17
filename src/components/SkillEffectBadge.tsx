@@ -42,6 +42,14 @@ const getEffectInfo = (effect: ImmediateEffectType) => {
         color: '#f59e0b',
         bgColor: 'rgba(245, 158, 11, 0.3)'
       };
+    case 'draw_synergy_plus_1':
+      return {
+        icon: '🎴',
+        label: '抽卡+1',
+        description: '抽1张协同卡',
+        color: '#f59e0b',
+        bgColor: 'rgba(245, 158, 11, 0.2)'
+      };
     case 'steal_synergy':
       return {
         icon: '🗡️',
@@ -57,6 +65,14 @@ const getEffectInfo = (effect: ImmediateEffectType) => {
         description: '立即射门',
         color: '#ef4444',
         bgColor: 'rgba(239, 68, 68, 0.3)'
+      };
+    case 'ignore_defense':
+      return {
+        icon: '💨',
+        label: '突破',
+        description: '无视防守进行攻击',
+        color: '#9333ea',
+        bgColor: 'rgba(147, 51, 234, 0.2)'
       };
     case 'none':
     default:

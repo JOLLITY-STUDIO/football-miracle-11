@@ -176,10 +176,12 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
   }, [playerField, onCompleteIconsCalculated]);
 
   // Calculate complete icons for display
-  const getCompleteIcons = (field: FieldZone[]): Array<{ type: TacticalIcon; centerX: number; centerY: number }> => {
-    if (!field || field.length === 0) return [];
+  const getAllCompleteIcons = (playerField: FieldZone[], aiField: FieldZone[]): Array<{ type: TacticalIcon; centerX: number; centerY: number }> => {
+    // Combine both fields to analyze all cards
+    const allFields = [...playerField, ...aiField];
+    if (allFields.length === 0) return [];
     
-    const matcher = new TacticalIconMatcher(field);
+    const matcher = new TacticalIconMatcher(allFields);
     return matcher.getCompleteIcons().map(icon => ({
       type: icon.type,
       centerX: icon.centerX,
@@ -188,8 +190,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
   };
 
   // Get complete icons for both fields
-  const playerCompleteIcons = getCompleteIcons(playerField);
-  const aiCompleteIcons = getCompleteIcons(aiField);
+  const allCompleteIcons = getAllCompleteIcons(playerField, aiField);
 
   // Determine which zones belong to which field
   const playerZones = playerField.map(z => z.zone);
@@ -352,53 +353,6 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
                     opacity: getActiveIconStyle(7, colIdx, true, activePositions).opacity,
                     transform: getActiveIconStyle(7, colIdx, true, activePositions).transform,
                     transition: 'all 0.3s ease'
-                  }}
-                />
-              </div>
-            </foreignObject>
-          </g>
-        );
-      })}
-
-      {/* 拼合成功的完整图标 */}
-      {[...playerCompleteIcons, ...aiCompleteIcons].map((icon, index) => {
-        const iconMap: Record<TacticalIcon, string> = {
-          attack: '/icons/attack_ball.svg',
-          defense: '/icons/defense_shield.svg',
-          pass: '/icons/synergy_plus.svg',
-          press: '/icons/press_up.svg',
-          breakthrough: '/icons/attack_ball.svg',
-          breakthroughAll: '/icons/attack_ball.svg'
-        };
-
-        const iconUrl = iconMap[icon.type] || '/icons/attack_ball.svg';
-        
-        return (
-          <g key={`complete-icon-${index}`}>
-            <foreignObject
-              x={icon.centerX - 32}
-              y={icon.centerY - 32}
-              width={64}
-              height={64}
-            >
-              <div style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 10
-              }}>
-                <img
-                  src={iconUrl}
-                  alt={`Complete ${icon.type} icon`}
-                  style={{
-                    width: '56px',
-                    height: '56px',
-                    objectFit: 'contain',
-                    filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.9)) drop-shadow(0 0 20px rgba(255,255,255,0.9))',
-                    animation: 'pulse 2s infinite',
-                    zIndex: 10
                   }}
                 />
               </div>

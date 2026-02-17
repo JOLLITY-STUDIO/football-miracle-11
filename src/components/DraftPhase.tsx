@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StarCardDraft from './StarCardDraft';
+import { AthleteCardComponent } from './AthleteCard';
 import type { GameState, GameAction } from '../game/gameLogic';
 import { useGameAudio } from '../hooks/useGameAudio';
-import { starathleteCards } from '../data/cards';
+import { starathleteCards, baseathleteCards } from '../data/cards';
 
 interface DraftPhaseProps {
   gameState: GameState;
   dispatch: React.Dispatch<GameAction>;
 }
 
-type DraftStage = 'preview' | 'shuffle' | 'draw' | 'selection';
+type DraftStage = 'deckSelection' | 'preview' | 'shuffle' | 'draw' | 'selection';
 
 export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) => {
   const { playSound } = useGameAudio();
@@ -22,45 +23,54 @@ export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) =
   const [isShuffling, setIsShuffling] = useState(false);
 
   useEffect(() => {
-    if (gameState.phase === 'draft' && gameState.draftRound === 1 && gameState.draftStep === 0 && gameState.availableDraftCards.length === 0) {
-      setDraftStage('preview');
-      
-      const previewTimer = setTimeout(() => {
-        setDraftStage('shuffle');
-        setIsShuffling(true);
-        playSound('swosh');
+    let previewTimer: NodeJS.Timeout;
+    let shuffleTimer: NodeJS.Timeout;
+    let drawTimer: NodeJS.Timeout;
+    let selectionTimer: NodeJS.Timeout;
+
+    if (gameState.phase === 'draft') {
+      if (gameState.draftStep === 0 && gameState.availableDraftCards.length === 0) {
+        setDraftStage('preview');
         
-        const shuffleTimer = setTimeout(() => {
-          const shuffled = [...starathleteCards].sort(() => Math.random() - 0.5);
-          setShuffledDeck(shuffled);
-          setIsShuffling(false);
+        // 直接开始选秀流程
+        previewTimer = setTimeout(() => {
+          setDraftStage('shuffle');
+          setIsShuffling(true);
+          playSound('shuffle');
           
-          const drawTimer = setTimeout(() => {
-            setDraftStage('draw');
-            playSound('draw');
+          shuffleTimer = setTimeout(() => {
+            setIsShuffling(false);
             
-            const drawn = shuffled.slice(0, 3);
-            setDrawnCards(drawn);
-            
-            const selectionTimer = setTimeout(() => {
-              setDraftStage('selection');
-              dispatch({ type: 'START_DRAFT_ROUND', cards: drawn });
-            }, 1500);
-            
-            return () => clearTimeout(selectionTimer);
-          }, 500);
-          
-          return () => clearTimeout(drawTimer);
-        }, 2000);
-        
-        return () => clearTimeout(shuffleTimer);
-      }, 3000);
-      
-      return () => clearTimeout(previewTimer);
-    } else if (gameState.phase === 'draft' && gameState.draftStep > 0) {
-      setDraftStage('selection');
+            drawTimer = setTimeout(() => {
+              setDraftStage('draw');
+              playSound('deal');
+              
+              selectionTimer = setTimeout(() => {
+                dispatch({ type: 'START_DRAFT_ROUND' });
+              }, 1500);
+            }, 500);
+          }, 2000);
+        }, 3000);
+      } else if (gameState.draftStep > 0) {
+        setDraftStage('selection');
+      }
     }
-  }, [gameState.phase, gameState.draftRound, gameState.draftStep, gameState.availableDraftCards.length, dispatch]);
+
+    return () => {
+      if (previewTimer) clearTimeout(previewTimer);
+      if (shuffleTimer) clearTimeout(shuffleTimer);
+      if (drawTimer) clearTimeout(drawTimer);
+      if (selectionTimer) clearTimeout(selectionTimer);
+    };
+  }, [gameState.phase, gameState.draftStep, gameState.availableDraftCards.length, dispatch, playSound]);
+
+  // 清理未使用的变量
+  useEffect(() => {
+    // 当availableDraftCards更新时，使用游戏状态中的卡片
+    if (gameState.availableDraftCards.length > 0) {
+      setDrawnCards(gameState.availableDraftCards);
+    }
+  }, [gameState.availableDraftCards]);
 
   useEffect(() => {
     if (gameState.phase === 'draft' && gameState.draftStep === 2) {
@@ -71,7 +81,7 @@ export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) =
 
       const pickTimer = setTimeout(() => {
         dispatch({ type: 'AI_DRAFT_PICK' });
-        playSound('draw');
+        playSound('pick');
         const clearTimer = setTimeout(() => setAiSelectedIndex(null), 800);
         return () => clearTimeout(clearTimer);
       }, 1800);
@@ -98,6 +108,12 @@ export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) =
     if (gameState.phase === 'draft') {
       setPlayerSelectedIndex(null);
       setAiSelectedIndex(null);
+      // Only set to preview if it's the first round or starting a new draft process
+      if (gameState.draftRound === 1 && gameState.draftStep === 0) {
+        setDraftStage('preview');
+      } else {
+        setDraftStage('selection');
+      }
     }
   }, [gameState.phase, gameState.draftRound, gameState.draftStep]);
 
@@ -112,7 +128,7 @@ export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) =
       {draftStage === 'draw' && (
         <StarCardDraw drawnCards={drawnCards} />
       )}
-      {draftStage === 'selection' && (
+      {(draftStage === 'selection' || (gameState.phase === 'draft' && gameState.draftStep > 0)) && (
         <StarCardDraft
           cards={gameState.availableDraftCards}
           round={gameState.draftRound}
@@ -120,7 +136,7 @@ export const DraftPhase: React.FC<DraftPhaseProps> = ({ gameState, dispatch }) =
           onSelect={(index) => {
             setPlayerSelectedIndex(index);
             dispatch({ type: 'PICK_DRAFT_CARD', cardIndex: index });
-            playSound('draw');
+            playSound('pick');
           }}
           aiSelectedIndex={aiSelectedIndex}
           playerSelectedIndex={playerSelectedIndex}
@@ -138,61 +154,64 @@ const StarCardPreview: React.FC<{ cards: typeof starathleteCards }> = ({ cards }
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[70] font-['Russo_One']"
+        className="absolute inset-0 bg-gradient-to-b from-black/80 to-black/90 flex items-center justify-center z-[70] font-['Russo_One']"
       >
         <motion.div 
-          initial={{ scale: 0.9, y: 30 }}
-          animate={{ scale: 1, y: 0 }}
-          className="bg-[#2a2a2a] rounded-2xl p-8 shadow-2xl border border-gray-700 max-w-7xl w-full max-h-[90vh] overflow-y-auto"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full h-full flex flex-col items-center justify-center p-8"
         >
-          <div className="text-center mb-8">
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-5xl font-bold text-yellow-400 mb-4 tracking-wider"
-            >
-              ⭐ STAR PLAYERS PREVIEW ⭐
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-2xl font-bold text-green-400"
-            >
-              Review all available star players...
-            </motion.div>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-5xl font-bold text-yellow-400 mb-6 tracking-wider text-center"
+          >
+            ⭐ STAR PLAYERS ⭐
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-2xl font-bold text-green-400 mb-8 text-center"
+          >
+            Available star players...
+          </motion.div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl w-full max-h-[60vh] overflow-y-auto pb-8"
+          >
             {cards.map((card, index) => (
               <motion.div
                 key={card.id}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-gray-800 rounded-xl p-4 border border-gray-600"
+                transition={{ delay: index * 0.03 }}
+                className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-3 border border-gray-600"
               >
-                  <div className="text-center">
-                  <div className="text-yellow-400 text-lg font-bold mb-2">{card.nickname}</div>
-                  <div className="text-white text-sm mb-2">{card.realName}</div>
-                  <div className="text-gray-400 text-xs mb-3">{card.positionLabel}</div>
+                <div className="text-center">
+                  <div className="text-yellow-400 text-lg font-bold mb-1">{card.nickname}</div>
+                  <div className="text-white text-xs mb-1">{card.realName}</div>
+                  <div className="text-gray-400 text-xs mb-2">{card.positionLabel}</div>
                   <div className="flex flex-wrap gap-1 justify-center">
                     {card.icons.map((icon, idx) => (
-                      <div key={idx} className="text-xl">{getIconEmoji(icon)}</div>
+                      <div key={idx} className="text-lg">{getIconEmoji(icon)}</div>
                     ))}
                   </div>
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
           
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 2 }}
-            className="text-center text-gray-500 text-sm tracking-wider uppercase mt-8"
+            className="text-center text-gray-500 text-sm tracking-wider uppercase mt-6"
           >
-            Shuffling deck in {3}...
+            Shuffling deck...
           </motion.div>
         </motion.div>
       </motion.div>
@@ -207,10 +226,10 @@ const StarDeckShuffle: React.FC<{ isShuffling: boolean; deck: typeof starathlete
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[70] font-['Russo_One']"
+        className="absolute inset-0 bg-gradient-to-b from-black/80 to-black/90 flex items-center justify-center z-[70] font-['Russo_One']"
       >
         <motion.div 
-          initial={{ scale: 0.9 }}
+          initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           className="text-center"
         >
@@ -226,7 +245,7 @@ const StarDeckShuffle: React.FC<{ isShuffling: boolean; deck: typeof starathlete
             animate={{ opacity: 1 }}
             className="text-4xl font-bold text-yellow-400 mb-4 tracking-wider"
           >
-            SHUFFLING STAR DECK
+            SHUFFLING
           </motion.div>
           <motion.div 
             initial={{ opacity: 0 }}
@@ -234,7 +253,7 @@ const StarDeckShuffle: React.FC<{ isShuffling: boolean; deck: typeof starathlete
             transition={{ delay: 0.3 }}
             className="text-2xl font-bold text-green-400"
           >
-            {deck.length} cards in deck
+            {deck.length} cards
           </motion.div>
         </motion.div>
       </motion.div>
@@ -249,69 +268,51 @@ const StarCardDraw: React.FC<{ drawnCards: typeof starathleteCards }> = ({ drawn
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[70] font-['Russo_One']"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] font-['Russo_One']"
       >
         <motion.div 
           initial={{ scale: 0.9, y: 30 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-[#2a2a2a] rounded-2xl p-8 shadow-2xl border border-gray-700 max-w-5xl w-full"
+          className="p-8 max-w-5xl w-full flex flex-col items-center"
         >
-          <div className="text-center mb-10">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-4xl font-bold text-yellow-400 mb-4 tracking-wider"
-            >
-              ⭐ DRAFT ROUND 1 ⭐
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-2xl font-bold text-green-400"
-            >
-              Drawing 3 cards...
-            </motion.div>
+          <div className="text-center mb-10 text-center">
+            <div className="text-4xl font-bold text-yellow-400 mb-4 tracking-wider">
+              ⭐ STAR CARD DRAFT ⭐
+            </div>
+            <div className="text-2xl font-bold text-green-400">
+              DRAWING CARDS...
+            </div>
           </div>
           
           <div className="flex gap-8 justify-center items-center mb-8">
             {drawnCards.map((card, index) => (
               <motion.div
                 key={card.id}
-                initial={{ opacity: 0, x: -100, rotate: -10 }}
-                animate={{ opacity: 1, x: 0, rotate: 0 }}
-                transition={{ delay: index * 0.3 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2 }}
                 className="relative"
               >
-                <div className="bg-gray-800 rounded-xl p-6 border-2 border-yellow-500 shadow-2xl">
-                  <div className="text-center">
-                    <div className="text-yellow-400 text-xl font-bold mb-2">{card.nickname}</div>
-                    <div className="text-white text-sm mb-2">{card.realName}</div>
-                    <div className="text-gray-400 text-xs mb-3">{card.positionLabel}</div>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {card.icons.map((icon, idx) => (
-                        <div key={idx} className="text-2xl">{getIconEmoji(icon)}</div>
-                      ))}
-                    </div>
-                  </div>
+                <div className="relative z-10">
+                  <AthleteCardComponent
+                    card={card}
+                    size="large"
+                  />
                 </div>
               </motion.div>
             ))}
           </div>
           
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="text-center text-gray-500 text-sm tracking-wider uppercase"
-          >
-            Prepare to choose your star player...
-          </motion.div>
+          <div className="text-center text-gray-500 text-sm tracking-wider uppercase">
+            {drawnCards.length} cards drawn • Preparing for selection...
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
   );
 };
+
+
 
 function getIconEmoji(icon: string): string {
   const iconMap: { [key: string]: string } = {

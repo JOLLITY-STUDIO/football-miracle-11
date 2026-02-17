@@ -161,10 +161,24 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
         const base = import.meta.env.BASE_URL;
         const safeTrack = getSafeTrack(currentTrack);
         const trackPath = `${base}bgm/${encodeURIComponent(safeTrack)}`;
-        audioRef.current.src = trackPath;
-        audioRef.current.volume = volume;
         
         try {
+          // Check if audio element exists and is ready
+          if (!audioRef.current) return;
+          
+          // Set source and volume
+          audioRef.current.src = trackPath;
+          audioRef.current.volume = volume;
+          
+          // Wait for metadata to load before playing
+          await new Promise((resolve, reject) => {
+            audioRef.current!.onloadedmetadata = resolve;
+            audioRef.current!.onerror = reject;
+            // Set timeout to avoid infinite waiting
+            setTimeout(reject, 5000);
+          });
+          
+          // Now play
           playPromiseRef.current = audioRef.current.play();
           await playPromiseRef.current;
           setIsPlaying(true);
@@ -184,7 +198,8 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
               logger.debug("Playback aborted (interrupted by source change or pause)");
               break;
             case 'NotSupportedError':
-              console.warn("Audio format not supported:", err.message);
+            case 'DOMException':
+              console.warn("Audio format not supported or file not found:", err.message);
               // Mark current track as failed
               if (currentTrack) {
                 failedTracks.add(currentTrack);
@@ -203,12 +218,17 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
           setIsPlaying(false);
         } finally {
           playPromiseRef.current = null;
+          // Clean up event listeners
+          if (audioRef.current) {
+            audioRef.current.onloadedmetadata = null;
+            audioRef.current.onerror = null;
+          }
         }
       }
     };
 
     startPlayback();
-  }, [currentTrack, isBgmEnabled, volume, playNextTrack]);
+  }, [currentTrack, isBgmEnabled, volume, pickRandomTrack]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -292,8 +312,10 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
             <button 
                 onClick={playNextTrack}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-[10px]"
+                title="Next Track (Random)"
             >
-                �?            </button>
+                ⏭️
+            </button>
           </div>
           <div className="px-2">
             <input 

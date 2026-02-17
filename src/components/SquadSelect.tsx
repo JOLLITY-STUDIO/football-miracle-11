@@ -19,7 +19,9 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
       const orderA = typeOrder[a.type as keyof typeof typeOrder] ?? 3;
       const orderB = typeOrder[b.type as keyof typeof typeOrder] ?? 3;
       if (orderA !== orderB) return orderA - orderB;
-      return a.name.localeCompare(b.name);
+      const nameA = a.nickname || a.name || '';
+      const nameB = b.nickname || b.name || '';
+      return nameA.localeCompare(nameB);
     });
   }, [allPlayers]);
 

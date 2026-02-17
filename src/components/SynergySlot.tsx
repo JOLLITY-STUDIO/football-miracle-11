@@ -37,43 +37,36 @@ export const SynergySlot: React.FC<Props> = ({
 
   return (
     <div className="relative group">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-row">
 
-
-        {/* Stacked Cards Area */}
-        <div className={`flex items-center gap-3 ${isAi ? 'flex-row-reverse' : 'flex-row'}`}>
-          {/* Left Indicator Square */}
-          <div 
-            className="w-8 h-8 rounded border-2 border-white flex items-center justify-center"
-            style={{
-              backgroundColor: colorMap[type],
-            }}
-          >
-            <img src="/icons/attack_ball.svg" alt="Attack" className="w-6 h-6" />
-          </div>
-          
-          {/* Card Slot */}
-          <div 
-            className={clsx(
-              "w-[206px] h-[138px] rounded-lg border-2 border-white flex items-center justify-center relative transition-colors duration-300",
-            )}
-            style={{
-              backgroundColor: `${colorMap[type]}20`,
-            }}
-          >
-            {cards.length === 0 ? (
-              <div className="text-[12px] text-white/5 font-black uppercase tracking-widest">EMPTY</div>
-            ) : (
-              <div className="relative w-[198px] h-[130px]">
+        {/* Left Indicator Square */}
+        <div 
+          className="w-8 h-8 rounded border-2 border-white flex items-center justify-center"
+          style={{
+            backgroundColor: colorMap[type],
+          }}
+        >
+          <img src="/icons/attack_ball.svg" alt="Attack" className="w-6 h-6" />
+        </div>
+        
+        {/* Card Slot */}
+        <div 
+          className="w-[206px] h-[138px] rounded-lg border-2 border-white flex items-center justify-center relative transition-colors duration-300"
+          style={{
+            backgroundColor: `${colorMap[type]}20`,
+          }}
+        >
+          {cards.length === 0 ? (
+            <div className="text-[12px] text-white/5 font-black uppercase tracking-widest">EMPTY</div>
+          ) : (
+            <div className="relative w-[198px] h-[130px]">
               {cards.map((card, i) => (
                 <motion.div
                   key={card.id}
                   className="absolute inset-0"
                   style={{
                     zIndex: i,
-                    transform: isAi 
-                      ? `translateY(${i * 4}px) translateX(${i * 4}px)` // Opponent side diagonal offset
-                      : `translateY(-${i * 4}px) translateX(${i * 4}px)`, // Player side diagonal offset
+                    transform: `translateY(-${i * 4}px) translateX(${i * 4}px)`,
                   }}
                   initial={{ opacity: 0, scale: 0.8, rotateY: 180 }}
                   animate={{ opacity: 1, scale: 1, rotateY: (isAi && !revealed) ? 180 : 0 }}
@@ -81,7 +74,7 @@ export const SynergySlot: React.FC<Props> = ({
                   <SynergyCardComponent
                     card={card}
                     size="large"
-                    faceDown={isAi && !revealed} // AI cards revealed in showdown
+                    faceDown={isAi && !revealed}
                     selected={selectedCards.some(c => c.id === card.id)}
                     onClick={() => !isAi && onSelect?.(card)}
                   />
@@ -103,7 +96,7 @@ export const SynergySlot: React.FC<Props> = ({
                     times: [0, 0.5, 1],
                     ease: "easeOut"
                   }}
-                  className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-1 bg-gradient-to-r from-yellow-600 to-yellow-400 px-4 py-2 rounded-full border-2 border-white shadow-[0_0_20px_rgba(234,179,8,0.6)]"
+                  className={`absolute -bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-1 bg-gradient-to-r from-yellow-600 to-yellow-400 px-4 py-2 rounded-full border-2 border-white shadow-[0_0_20px_rgba(234,179,8,0.6)] ${isAi ? 'transform rotate-180' : ''}`}
                 >
                   <span className="text-[14px] font-black text-black drop-shadow-sm">+{totalStars}</span>
                   <span className="text-[12px] text-black/80">星</span>
@@ -126,21 +119,19 @@ export const SynergySlot: React.FC<Props> = ({
               </div>
             </div>
           )}
-          </div>
-          
-          {/* Right Indicator Square */}
-          <div 
-            className="w-8 h-8 rounded border-2 border-white flex items-center justify-center"
-            style={{
-              backgroundColor: type === 'attack' ? 'transparent' : colorMap[type],
-              opacity: type === 'attack' ? 0 : 1,
-            }}
-          >
-            {type === 'defense' || type === 'special' ? '🛡️' : ''}
-          </div>
+        </div>
+        
+        {/* Right Indicator Square */}
+        <div 
+          className="w-8 h-8 rounded border-2 border-white flex items-center justify-center"
+          style={{
+            backgroundColor: type === 'attack' ? 'transparent' : colorMap[type],
+            opacity: type === 'attack' ? 0 : 1,
+          }}
+        >
+          {type === 'defense' || type === 'special' ? '🛡️' : ''}
         </div>
       </div>
     </div>
   );
 };
-

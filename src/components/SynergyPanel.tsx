@@ -25,9 +25,9 @@ export const SynergyPanel: React.FC<Props> = ({
   const specialCards = synergyHand.filter(c => c.type === 'special' || c.type === 'tackle' || c.type === 'setpiece');
 
   return (
-    <div className={`flex ${isAi ? 'flex-col-reverse' : 'flex-col'} gap-6 p-6 ${transparent ? '' : 'bg-black/40 backdrop-blur-sm rounded-2xl border border-white/5 shadow-2xl'}`}>
+    <div className={`flex flex-col gap-6 p-6 ${transparent ? '' : 'bg-black/40 backdrop-blur-sm rounded-2xl border border-white/5 shadow-2xl'} ${isAi ? 'transform rotate-180' : ''}`}>
       {!transparent && (
-        <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-2 text-center">
+        <div className={`text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-2 text-center ${isAi ? 'transform rotate-180' : ''}`}>
           {isAi ? 'OPPONENT SYNERGY' : 'PLAYER SYNERGY'}
         </div>
       )}

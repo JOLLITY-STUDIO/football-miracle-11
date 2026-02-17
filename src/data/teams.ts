@@ -40,8 +40,25 @@ export const awayTeam: Team = {
   isHome: false,
 };
 
+// 卡组定义
+export const starCardDeck: athleteCard[] = [...starathleteCards];
+export const homeCardDeck: athleteCard[] = [...baseathleteCards.filter(card => card.id.startsWith('H')), ...starathleteCards];
+export const awayCardDeck: athleteCard[] = [...baseathleteCards.filter(card => card.id.startsWith('A')), ...starathleteCards];
+
 export function getStarCardsForDraft(): athleteCard[] {
   return [...starathleteCards];
+}
+
+export function getStarCardDeck(): athleteCard[] {
+  return [...starCardDeck];
+}
+
+export function getHomeCardDeck(): athleteCard[] {
+  return [...homeCardDeck];
+}
+
+export function getAwayCardDeck(): athleteCard[] {
+  return [...awayCardDeck];
 }
 
 export function shuffleArray<T>(array: T[]): T[] {
@@ -63,5 +80,11 @@ export function drawStarsForDraftRound(availableStars: athleteCard[], count: num
 export function removeDraftedStars(availableStars: athleteCard[], drafted: athleteCard[]): athleteCard[] {
   const draftedIds = new Set(drafted.map(card => card.id));
   return availableStars.filter(card => !draftedIds.has(card.id));
+}
+
+// 从指定卡组中抽取卡牌
+export function drawCardsFromDeck(deck: athleteCard[], count: number): athleteCard[] {
+  const shuffled = shuffleArray(deck);
+  return shuffled.slice(0, count);
 }
 

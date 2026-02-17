@@ -211,8 +211,8 @@ export const useGameState = (
     playSound('click');
   }, [gameState.currentTurn, dispatch, playSound]);
 
-  const handleTeamAction = useCallback((action: 'pass' | 'press') => {
-    dispatch({ type: 'TEAM_ACTION', action });
+  const handleTeamAction = useCallback((action: 'pass' | 'press', iconCount: number) => {
+    dispatch({ type: 'TEAM_ACTION', action, iconCount });
     playSound('click');
   }, [dispatch, playSound]);
 

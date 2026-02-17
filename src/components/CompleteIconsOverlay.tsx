@@ -3,11 +3,14 @@ import { motion } from 'framer-motion';
 import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
 import type { FieldZone } from '../types/game';
 import type { TacticalIcon } from '../data/cards';
+import { FIELD_CONFIG } from '../config/fieldConfig';
+import { FIELD_CONFIG as FIELD_DIMENSIONS } from '../config/fieldDimensions';
 
 interface CompleteIconsOverlayProps {
   playerField: FieldZone[];
   aiField?: FieldZone[];
   onIconCountsCalculated?: (counts: Record<TacticalIcon, number>) => void;
+  onIconClick?: (icon: any) => void;
 }
 
 /**
@@ -17,7 +20,8 @@ interface CompleteIconsOverlayProps {
 export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
   playerField,
   aiField = [],
-  onIconCountsCalculated
+  onIconCountsCalculated,
+  onIconClick
 }) => {
   // 分析玩家场地的完整图标
   const playerMatcher = React.useMemo(() => {
@@ -78,15 +82,56 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
   };
 
   /**
+   * 计算AI半场完整图标的变换后坐标
+   */
+  const calculateAICoordinates = (x: number, y: number) => {
+    // 场地宽度
+    const fieldWidth = FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH;
+    // 场地高度的一半
+    const halfFieldHeight = FIELD_CONFIG.rowsPerHalf * FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
+    
+    // 列镜像：水平翻转x坐标
+    const mirroredX = fieldWidth - x;
+    // 垂直位置调整：AI半场在顶部
+    const adjustedY = y;
+    
+    return { x: mirroredX, y: adjustedY };
+  };
+
+  /**
    * 渲染单个完整图标
    */
   const renderCompleteIcon = (icon: any, index: number, isPlayer: boolean) => {
     const iconColor = getIconColor(icon.type);
     const iconImage = getIconImage(icon.type);
 
+    // 计算最终坐标
+    let finalX = icon.centerX;
+    let finalY = icon.centerY;
+    let transform = '';
+
+    if (!isPlayer) {
+      // 为AI图标应用变换
+      const aiCoords = calculateAICoordinates(icon.centerX, icon.centerY);
+      finalX = aiCoords.x;
+      finalY = aiCoords.y;
+      // 应用180度旋转
+      transform = `rotate(180 ${finalX} ${finalY})`;
+    }
+
+    // 生成更唯一的键，基于图标位置和类型
+    const uniqueKey = `${isPlayer ? 'player' : 'ai'}-${icon.type}-${Math.round(finalX)}-${Math.round(finalY)}`;
+
+    // 处理图标点击
+    const handleIconClick = () => {
+      if (icon.type === 'attack' && onIconClick) {
+        onIconClick(icon);
+      }
+    };
+
     return (
       <motion.g
-        key={`${isPlayer ? 'player' : 'ai'}-complete-${icon.type}-${index}`}
+        key={uniqueKey}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ 
@@ -95,11 +140,15 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
           stiffness: 300,
           damping: 20
         }}
+        onClick={handleIconClick}
+        style={{
+          cursor: icon.type === 'attack' ? 'pointer' : 'default'
+        }}
       >
         {/* 发光效果 */}
         <circle
-          cx={icon.centerX}
-          cy={icon.centerY}
+          cx={finalX}
+          cy={finalY}
           r="35"
           fill={iconColor}
           opacity="0.3"
@@ -108,8 +157,8 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
         
         {/* 主图标背景 */}
         <circle
-          cx={icon.centerX}
-          cy={icon.centerY}
+          cx={finalX}
+          cy={finalY}
           r="25"
           fill="rgba(255, 255, 255, 0.9)"
           stroke={iconColor}
@@ -118,10 +167,11 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
         
         {/* 图标图片 */}
         <foreignObject
-          x={icon.centerX - 20}
-          y={icon.centerY - 20}
+          x={finalX - 20}
+          y={finalY - 20}
           width="40"
           height="40"
+          transform={transform}
         >
           <img
             src={iconImage}
@@ -137,8 +187,8 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
 
         {/* 脉冲动画 */}
         <motion.circle
-          cx={icon.centerX}
-          cy={icon.centerY}
+          cx={finalX}
+          cy={finalY}
           r="25"
           fill="none"
           stroke={iconColor}
@@ -160,7 +210,7 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
 
   return (
     <svg
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className="absolute inset-0 w-full h-full"
       style={{ zIndex: 1000 }}
     >
       {/* 渲染玩家的完整图标 */}

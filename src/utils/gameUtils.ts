@@ -41,17 +41,49 @@ export const countIcons = (field: FieldZone[], iconType: string): number => {
 
 export const calculateActivatedIconPositions = (playerField: FieldZone[], aiField: FieldZone[]): { zone: number; position: number }[] => {
   const activatedPositions: { zone: number; position: number }[] = [];
+  const processedCards = new Set<string>();
   
   const processField = (field: FieldZone[], isPlayer: boolean) => {
     field.forEach(zone => {
       zone.slots.forEach(slot => {
         if (slot.athleteCard) {
           const card = slot.athleteCard;
+          const cardKey = `${card.id}-${zone.zone}-${slot.position}`;
+          
+          // Skip if this card has already been processed for this slot
+          if (processedCards.has(cardKey)) return;
+          processedCards.add(cardKey);
+          
+          // Define icon position to slot position mapping
+          const iconSlotMap: Record<string, number> = {
+            'slot-topLeft': slot.position,
+            'slot-topRight': slot.position + 1,
+            'slot-bottomLeft': slot.position,
+            'slot-bottomRight': slot.position + 1
+          };
+          
+          // Define which icon positions are relevant for each zone and icon type
+          const relevantPositionsByZone: Record<number, { positions: string[]; iconTypes: string[] }> = {
+            0: { positions: ['slot-topLeft', 'slot-topRight'], iconTypes: ['defense'] },    // AI defense - top positions (only defense icons)
+            3: { positions: ['slot-bottomLeft', 'slot-bottomRight'], iconTypes: ['attack'] }, // AI attack - bottom positions (only attack icons)
+            4: { positions: ['slot-topLeft', 'slot-topRight'], iconTypes: ['attack'] },    // Player attack - top positions (only attack icons)
+            7: { positions: ['slot-bottomLeft', 'slot-bottomRight'], iconTypes: ['defense'] }  // Player defense - bottom positions (only defense icons)
+          };
+          
+          const relevantPositions = relevantPositionsByZone[zone.zone];
+          if (!relevantPositions) return;
+          
+          // Only add activated positions for relevant icon positions and types
           card.iconPositions.forEach((iconPos: any) => {
-            activatedPositions.push({
-              zone: zone.zone,
-              position: slot.position
-            });
+            if (relevantPositions.positions.includes(iconPos.position) && relevantPositions.iconTypes.includes(iconPos.type)) {
+              const targetSlot = iconSlotMap[iconPos.position];
+              if (targetSlot !== undefined && targetSlot >= 0 && targetSlot < 8) {
+                activatedPositions.push({
+                  zone: zone.zone,
+                  position: targetSlot
+                });
+              }
+            }
           });
         }
       });

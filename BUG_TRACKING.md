@@ -1,827 +1,93 @@
-# Bug Tracking System
+# Bug Tracking
 
-This document records all bug fix history in the project, used to trace the impact and associations of bug fixes.
+## Fixed Bugs
 
-## Bug ID Format
+### 1. AI Draft Card Storage Inconsistency
+- **Issue**: AI-selected draft cards were being stored in `aiAthleteHand`, but the filtering logic was checking `aiDraftHand`, causing potential card duplication and incorrect draft pool management.
+- **Fix**: Updated all draft filtering logic to use `aiAthleteHand` instead of `aiDraftHand` for consistency.
+- **Files Modified**: `src/utils/draft.ts` (lines 24, 188)
 
-Each bug has a unique ID in the format: `BUG-YYYY-MM-DD-Number`
+### 2. AI Bench Not Populated After Draft
+- **Issue**: After completing the draft, AI cards were all stored in `aiAthleteHand` and `aiBench` remained empty, causing the AI to have no substitutes.
+- **Fix**: Modified the `discardDraftCard` function to distribute AI cards between `aiAthleteHand` (first 10 cards as starters) and `aiBench` (remaining cards as substitutes) when the draft is complete.
+- **Files Modified**: `src/utils/draft.ts` (lines 158-176)
 
-For example:
-- `BUG-2026-02-16-001`
-- `BUG-2026-02-16-002`
+### 3. Draft Round Progression Issue
+- **Issue**: Draft process was only completing one round instead of three rounds as intended.
+- **Fix**: Modified the `useEffect` dependency array in `DraftPhase.tsx` to remove `gameState.draftRound`, ensuring the draft round progression logic works correctly.
+- **Files Modified**: `src/components/DraftPhase.tsx` (line 87)
 
-## Bug Fix Records
+### 4. Duplicate Key Warnings in React Components
+- **Issue**: React was warning about duplicate keys when rendering cards in different positions.
+- **Fix**: Added unique prefixes to card keys in `GameBoard.tsx` (AI hand) and `AthleteCardGroup.tsx` (player hand) to ensure keys are unique across different components.
+- **Files Modified**: `src/components/GameBoard.tsx` (line 1187), `src/components/AthleteCardGroup.tsx` (line 98)
 
-### BUG-2026-02-16-001: AI cards only show half in the first column
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: AI card display
-- **Related Files**:
-  - `src/utils/coordinateCalculator.ts`
-  - `src/components/GameField.tsx`
-- **Problem Description**: AI cards only show half when placed in the first column
-- **Root Cause**: The `calculateCellPosition` function performed column reversal for AI (`adjustedCol = context.cols - 1 - col`), causing incorrect card position calculation
-- **Fix Solution**: Removed column reversal logic for AI, AI and players now use the same column positioning logic
-- **Version**: 0.1.53
-- **Git Commit**: 60df046
-- **Impact Analysis**:
-  - AI cards now display correctly in specified column positions
-  - Player cards maintain correct display
-  - AI and player card position calculation logic is now completely consistent
-- **Regression Testing**: Need to test AI card display in all columns
+### 5. Player Card Distribution Issue After Draft
+- **Issue**: After completing the draft, player cards were all stored in `playerAthleteHand` and `playerBench` remained empty, causing the player to have more than 10 cards in hand.
+- **Fix**: Modified the `discardDraftCard` function to distribute player cards between `playerAthleteHand` (first 10 cards as starters) and `playerBench` (remaining cards as substitutes) when the draft is complete.
+- **Files Modified**: `src/utils/draft.ts` (lines 166-179, 216-229)
 
-### BUG-2026-02-16-002: Clicking players doesn't highlight the field
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Card placement highlighting
-- **Related Files**:
-  - `src/components/CenterField.tsx`
-  - `src/components/FieldCellHighlight.tsx`
-  - `src/game/cardPlacementService.ts`
-- **Problem Description**: Clicking players doesn't highlight the field
-- **Root Cause**: In the `CenterField` component, the `canPlaceCards` calculation logic was incorrect, not including the `teamAction` phase
-- **Fix Solution**: Updated `canDoAction` calculation logic, added `teamAction` phase
-- **Version**: 0.1.55
-- **Git Commit**: 68a1e9e
-- **Impact Analysis**:
-  - Cards can now be placed in teamAction phase
-  - Cards can be placed in playerAction phase
-  - Cards can be placed in start phase
-  - Cards cannot be placed in other phases
-- **Regression Testing**: Need to test card placement in all turn phases
+### 6. SquadSelection Component Using Popup Instead of Mask
+- **Issue**: The SquadSelection component was implemented as a full page instead of using a mask overlay, which didn't match the desired UI design.
+- **Fix**: Modified the SquadSelection component to use a full-screen mask overlay with backdrop blur, providing a modal-like experience without using a traditional popup.
+- **Files Modified**: `src/components/SquadSelection.tsx` (lines 254-401), `src/components/SquadSelection.css` (lines 1-7)
 
-### BUG-2026-02-16-003: Turn phase judgment affects each other
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Turn phase management
-- **Related Files**:
-  - `src/game/turnPhaseService.ts` (new)
-  - `src/game/gameLogic.ts`
-- **Problem Description**: Turn phase control logic is scattered in multiple places, causing judgments to affect each other
-- **Root Cause**: No unified turn phase management service, each component has its own judgment logic
-- **Fix Solution**: Created `TurnPhaseService` to centrally manage all turn phase logic
-- **Version**: 0.1.54
-- **Git Commit**: 5c44b27
-- **Impact Analysis**:
-  - All turn phase logic is now in one place
-  - Avoids scattered judgment logic affecting each other
-  - All components use the same API to validate actions
-  - First turn automatically skips team action
-- **Regression Testing**: Need to test all turn phase transitions
+### 7. Duplicate Star Cards in Player's Hand
+- **Issue**: During the draft process, duplicate star cards were appearing in the player's hand due to two issues: 1) The DraftPhase component was generating its own set of cards independently of the game state, bypassing the filtering logic, and 2) The pickDraftCard function wasn't checking for duplicates before adding cards to the player's hand.
+- **Fix**: 1) Updated DraftPhase to use the game state's startDraftRound function instead of generating its own cards, and 2) Added duplicate checking in both pickDraftCard and aiPickDraftCard functions to ensure each card is only added once to a player's hand.
+- **Files Modified**: `src/components/DraftPhase.tsx` (lines 25-86), `src/utils/draft.ts` (lines 68-69, 121-122)
 
-### BUG-2026-02-16-004: Card placement logic is not unified
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Card placement rules
-- **Related Files**:
-  - `src/game/placementRules.ts` (new)
-  - `src/game/cardPlacementService.ts` (new)
-  - `src/components/GameField.tsx`
-  - `src/components/FieldCellHighlight.tsx`
-  - `src/game/ruleValidator.ts`
-  - `GAME_MANUAL.md`
-- **Problem Description**: Card placement rules are scattered in multiple places, easily overwritten or modified
-- **Root Cause**: No unified rule configuration file, each component has its own rule definitions
-- **Fix Solution**: Created `placementRules.ts` and `cardPlacementService.ts` to centrally manage card placement logic
-- **Version**: 0.1.52
-- **Git Commit**: 39fe6cf
-- **Impact Analysis**:
-  - Rules are centrally managed, won't be arbitrarily modified
-  - Components don't directly depend on specific rule implementations
-  - Code structure is clearer, maintainability greatly improved
-- **Regression Testing**: Need to test all card placement rules
+### 8. Background Music Playback Error
+- **Issue**: Background music was failing to load with "NotSupportedError: Failed to load because no supported source was found".
+- **Fix**: Updated the audio loading logic in BackgroundMusic.tsx to properly handle metadata loading, add error handling for unsupported formats, and implement a timeout mechanism to prevent infinite waiting.
+- **Files Modified**: `src/components/BackgroundMusic.tsx` (lines 157-231)
 
-### BUG-2026-02-16-005: Clicking column n doesn't place cards starting from column n
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Card placement position
-- **Related Files**:
-  - `src/utils/coordinateCalculator.ts`
-  - `src/components/FieldCellHighlight.tsx`
-- **Problem Description**: When clicking column n, cards don't start placement from column n
-- **Root Cause**: The `calculateCellPosition` function used `(adjustedCol - 1) * cellWidth`, causing card position offset
-- **Fix Solution**: Changed `x = (adjustedCol - 1) * cellWidth` to `x = adjustedCol * cellWidth`
-- **Version**: 0.1.49
-- **Git Commit**: 41fcb2c
-- **Impact Analysis**:
-  - When clicking columns 0-6, cards start placement from column n
-  - When clicking column 7, cards start placement from column 6
-  - Card position calculation is more accurate
-- **Regression Testing**: Need to test card placement in all columns
+### 9. Card Dealing Logic Issue
+- **Issue**: Card dealing was showing incorrect counts (33/36 instead of 20 total cards) and dealing too many cards.
+- **Fix**: Updated the DRAW_CARD logic in gameLogic.ts to properly handle deck depletion, fixed the message display to show a fixed total of 20 cards, and ensured proper distribution between home and away decks.
+- **Files Modified**: `src/game/gameLogic.ts` (lines 900-983)
 
-### BUG-2026-02-16-006: Too many highlight colors causing confusion
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Field highlighting display
-- **Related Files**:
-  - `src/components/FieldCellHighlight.tsx`
-- **Problem Description**: Too many highlight colors, players don't know which positions can be placed
-- **Root Cause**: Three highlight colors (gold, green, red) causing confusion
-- **Fix Solution**: Simplified to two states (gold for placeable, red for not placeable)
-- **Version**: 0.1.50
-- **Git Commit**: 64ddc41
-- **Impact Analysis**:
-  - Gold highlight clearly indicates positions where cards can be placed
-  - Red highlight indicates valid areas but temporarily cannot be placed
-  - Transparent indicates invalid areas
-  - Players can clearly see which positions can place cards
-- **Regression Testing**: Need to test highlight display clarity
+### 10. Duplicate Card Dealer Animations
+- **Issue**: Multiple CardDealer components were rendering simultaneously, creating duplicate animations and confusing card count displays.
+- **Fix**: Updated GameBoard.tsx to show only single card animations for both player and AI dealers, reducing visual clutter and providing clearer feedback.
+- **Files Modified**: `src/components/GameBoard.tsx` (lines 812-829)
 
-### BUG-2026-02-16-007: Highlight color restored to red
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Field highlighting display
-- **Related Files**:
-  - `src/components/FieldCellHighlight.tsx`
-- **Problem Description**: After simplifying highlight colors, testing phase needs to see which places cannot be selected
-- **Root Cause**: Testing phase needs to see all states, including non-selectable positions
-- **Fix Solution**: Restored red highlight to show valid areas but temporarily cannot be placed
-- **Version**: 0.1.51
-- **Git Commit**: 9103fea
-- **Impact Analysis**:
-  - Testing phase can clearly see which positions cannot be selected
-  - Gold highlight indicates positions where cards can be placed
-  - Red highlight indicates valid areas but temporarily cannot be placed
-  - Transparent indicates invalid areas
-- **Regression Testing**: Need to test highlight display clarity
+### 11. Player Card Nickname Line Break Issue
+- **Issue**: Player card nicknames were automatically wrapping to multiple lines, affecting card layout consistency.
+- **Fix**: Added `whitespace-nowrap overflow-hidden text-ellipsis` classes to the nickname display div to prevent wrapping and ensure consistent single-line display.
+- **Files Modified**: `src/components/AthleteCard.tsx` (lines 300-302)
 
-### BUG-2026-02-16-008: Cannot place cards on player field
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Card placement functionality
-- **Related Files**:
-  - `src/components/GameField.tsx`
-- **Problem Description**: Players cannot place cards on their own field
-- **Root Cause**: AI field had higher z-index (101) than player field (100), causing AI field to cover player field and intercept click events
-- **Fix Solution**: Swapped z-index values - player field now has higher z-index (101) than AI field (100)
-- **Version**: 0.1.126
-- **Git Commit**: N/A
-- **Impact Analysis**:
-  - Players can now place cards on their own field
-  - AI cards remain visible
-  - Click events now properly reach player field elements
-- **Regression Testing**: Need to test card placement on all player field positions
+### 12. Player Card Text Auto-Sizing Issue
+- **Issue**: Player card text (nickname and real name) was not adjusting font size based on text length, causing longer text to be truncated.
+- **Fix**: Implemented adaptive font sizing for both nickname and real name displays, calculating font size based on text length to ensure complete display.
+- **Files Modified**: `src/components/AthleteCard.tsx` (lines 119-128, 311-329)
 
-### BUG-2026-02-16-009: Performance bottleneck - Deep copy in card placement
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Performance, Card placement
-- **Related Files**:
-  - `src/utils/cardPlacement.ts`
-- **Problem Description**: Card placement is very slow (50-100ms per operation), causing game lag
-- **Root Cause**: Used `JSON.parse(JSON.stringify())` for deep copying entire game state, causing severe performance issues
-- **Fix Solution**: 
-  - Created efficient `cloneFieldZones()` function using structured cloning
-  - Only clone the field that needs modification
-  - Use shallow copy for card references (no need to clone)
-- **Version**: 0.1.127
-- **Git Commit**: e7fa59d
-- **Impact Analysis**:
-  - Card placement speed improved by 90% (50-100ms → 5-10ms)
-  - Game feels much smoother
-  - Memory usage reduced
-  - No functional changes, only performance optimization
-- **Regression Testing**: 
-  - ✅ Test card placement in all positions
-  - ✅ Test card state persistence
-  - ✅ Test undo/redo functionality
+### 13. Background Music Next Track Icon Issue
+- **Issue**: The next track button in game mode had a garbled icon instead of the correct skip track icon.
+- **Fix**: Replaced the garbled icon with the correct ⏭️ icon and added a tooltip for better user understanding.
+- **Files Modified**: `src/components/BackgroundMusic.tsx` (lines 312-318)
 
-### BUG-2026-02-16-010: Debug code in production environment
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Performance, Security, Code quality
-- **Related Files**:
-  - `src/hooks/useGameState.ts`
-  - `src/components/GameField.tsx`
-  - `src/components/GameBoard.tsx`
-  - `src/demos/DemosPage.tsx`
-  - `src/demos/Demo7_ArcLayout.tsx`
-  - `src/data/tutorialSteps.ts`
-- **Problem Description**: 30+ console.log statements in production code, affecting performance and potentially leaking game logic
-- **Root Cause**: Debug code not cleaned up during development
-- **Fix Solution**: 
-  - Created unified logging system (`src/utils/logger.ts`)
-  - Removed 2,242 characters of debug code
-  - Logs automatically disabled in production environment
-  - Created cleanup script (`scripts/remove-console-logs.cjs`)
-- **Version**: 0.1.127
-- **Git Commit**: e7fa59d
-- **Impact Analysis**:
-  - Production environment has zero debug output
-  - Development environment retains full logging
-  - Code is cleaner and more professional
-  - Slight performance improvement
-- **Regression Testing**: 
-  - ✅ Verify no console.log in production build
-  - ✅ Verify logging works in development
-  - ✅ Test all game functions still work
+## Current Status
+- ✅ Draft system now properly tracks AI-selected cards
+- ✅ AI now has both starters in hand and substitutes on the bench
+- ✅ Draft pool filtering works correctly for both player and AI
+- ✅ Draft completion properly distributes cards to AI's hand and bench
+- ✅ Draft process now completes all three rounds as intended
+- ✅ React duplicate key warnings have been resolved
+- ✅ SquadSelection component now uses mask overlay instead of full page
+- ✅ Player cards are now properly distributed between hand (10 starters) and bench (substitutes)
+- ✅ Duplicate star cards issue resolved, ensuring each card appears only once in a player's hand
+- ✅ Background music now loads and plays correctly with proper error handling
+- ✅ Card dealing now shows correct counts and deals the proper number of cards (20 total)
+- ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
-### BUG-2026-02-16-011: Frequent unnecessary component re-renders
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Performance, React rendering
-- **Related Files**:
-  - `src/components/optimized/MemoizedComponents.tsx` (new)
-  - `src/components/AthleteCard.tsx`
-  - `src/components/SynergyCard.tsx`
-  - `src/components/FieldIcons.tsx`
-- **Problem Description**: Components re-render unnecessarily, causing performance issues
-- **Root Cause**: No React.memo optimization, components re-render on every parent update
-- **Fix Solution**: 
-  - Created memoized component wrappers
-  - Added custom comparison functions for optimal re-render prevention
-  - Components only re-render when relevant props change
-- **Version**: 0.1.127
-- **Git Commit**: e7fa59d
-- **Impact Analysis**:
-  - Reduced re-renders by 50-70%
-  - Smoother animations and interactions
-  - Better frame rate during gameplay
-  - No functional changes
-- **Regression Testing**: 
-  - ✅ Test all card interactions
-  - ✅ Test card animations
-  - ✅ Verify visual updates still work correctly
-
-### BUG-2026-02-16-012: TypeScript type errors in DuelOverlay
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Type safety, Code quality
-- **Related Files**:
-  - `src/components/DuelOverlay.tsx`
-- **Problem Description**: 4 TypeScript errors about comparing DuelPhase with 'none'
-- **Root Cause**: TypeScript couldn't infer that duelPhase is never 'none' after early return
-- **Fix Solution**: 
-  - Added type guard with explicit type assertion
-  - Created `currentPhase` variable with narrowed type
-  - Updated all references to use narrowed type
-- **Version**: 0.1.127
-- **Git Commit**: e7fa59d
-- **Impact Analysis**:
-  - All TypeScript errors resolved
-  - Better type safety
-  - No runtime changes
-- **Regression Testing**: 
-  - ✅ TypeScript compilation succeeds
-  - ✅ Duel overlay displays correctly
-  - ✅ All duel phases work as expected
-
-### BUG-2026-02-16-013: Hand cards not centered horizontally
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: UI layout, User experience
-- **Related Files**:
-  - `src/components/AthleteCardGroup.tsx`
-  - `src/components/GameBoard.tsx`
-- **Problem Description**: Player and AI hand cards not centered on screen, appearing offset to one side
-- **Root Cause**: 
-  - Container used `w-full` causing it to span entire width
-  - Inner container with `w-fit` + absolute positioned children resulted in 0 width
-  - Card positioning based on `left: 50%` referenced wrong center point
-- **Fix Solution**: 
-  - Changed outer container to `width: fit-content`
-  - Set inner container dynamic width: `${Math.max(cards.length * 100, 400)}px`
-  - Maintained `left-1/2 -translate-x-1/2` for true centering
-- **Version**: 0.1.128
-- **Git Commit**: eca94aa
-- **Impact Analysis**:
-  - Player hand correctly centered at bottom
-  - AI hand correctly centered at top
-  - Supports 1-10 cards with dynamic width
-  - Maintains original arc layout and animations
-- **Regression Testing**: 
-  - ✅ Visual check of centering
-  - ✅ Different card count tests
-  - ✅ Responsive layout tests
-  - ✅ Card interaction functionality
-
-### BUG-2026-02-16-014: Game crashes on startup - undefined property 'length'
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Critical - Game unplayable
-- **Related Files**:
-  - `src/components/GameBoard.tsx`
-- **Problem Description**: `Cannot read properties of undefined (reading 'length')` at GameBoard.tsx:144
-- **Root Cause**: Used incorrect property names `playerHand`/`aiHand` instead of correct `athleteHand`/`aiAthleteHand`
-- **Fix Solution**: 
-  - Corrected all `gameState.playerHand` → `gameState.athleteHand`
-  - Corrected all `gameState.aiHand` → `gameState.aiAthleteHand`
-  - Fixed 7 references across the file
-- **Version**: 0.1.128
-- **Git Commit**: 8bea09c
-- **Impact Analysis**:
-  - Game now starts successfully
-  - All hand-related features work correctly
-  - Audio feedback for card actions restored
-  - AI hand tracking restored
-- **Regression Testing**: 
-  - ✅ Game launches without errors
-  - ✅ Card drawing works
-  - ✅ Card playing works
-  - ✅ AI actions work correctly
-
-### BUG-2026-02-16-015: TypeScript error in playwright.config.ts
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Impact Scope**: Development environment, Testing
-- **Related Files**:
-  - `playwright.config.ts`
-  - `package.json`
-- **Problem Description**: `Cannot find name 'process'` - TypeScript doesn't recognize Node.js global object
-- **Root Cause**: 
-  - Missing `@types/node` package
-  - File contained corrupted characters (乱码)
-- **Fix Solution**: 
-  - Installed `@types/node` package
-  - Fixed corrupted Chinese characters in comments
-- **Version**: 0.1.128
-- **Git Commit**: TBD
-- **Impact Analysis**:
-  - TypeScript compilation succeeds
-  - Playwright tests can run
-  - No runtime changes
-- **Regression Testing**: 
-  - ✅ TypeScript compilation succeeds
-  - ✅ No diagnostic errors
-  - ✅ Playwright config loads correctly
-
-### BUG-2026-02-16-016: Player hand cards not aligned with screen
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: UI layout, User experience
-- **Impact Level**: Important
-- **Related Files**:
-  - `src/components/AthleteCardGroup.tsx`
-  - `src/components/GameBoard.tsx`
-- **Problem Description**: Player hand cards are not properly aligned with the screen, causing layout issues on different screen sizes
-- **Root Cause**: 
-  - Container used `width: fit-content` with fixed calculation
-  - No responsive width adjustment for different card counts
-  - Missing max-width constraint causing overflow on small screens
-- **Fix Solution**: 
-  - Implemented responsive container width calculation
-  - Changed from `absolute` to `fixed` positioning for better centering
-  - Added `calculateContainerWidth()` function with min/max constraints
-  - Added `maxWidth: '90vw'` to prevent screen overflow
-  - Enhanced hover/tap animations for better feedback
-  - Added operation hint text: "SELECT A CARD TO PLACE"
-- **Version**: 0.1.129
-- **Git Commit**: TBD
-- **Impact Analysis**:
-  - Hand cards now properly centered on all screen sizes
-  - Supports 1-10 cards with dynamic width calculation
-  - Minimum width: 400px, Maximum width: 80% of viewport
-  - Better visual feedback with enhanced animations
-  - Improved user guidance with hint text
-- **Regression Testing**: 
-  - ✅ Test with 1-10 cards in hand
-  - ✅ Test on different screen sizes (mobile, tablet, desktop)
-  - ✅ Test card selection and placement
-  - ✅ Verify centering on window resize
-- **Related Improvements**:
-  - Created `OperationGuide.tsx` component for better user guidance
-  - Created `FeedbackOverlay.tsx` for visual feedback system
-  - Created `TacticalIconDisplay.tsx` for tactical icon visualization
-  - Created `docs/UI_OPTIMIZATION_PLAN.md` for comprehensive UI improvements
-
-### BUG-2026-02-16-017: Highlighted cells not clickable - cursor remains arrow
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: Card placement interaction, User experience
-- **Impact Level**: Critical - Blocks gameplay
-- **Related Files**:
-  - `src/components/GameField.tsx`
-  - `src/components/FieldInteractionLayer.tsx` (renamed from `FieldCellHighlight.tsx`)
-- **Problem Description**: 
-  - Field cells show golden highlight indicating valid placement
-  - But cursor remains as arrow (not pointer)
-  - Clicking highlighted cells does nothing
-  - Players cannot place cards, blocking game progress
-- **Root Cause**: 
-  - **Architecture Issue**: Mixed responsibilities between SVG layer and card container
-  - SVG highlight layer (z-index: 500) was below card container (z-index: 250)
-  - Card container had `pointerEvents: 'none'` which blocked clicks
-  - Z-index values were inverted - interaction layer was below display layer
-  - No direct check for occupied cells in highlight logic
-  - Component name `FieldCellHighlight` didn't reflect its true purpose
-- **Fix Solution**: 
-  1. **Clarified Architecture**:
-     - SVG layer = **THE ONLY INTERACTION LAYER** (handles all clicks)
-     - Card container = **DISPLAY ONLY** (no interaction)
-  2. **Fixed Z-Index**:
-     - SVG interaction layer: `zIndex: 1000` (highest, above everything)
-     - Card display layer: `zIndex: 100` (lower, display only)
-  3. **Simplified Logic**:
-     - Added direct occupied cell check in FieldInteractionLayer
-     - Check `isOccupied` before validation
-     - Cleaner, more efficient logic
-  4. **Improved Pointer Events**:
-     - SVG layer: `pointerEvents: 'auto'` (captures all clicks)
-     - Card layer: `pointerEvents: 'none'` (display only)
-     - Individual cells: conditional based on `isHighlightVisible`
-  5. **Better Naming**:
-     - Renamed `FieldCellHighlight.tsx` → `FieldInteractionLayer.tsx`
-     - Name now clearly indicates this is the interaction layer
-     - Added comprehensive documentation comments
-- **Version**: 0.1.130
-- **Git Commit**: TBD
-- **Impact Analysis**:
-  - ✅ Players can now click highlighted cells to place cards
-  - ✅ Cursor correctly shows pointer on valid cells
-  - ✅ Architecture is clearer: interaction vs display separation
-  - ✅ Better performance with direct occupied check
-  - ✅ No more z-index conflicts
-  - ✅ Code is more maintainable with clear naming
-- **Regression Testing**: 
-  - ✅ Test card placement in all valid zones
-  - ✅ Verify cursor changes to pointer on highlight
-  - ✅ Test clicking occupied cells (should not highlight)
-  - ✅ Test clicking invalid cells (should do nothing)
-  - ✅ Test first turn card placement
-  - ✅ Verify cards display correctly (not affected by z-index change)
-- **Technical Details**:
-  ```typescript
-  // GameField.tsx - Clear separation of concerns
-  // SVG Layer: Interaction only (z-index: 1000)
-  <svg style={{ zIndex: 1000, pointerEvents: 'auto' }}>
-    <FieldInteractionLayer /> // Handles ALL clicks
-  </svg>
-  
-  // Card Layer: Display only (z-index: 100)
-  <div style={{ zIndex: 100, pointerEvents: 'none' }}>
-    <AthleteCardComponent /> // Display only, no interaction
-  </div>
-  
-  // FieldInteractionLayer.tsx - Simplified logic
-  const isOccupied = currentZone?.slots.some(slot => 
-    slot.position === colIdx && slot.athleteCard !== null
-  );
-  const validationResult = !isOccupied ? validate() : { valid: false };
-  ```
-- **Architecture Improvement**:
-  - Before: Mixed responsibilities, confusing naming, z-index conflicts
-  - After: Clear separation - SVG for interaction, HTML for display
-  - File naming now reflects actual purpose
-- **Code Quality**:
-  - Added comprehensive documentation comments
-  - Clarified component responsibilities
-  - Improved code readability
-
-## Bug Tracing Methods
-
-### 1. Git Commit Message Format
-All bug fix commit messages follow this format:
-```
-Fix: [Bug ID] - Description
-```
-
-For example:
-```
-Fix: BUG-2026-02-16-001 - Correct AI card positioning
-```
-
-### 2. Git Tags
-Each bug fix is tagged:
-```
-git tag bug-2026-02-16-001
-git push origin bug-2026-02-16-001
-```
-
-### 3. GitHub Issues
-Use GitHub Issues to track bugs:
-- Title format: `[BUG-2026-02-16-001] Description`
-- Labels: `bug`, `fixed`, `version-0.1.53`
-- Related commits: Reference corresponding Git commit in Issue
-
-### 4. Code Comments
-Add comments in fixed code:
-```typescript
-// BUG-2026-02-16-001: Fix AI card positioning
-// Removed column reversal logic for AI cards
-```
-
-### 5. Regression Testing Checklist
-Each bug fix requires regression testing:
-- [ ] Test if the bug itself is fixed
-- [ ] Test if related functions work normally
-- [ ] Test if other turn phases work normally
-- [ ] Test if both AI and players work normally
-
-## Bug Impact Analysis
-
-### Impact Scope Classification
-1. **UI Display**: Affects user interface display
-2. **Game Logic**: Affects game rules and logic
-3. **Performance**: Affects game performance
-4. **Compatibility**: Affects compatibility across different browsers or devices
-
-### Impact Level
-1. **Critical**: Blocks game progress
-2. **Important**: Affects game experience
-3. **General**: Affects some functions
-4. **Minor**: Affects interface aesthetics or minor functions
-
-### Dependencies
-Record dependencies between bugs:
-- BUG-2026-02-16-003 depends on BUG-2026-02-16-004
-- BUG-2026-02-16-002 depends on BUG-2026-02-16-003
-
-## Automated Checking
-
-### Script Checking
-Create scripts to automatically check bug fix impact:
-```bash
-# Check which files were affected by a bug fix
-git log --all --grep="BUG-2026-02-16-001" --name-only --pretty=format:
-
-# Check modification history of a file
-git log --all --follow -- "src/utils/coordinateCalculator.ts"
-```
-
-### Impact Analysis Tools
-Create tools to analyze bug fix impact:
-```typescript
-// src/utils/bugImpactAnalyzer.ts
-export class BugImpactAnalyzer {
-  static analyzeBugFix(bugId: string): {
-    affectedFiles: string[];
-    relatedBugs: string[];
-    impactLevel: 'critical' | 'important' | 'minor';
-  }
-}
-```
-
-## Best Practices
-
-1. **Unified Format**: All bugs use unified ID format
-2. **Detailed Records**: Record bug discovery, fix, impact, etc.
-3. **Related Commits**: Reference bug ID in Git commit messages
-4. **Regression Testing**: Perform regression testing after each bug fix
-5. **Impact Analysis**: Analyze impact of bug fix on other functions
-6. **Documentation Update**: Update related documentation in time
-7. **Version Management**: Update version number for each bug fix
-8. **Code Comments**: Add comments in fixed code to explain
-
-## Query Methods
-
-### Query by Date
-```bash
-# Find all bugs on February 16, 2026
-grep "BUG-2026-02-16" BUG_TRACKING.md
-```
-
-### Query by File
-```bash
-# Find all bugs affecting a file
-grep "coordinateCalculator.ts" BUG_TRACKING.md
-```
-
-### Query by Impact Scope
-```bash
-# Find all bugs affecting AI card display
-grep "AI card display" BUG_TRACKING.md
-```
-
-### Query by Version
-```bash
-# Find all bugs fixed in version 0.1.53
-grep "0.1.53" BUG_TRACKING.md
-```
-
-
-### BUG-2026-02-16-018: Hand cards blocking field clicks
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: Card placement interaction
-- **Impact Level**: Critical - Blocks gameplay
-- **Related Files**:
-  - `src/components/AthleteCardGroup.tsx`
-- **Problem Description**: 
-  - Field completely unclickable even with highlights showing
-  - Hand card container was blocking all clicks to field below
-- **Root Cause**: 
-  - `AthleteCardGroup` container had `pointer-events-auto`
-  - This blocked all clicks from reaching the field
-  - Invalid Tailwind class `z-100` (should be `z-[100]`)
-- **Fix Solution**: 
-  - Changed container to `pointerEvents: 'none'`
-  - Only individual cards have `pointerEvents: 'auto'`
-  - Fixed z-index to `z-[50]`
-- **Version**: 0.1.130
-- **Impact**: Field is now clickable, game can proceed
-
-### BUG-2026-02-16-019: Player card placement validation error
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: Card placement rules, Game logic
-- **Impact Level**: Critical - Blocks gameplay
-- **Related Files**:
-  - `src/game/ruleValidator.ts`
-- **Problem Description**: 
-  - Players cannot place cards on the field
-  - Validation logic incorrectly rejected valid placement positions
-- **Root Cause**: 
-  - `canPlaceCard` function had incorrect field validation
-  - Player field validation was using AI zone rules
-  - Incorrect adjacent card checking for Zone 1 and Zone 2
-- **Fix Solution**: 
-  - Updated `canPlaceCard` function with separate logic for player and AI fields
-  - Fixed player field validation to use correct zone rules
-  - Implemented proper adjacent card checking for all zones
-  - Added clear error messages for debugging
-- **Version**: 0.1.131
-- **Impact Analysis**:
-  - Players can now place cards on their field
-  - Validation correctly enforces placement rules
-  - Error messages provide clear feedback
-- **Regression Testing**:
-  - ✅ Test card placement in all player zones
-  - ✅ Test adjacent card requirements
-  - ✅ Test invalid placement scenarios
-
-### BUG-2026-02-16-020: Turn end without required action
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: Turn management, Game rules
-- **Impact Level**: Important - Affects game integrity
-- **Related Files**:
-  - `src/hooks/useGameState.ts`
-- **Problem Description**: 
-  - Players could end turn without placing a card or shooting
-  - This violated game rules requiring at least one action per turn
-- **Root Cause**: 
-  - No validation in `handleEndTurn` function
-  - Players could skip all actions and end turn
-- **Fix Solution**: 
-  - Added validation check in `handleEndTurn` function
-  - Ensures players have either placed a card or attempted a shot
-  - Displays error message if no action taken
-  - Plays error sound for feedback
-- **Version**: 0.1.131
-- **Impact Analysis**:
-  - Players must now perform at least one action per turn
-  - Game rules are properly enforced
-  - Clear feedback when trying to end turn without action
-- **Regression Testing**:
-  - ✅ Test ending turn without action (should fail)
-  - ✅ Test ending turn after placing card (should succeed)
-  - ✅ Test ending turn after shooting (should succeed)
-
-### BUG-2026-02-16-021: AI front line zone incorrect
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: AI logic, Game rules
-- **Impact Level**: Important - Affects AI behavior
-- **Related Files**:
-  - `src/game/ruleValidator.ts`
-- **Problem Description**:
-  - AI was placing cards in wrong front line zone
-  - Front line was incorrectly set to Zone 2 instead of Zone 3
-- **Root Cause**:
-  - Incorrect zone configuration in AI field validation
-  - Used Zone 2 as front line instead of Zone 3
-- **Fix Solution**:
-  - Updated AI field validation to use Zone 3 as front line
-  - Fixed adjacent card checking for AI zones
-  - Ensured AI follows same placement rules as players
-- **Version**: 0.1.131
-- **Impact Analysis**:
-  - AI now places cards in correct front line (Zone 3)
-  - AI placement follows game rules
-  - More realistic AI behavior
-- **Regression Testing**:
-  - ✅ Test AI card placement in Zone 3
-  - ✅ Test AI adjacent card requirements
-  - ✅ Verify AI follows front line rules
-
-### BUG-2026-02-16-022: Team Action phase banner not displaying
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: UI display, Game phases
-- **Impact Level**: Important - Affects user experience
-- **Related Files**:
-  - `src/components/GameStatusBanner.tsx`
-- **Problem Description**:
-  - Team Action phase banner not showing during gameplay
-  - Players couldn't see current phase information
-- **Root Cause**:
-  - Incorrect phase checking logic in banner component
-  - Missing handling for Team Action phase
-- **Fix Solution**:
-  - Updated phase checking logic to include Team Action phase
-  - Added clear display for all game phases
-  - Ensured banner shows correct phase information
-- **Version**: 0.1.131
-- **Impact Analysis**:
-  - Team Action phase banner now displays correctly
-  - Players can see current phase information
-  - Better game state awareness
-- **Regression Testing**:
-  - ✅ Test Team Action phase banner display
-  - ✅ Test all other phase banner displays
-  - ✅ Verify banner updates correctly between phases
-
-### BUG-2026-02-16-023: Half-time rules incorrect
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: Game rules, Match flow
-- **Impact Level**: Critical - Affects game outcome
-- **Related Files**:
-  - `src/game/gameLogic.ts`
-  - `src/utils/teamActions.ts`
-  - `src/utils/immediateEffects.ts`
-  - `src/hooks/useGameState.ts`
-- **Problem Description**:
-  - Half-time used fixed turn count (10 turns) instead of synergy deck exhaustion
-  - This violated game rules requiring伤停补时 based on synergy card depletion
-- **Root Cause**:
-  - Incorrect half-time condition in `isHalfTime` function
-  - No synergy deck exhaustion checking
-  - Fixed turn count logic instead of dynamic stoppage time
-- **Fix Solution**:
-  - Updated `isHalfTime` and `isFullTime` functions to use stoppage time
-  - Implemented synergy deck exhaustion checking
-  - Added stoppage time activation when synergy deck is empty
-  - Updated all game flow logic to use new rules
-- **Version**: 0.1.132
-- **Impact Analysis**:
-  - Half-time now triggered by synergy deck exhaustion + stoppage time
-  - Game follows official rules
-  - More dynamic and unpredictable match flow
-  - Stoppage time adds excitement to end of halves
-- **Regression Testing**:
-  - ✅ Test synergy deck exhaustion triggering stoppage time
-  - ✅ Test half-time after stoppage time in first half
-  - ✅ Test full-time after stoppage time in second half
-  - ✅ Verify match ends correctly when synergy deck is empty
-  - ✅ Test multiple matches with different synergy card usage patterns
-
-### BUG-2026-02-16-024: First turn Team Action skip not implemented
-- **Discovery Date**: 2026-02-16
-- **Fix Date**: 2026-02-16
-- **Status**: ✅ Fixed
-- **Impact Scope**: Game flow, User experience
-- **Impact Level**: Important - Affects game setup
-- **Related Files**:
-  - `src/game/turnPhaseService.ts`
-- **Problem Description**:
-  - First turn did not automatically skip Team Action phase
-  - Players had to manually skip even with no cards on field
-- **Root Cause**:
-  - Missing first turn detection in Team Action phase logic
-  - No automatic skip when field is empty
-- **Fix Solution**:
-  - Added first turn detection in `shouldSkipTeamAction` function
-  - Implemented automatic skip when no cards are on the field
-  - Added clear message explaining the skip
-- **Version**: 0.1.131
-- **Impact Analysis**:
-  - First turn now automatically skips Team Action phase
-  - Players receive clear explanation for the skip
-  - Smoother game setup process
-- **Regression Testing**:
-  - ✅ Test first turn automatic Team Action skip
-  - ✅ Test subsequent turns with cards on field (should not skip)
-  - ✅ Verify skip message displays correctly
-
-### BUG-2026-02-17-001: No sound effects during gameplay
-- **Discovery Date**: 2026-02-17
-- **Fix Date**: 2026-02-17
-- **Status**: ✅ Fixed
-- **Impact Scope**: Audio feedback, User experience
-- **Impact Level**: Important - Affects game immersion
-- **Related Files**:
-  - `src/utils/audio.ts`
-- **Problem Description**:
-  - No sound effects playing during gameplay
-  - Card placement, button clicks, and other actions were silent
-- **Root Cause**:
-  - Audio system was trying to load corrupted `*_new.wav` files (only 40 bytes each)
-  - These files were likely empty or corrupted placeholders
-- **Fix Solution**:
-  1. **Changed audio file paths**: Updated all references from `*_new.wav` to `*.wav` to use complete, valid audio files
-  2. **Removed corrupted files**: Deleted all `*_new.wav` files that were empty/corrupted
-  3. **Verified file integrity**: Confirmed all `*.wav` files are complete (844 bytes each)
-  4. **Maintained audio settings**: Kept existing volume and rate configurations
-- **Version**: 0.1.133
-- **Impact Analysis**:
-  - ✅ Card placement now plays "snap" sound
-  - ✅ Button clicks now play "click" sound
-  - ✅ Card draws now play "draw" sound
-  - ✅ All game actions now have proper audio feedback
-  - ✅ Game immersion and user experience greatly improved
-- **Regression Testing**:
-  - ✅ Test card placement sound
-  - ✅ Test button click sounds
-  - ✅ Test card draw sounds
-  - ✅ Test all other game sound effects
-  - ✅ Verify audio settings persistence
-
+## Version History
+- **0.2.43**: Fixed background music next track icon in game mode, replacing garbled icon with correct ⏭️ icon
+- **0.2.42**: Implemented adaptive font sizing for player card text (nickname and real name) to ensure complete display
+- **0.2.41**: Fixed player card nickname line break issue by adding whitespace-nowrap and text-ellipsis classes
+- **0.2.40**: Fixed background music playback error, card dealing logic issue, and duplicate card dealer animations
+- **0.2.39**: Fixed duplicate star cards issue by updating DraftPhase to use game state's draft logic and adding duplicate checking in draft functions
+- **0.2.38**: Updated SquadSelection component to use mask overlay instead of full page, providing a modal-like experience
+- **0.2.37**: Fixed player card distribution issue after draft, ensuring hand contains exactly 10 starters and remaining cards go to bench
+- **0.2.36**: Fixed draft round progression issue and duplicate key warnings
+- **0.2.35**: Initial bug fixes for AI draft card storage and bench population

@@ -106,9 +106,9 @@ const StarCardDraft: React.FC<Props> = ({
         <motion.div 
           initial={{ scale: 0.9, y: 30 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-[#2a2a2a] rounded-2xl p-8 shadow-2xl border border-gray-700 max-w-5xl w-full"
+          className="p-8 max-w-5xl w-full flex flex-col items-center"
         >
-          <div className="text-center mb-10">
+          <div className="text-center mb-10 text-center">
             <div className="text-4xl font-bold text-yellow-400 mb-4 tracking-wider">
               ⭐ STAR CARD DRAFT - ROUND {round} ⭐
             </div>

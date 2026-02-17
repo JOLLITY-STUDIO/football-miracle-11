@@ -1,7 +1,7 @@
 import type { GameState } from '../game/gameLogic';
 import type { SynergyCard } from '../data/cards';
 
-export const performTeamAction = (state: GameState, action: 'pass' | 'press'): GameState => {
+export const performTeamAction = (state: GameState, action: 'pass' | 'press', iconCount: number = 0): GameState => {
   let newControlPosition = state.controlPosition;
   let message = '';
   let newSynergyDeck = [...state.synergyDeck];
@@ -12,17 +12,8 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
   switch (action) {
     case 'pass': {
       // Pass 不影响控制权，只根据 pass 图标数量抽取协同卡
-      // 统计场上pass图标的数量
-      const field = state.currentTurn === 'player' ? state.playerField : state.aiField;
-      let passIconCount = 0;
-      
-      field.forEach((zone: { slots: { athleteCard?: { icons: string[] } }[] }) => {
-        zone.slots.forEach((slot: { athleteCard?: { icons: string[] } }) => {
-          if (slot.athleteCard) {
-            passIconCount += slot.athleteCard.icons.filter((icon: string) => icon === 'pass').length;
-          }
-        });
-      });
+      // 使用传入的iconCount参数
+      const passIconCount = iconCount;
       
       // 检查协同卡牌库是否耗尽
       if (newSynergyDeck.length === 0) {
@@ -53,17 +44,8 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press'): G
     }
       
     case 'press': {
-      // 统计场上press图标的数量
-      const pressField = state.currentTurn === 'player' ? state.playerField : state.aiField;
-      let pressIconCount = 0;
-      
-      pressField.forEach((zone: { slots: { athleteCard?: { icons: string[] } }[] }) => {
-        zone.slots.forEach((slot: { athleteCard?: { icons: string[] } }) => {
-          if (slot.athleteCard) {
-            pressIconCount += slot.athleteCard.icons.filter((icon: string) => icon === 'press').length;
-          }
-        });
-      });
+      // 使用传入的iconCount参数
+      const pressIconCount = iconCount;
       
       // 计算控制权移动格数(总控制权分为5格，每格20%)
       // 根据press图标数量移动对应格数

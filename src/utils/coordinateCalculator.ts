@@ -74,10 +74,13 @@ export const calculateCellCenter = (context: FieldContext, row: number, col: num
  * Uses absolute positioning within the field container
  */
 export const calculateCellPosition = (context: FieldContext, row: number, col: number): Coordinates => {
-  const { cellWidth, cellHeight } = context;
+  const { cellWidth, cellHeight, cols, mirrorColumns } = context;
+  
+  // Reverse column positions if mirroring is enabled (consistent with calculateCellCenter)
+  const adjustedCol = mirrorColumns ? cols - 1 - col : col;
   
   // Calculate absolute positions
-  const x = col * cellWidth;
+  const x = adjustedCol * cellWidth;
   const y = row * cellHeight;
   
   return { x, y };

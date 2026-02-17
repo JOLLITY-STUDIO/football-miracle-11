@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameAudio } from '../hooks/useGameAudio';
+import { playAmbient, stopAmbient, startMatchAmbience, stopMatchAmbience } from '../utils/audio';
 
 interface Props {
   onStartGame3D: () => void;
@@ -38,6 +39,22 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
     }));
     setFloatingIcons(icons);
   }, []);
+
+  useEffect(() => {
+    // Available sound effects for random play
+    const soundEffects = ['whistle', 'cheer', 'goal', 'out'];
+
+    // Play random sound effect periodically (every 10-20 seconds)
+    const randomSoundInterval = setInterval(() => {
+      const randomSound = soundEffects[Math.floor(Math.random() * soundEffects.length)];
+      playSound(randomSound);
+    }, 10000 + Math.random() * 10000);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(randomSoundInterval);
+    };
+  }, [playSound]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-600 to-emerald-700 flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -206,6 +223,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
       >
         <p className="font-medium">5 mins per game · Light Strategy</p>
         <p>Tactical Layout · One Goal Wins</p>
+        <p className="text-xs opacity-60">Version 0.2.33</p>
         <div className="mt-4 p-3 bg-black/20 rounded-lg backdrop-blur-sm">
           <p className="text-xs opacity-80">⚠️ English Version Only</p>
           <p className="text-xs opacity-60">Use browser translate for other languages</p>

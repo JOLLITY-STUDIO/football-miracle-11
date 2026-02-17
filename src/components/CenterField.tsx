@@ -26,7 +26,8 @@ interface Props {
   shootMode?: boolean;
   selectedShootPlayer?: {zone: number, position: number} | null;
   onCloseShootMode?: () => void;
-  onCompleteIconsCalculated?: (passCount: number, pressCount: number) => void;
+  onCompleteIconsCalculated?: (counts: Record<string, number>) => void;
+  onIconClick?: (icon: any) => void;
   viewSettings?: {
     pitch: number;
     rotation: number;
@@ -57,6 +58,7 @@ export const CenterField: React.FC<Props> = ({
   selectedShootPlayer = null,
   onCloseShootMode,
   onCompleteIconsCalculated,
+  onIconClick,
   viewSettings = { pitch: 0, rotation: 0, zoom: 1, height: 0 },
 }) => {
   // Calculate canPlaceCards based on game state
@@ -108,6 +110,7 @@ export const CenterField: React.FC<Props> = ({
             shootMode={shootMode}
             selectedShootPlayer={selectedShootPlayer}
             onCompleteIconsCalculated={onCompleteIconsCalculated}
+            onIconClick={onIconClick}
           />
         </div>
       </div>

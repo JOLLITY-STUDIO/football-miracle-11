@@ -55,6 +55,9 @@ export interface GameState {
   availableDraftCards: athleteCard[];
   discardedDraftCards: athleteCard[];
   starCardDeck: athleteCard[];
+  homeCardDeck: athleteCard[];
+  awayCardDeck: athleteCard[];
+  selectedDraftDeck: 'star' | 'home' | 'away';
   pendingPenalty: boolean;
   pendingImmediateEffect: { card: athleteCard; zone: number; slot: number } | null;
   synergyChoice: { cards: SynergyCard[]; sourceCard: athleteCard } | null;
@@ -77,6 +80,11 @@ export interface GameState {
   draftTurn: 'player' | 'ai';
   aiDraftHand: athleteCard[];
   isTransitioning: boolean;
+  // 抽卡相关状态
+  dealingProgress: number;  // 抽卡进度，0-13
+  dealingDirection: 'player' | 'ai';  // 当前抽卡方向
+  playerDraftDeck: athleteCard[];  // 玩家选秀卡组
+  aiDraftDeck: athleteCard[];  // AI选秀卡组
 }
 
 export interface MatchLogEntry {
@@ -101,7 +109,7 @@ export const createInitialState = (
   initialPlayerField: FieldZone[] | null = null
 ): GameState => {
   const initialState: GameState = {
-    phase: 'coinToss',
+    phase: 'setup',
     turnPhase: 'teamAction',
     currentTurn: 'player',
     controlPosition: 50,
@@ -109,8 +117,8 @@ export const createInitialState = (
     aiScore: 0,
     playerSubstitutionsLeft: 3,
     aiSubstitutionsLeft: 3,
-    playerAthleteHand: [],
-    playerBench: [],
+    playerAthleteHand: playerStarters,
+    playerBench: playerSubstitutes,
     playerSynergyHand: [],
     playerField: initialPlayerField || [
       { zone: 0, cards: [], synergyCards: [], slots: Array.from({ length: 8 }, (_, i) => ({ position: i, athleteCard: null, usedShotIcons: [], shotMarkers: 0 })) },
@@ -152,7 +160,10 @@ export const createInitialState = (
     draftStep: 0,
     availableDraftCards: [],
     discardedDraftCards: [],
-    starCardDeck: [],
+    starCardDeck: starathleteCards,
+    homeCardDeck: baseathleteCards.filter(card => card.id.startsWith('H')),
+    awayCardDeck: baseathleteCards.filter(card => card.id.startsWith('A')),
+    selectedDraftDeck: 'star',
     pendingPenalty: false,
     pendingImmediateEffect: null,
     synergyChoice: null,
@@ -177,7 +188,12 @@ export const createInitialState = (
     tutorialStep: 0,
     showTutorial: false,
     // 过渡状态
-    isTransitioning: false
+    isTransitioning: false,
+    // 抽卡相关状态
+    dealingProgress: 0,
+    dealingDirection: 'player',
+    playerDraftDeck: [],
+    aiDraftDeck: []
   };
 
   return initialState;
@@ -190,7 +206,7 @@ export type GameAction =
   | { type: 'AI_DRAFT_PICK' }
   | { type: 'DISCARD_DRAFT_CARD' }
   | { type: 'FINISH_SQUAD_SELECT'; starters: athleteCard[]; subs: athleteCard[] }
-  | { type: 'TEAM_ACTION'; action: 'pass' | 'press' }
+  | { type: 'TEAM_ACTION'; action: 'pass' | 'press'; iconCount: number }
   | { type: 'PLACE_CARD'; card: athleteCard; zone: number; slot: number }
   | { type: 'NEXT_TUTORIAL_STEP' }
   | { type: 'SKIP_TUTORIAL' }
@@ -223,7 +239,9 @@ export type GameAction =
   | { type: 'CONFIRM_DEFENDER_SYNERGY' }
   | { type: 'AI_DEFENDER_SYNERGY_PICK' }
   | { type: 'START_SUBSTITUTION'; card: athleteCard }
-  | { type: 'PENALTY_COMPLETE'; playerPoints: number; aiPoints: number };
+  | { type: 'PENALTY_COMPLETE'; playerPoints: number; aiPoints: number }
+  | { type: 'SELECT_DRAFT_DECK'; deckType: 'star' | 'home' | 'away' } // 新添加的action类型
+  | { type: 'DRAW_CARD' }; // 抽卡动作
 
 export const isHalfTime = (state: GameState): boolean => {
   // Half-time occurs when stoppage time is active and the turn is ending
@@ -346,20 +364,51 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         type: 'system',
         message: `Rock Paper Scissors: Player is ${action.isHomeTeam ? 'Home' : 'Away'}`
       });
-      // 杩涘叆 draft 闃舵鍚庣珛鍗冲紑濮嬮€夌杞
-      if (newState.phase === 'draft') {
-        newState = startDraftRound(newState);
-      }
+      
+      // 洗牌并准备卡组
+      // 不管玩家选择主客场，homeCardDeck始终包含主场卡片，awayCardDeck始终包含客场卡片
+      const shuffledHomeDeck = shuffleArray([...newState.homeCardDeck]);
+      const shuffledAwayDeck = shuffleArray([...newState.awayCardDeck]);
+      
+      // 保存洗牌后的卡组，保持homeCardDeck和awayCardDeck的原始含义
+      newState.homeCardDeck = shuffledHomeDeck;
+      newState.awayCardDeck = shuffledAwayDeck;
+      
+      // 清空手牌，准备通过抽卡动画分发
+      newState.playerAthleteHand = [];
+      newState.aiAthleteHand = [];
+      
+      // 明确设置为dealing阶段
+      newState.phase = 'dealing' as GamePhase;
+      
+      newState.matchLogs = addLog(newState, {
+        type: 'system',
+        message: `Card decks prepared: Home deck (${shuffledHomeDeck.length} cards), Away deck (${shuffledAwayDeck.length} cards)`
+      });
+      
+      newState.matchLogs = addLog(newState, {
+        type: 'system',
+        message: `Deck sizes: Home deck ${newState.homeCardDeck.length}, Away deck ${newState.awayCardDeck.length}, Total ${newState.homeCardDeck.length + newState.awayCardDeck.length}`
+      });
+      
+      // 开始抽卡动画
+      newState.isDealing = true;
+      newState.dealingProgress = 0;
+      newState.message = 'Dealing cards...';
+      
       return newState;
     }
     
     case 'START_DRAFT_ROUND': {
       let newState;
       if (action.cards && action.cards.length > 0) {
+        // Calculate the next draft round if it's not set
+        const nextRound = state.draftRound || 1;
         newState = {
           ...state,
           availableDraftCards: action.cards,
-          draftStep: 1
+          draftStep: 1,
+          draftRound: nextRound
         };
       } else {
         newState = startDraftRound(state);
@@ -384,24 +433,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     }
     
     case 'FINISH_SQUAD_SELECT': {
-      // 鏍规嵁涓诲鍦轰负AI閫夋嫨鍩虹鐞冨憳
-      const aiBaseCards = baseathleteCards.filter(card => {
-        // 鐜╁鏄富闃熸椂锛孉I鏄闃燂紝鍙嶄箣浜︾劧
-        if (!state.isHomeTeam) {
-          return card.id.startsWith('H');
-        } else {
-          return card.id.startsWith('A');
-        }
-      });
-      
-      // 合并AI在选择中选择的明星卡和基础球员
-      const allAiCards = [...state.aiDraftHand, ...aiBaseCards];
-      
-      // 为AI选择首发和替补
-      const shuffledAiCards = [...allAiCards].sort(() => Math.random() - 0.5);
-      const aiStarters = shuffledAiCards.slice(0, 10);
-      const aiSubs = shuffledAiCards.slice(10);
-      
+      // 使用已经分发的卡牌，不再重新分发
       let newState: GameState = { 
         ...state, 
         phase: 'firstHalf' as GamePhase, 
@@ -413,8 +445,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         currentAction: 'none' as PlayerActionType,
         playerAthleteHand: action.starters,
         playerBench: action.subs,
-        aiAthleteHand: aiStarters,
-        aiBench: aiSubs
+        // 保持AI手牌不变，因为已经在ROCK_PAPER_SCISSORS阶段分发了
+        aiAthleteHand: state.aiAthleteHand,
+        aiBench: state.aiBench
       };      
       newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
       // Use TurnPhaseService to determine initial phase
@@ -440,7 +473,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'TEAM_ACTION':
       if (!TurnPhaseService.canPerformTeamAction(state.turnPhase)) return state;
       {
-        let newState = performTeamAction(state, action.action);
+        let newState = performTeamAction(state, action.action, action.iconCount);
         const actor = state.currentTurn === 'player' ? 'You' : 'AI';
         const actionName = action.action === 'pass' ? 'Pass' : 'Press';
         newState.turnPhase = 'athleteAction';
@@ -483,7 +516,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       if (newState.selectedSynergyCards.length > 0) {
         newState.matchLogs = addLog(newState, {
           type: 'synergy',
-          message: `Synergy card used: ${action.synergyCard.name} on ${action.targetCard.name}`
+          message: `Synergy card used: ${action.synergyCard.name} on ${action.targetCard.nickname}`
         });
       }
       return newState;
@@ -512,7 +545,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       let newState = performSubstitution(state, action.incomingCard, action.outgoingCard, action.zone, action.slot);
       newState.matchLogs = addLog(newState, {
         type: 'action',
-        message: `Substitution: ${action.incomingCard.name} replaced ${action.outgoingCard.name}`
+        message: `Substitution: ${action.incomingCard.nickname} replaced ${action.outgoingCard.nickname}`
       });
       return newState;
     }
@@ -557,13 +590,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'FINISH_SETUP':
       return { 
         ...state, 
-        phase: 'firstHalf' as GamePhase, 
-        turnCount: 1, 
-        isFirstTurn: true,
-        turnPhase: 'athleteAction' as TurnPhase, // Skip team action phase for first turn
+        phase: 'coinToss' as GamePhase, 
         matchLogs: addLog(state, {
           type: 'system',
-          message: 'Setup complete - Match ready to begin'
+          message: 'Setup complete - Ready for Rock Paper Scissors'
         }),
         showTutorial: true // 鍚姩鏁欑▼
       };
@@ -698,7 +728,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         newState.substitutionMode = null;
         newState.matchLogs = addLog(newState, {
           type: 'action',
-          message: `Substitution: ${outgoingCard.name} 鈫?${incomingCard.name}`
+          message: `Substitution: ${outgoingCard.nickname} 鈫?${incomingCard.nickname}`
         });
         return newState;
       }
@@ -717,12 +747,13 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       let availableCards: SynergyCard[] = [];
       let isStoppageTime = state.isStoppageTime;
       let message = isPlayerDefending ? 'Select synergy cards to defend' : 'AI is selecting defense synergy cards...';
+      let newSynergyDeck = [...state.synergyDeck];
       
       if (defenderHand.length > 0) {
         availableCards = [...defenderHand];
       } else {
-        if (state.synergyDeck.length > 0) {
-          const drawnCard = state.synergyDeck[0];
+        if (newSynergyDeck.length > 0) {
+          const drawnCard = newSynergyDeck.shift();
           if (drawnCard) {
             availableCards = [drawnCard];
           }
@@ -738,6 +769,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         defenderSynergySelection: true,
         defenderAvailableSynergyCards: availableCards,
         defenderSelectedSynergyCards: [],
+        synergyDeck: newSynergyDeck,
         isStoppageTime,
         message
       };
@@ -845,6 +877,160 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         ...state,
         defenderSelectedSynergyCards: selectedCards
       };
+    }
+    
+    case 'SELECT_DRAFT_DECK':
+      return {
+        ...state,
+        selectedDraftDeck: action.deckType,
+        message: `Selected draft deck: ${action.deckType === 'star' ? 'Star Cards' : action.deckType === 'home' ? 'Home Team Cards' : 'Away Team Cards'}`
+      };
+    
+    case 'DRAW_CARD': {
+      let newState = { ...state };
+      
+      // 检查是否所有卡都已抽完
+      const allCardsDealt = newState.homeCardDeck.length === 0 && newState.awayCardDeck.length === 0;
+      
+      if (allCardsDealt) {
+        // 抽卡完成
+        newState.isDealing = false;
+        newState.dealingProgress = 0;
+        newState.phase = 'draft' as GamePhase; // 抽卡完成后进入选秀阶段
+        newState.message = 'Card dealing complete! Now entering draft phase.';
+        newState.matchLogs = addLog(newState, {
+          type: 'system',
+          message: `All cards dealt: Player ${newState.playerAthleteHand.length} cards, AI ${newState.aiAthleteHand.length} cards` 
+        });
+        
+        // 清空主客场卡组，准备选秀
+        newState.homeCardDeck = [];
+        newState.awayCardDeck = [];
+        
+        return newState;
+      }
+      
+      const dealingCount = newState.dealingProgress + 1;
+      
+      // 每次只抽一张卡，交替从两个卡组抽卡
+      let cardDrawn = false;
+      let deckSource = '';
+      let recipient = '';
+      
+      // 先从homeCardDeck开始发牌，然后再从awayCardDeck发牌
+      // 这样确保主场先发完所有牌，然后客场再发
+      
+      // 先尝试从homeCardDeck抽卡
+      if (newState.homeCardDeck.length > 0 && !cardDrawn) {
+        const card = newState.homeCardDeck[0];
+        if (card) {
+          // 从homeCardDeck中移除这张卡
+          newState.homeCardDeck = newState.homeCardDeck.slice(1);
+          deckSource = 'home';
+          
+          // 根据卡片ID判断是主队还是客队卡片
+          const isHomeCard = card.id.startsWith('H');
+          
+          // 检查卡片是否已经在玩家或AI的手牌中
+          const isCardInPlayerHand = newState.playerAthleteHand.some(c => c.id === card.id);
+          const isCardInAiHand = newState.aiAthleteHand.some(c => c.id === card.id);
+          
+          if (!isCardInPlayerHand && !isCardInAiHand) {
+            // 根据主客场分配给玩家或AI
+            if ((newState.isHomeTeam && isHomeCard) || (!newState.isHomeTeam && !isHomeCard)) {
+              // 玩家获得自己队伍的卡片
+              newState.playerAthleteHand.push(card);
+              recipient = 'player';
+              newState.matchLogs = addLog(newState, {
+                type: 'action',
+                message: `[Dealing #${dealingCount}] Player drew: ${card.nickname} - Player hand: ${newState.playerAthleteHand.length}`
+              });
+            } else {
+              // AI获得对方队伍的卡片
+              newState.aiAthleteHand.push(card);
+              recipient = 'ai';
+              newState.matchLogs = addLog(newState, {
+                type: 'action',
+                message: `[Dealing #${dealingCount}] AI drew: ${card.nickname} - AI hand: ${newState.aiAthleteHand.length}`
+              });
+            }
+            cardDrawn = true;
+          } else {
+            // 卡片已经存在，跳过并记录日志
+            newState.matchLogs = addLog(newState, {
+              type: 'system',
+              message: `DEBUG: Skipping duplicate card: ${card.nickname} (${card.id})`
+            });
+            // 继续抽下一张卡
+            cardDrawn = false;
+          }
+        }
+      }
+      
+      // 如果homeCardDeck空了，再从awayCardDeck抽卡
+      if (newState.awayCardDeck.length > 0 && !cardDrawn) {
+        const card = newState.awayCardDeck[0];
+        if (card) {
+          // 从awayCardDeck中移除这张卡
+          newState.awayCardDeck = newState.awayCardDeck.slice(1);
+          deckSource = 'away';
+          
+          // 根据卡片ID判断是主队还是客队卡片
+          const isHomeCard = card.id.startsWith('H');
+          
+          // 检查卡片是否已经在玩家或AI的手牌中
+          const isCardInPlayerHand = newState.playerAthleteHand.some(c => c.id === card.id);
+          const isCardInAiHand = newState.aiAthleteHand.some(c => c.id === card.id);
+          
+          if (!isCardInPlayerHand && !isCardInAiHand) {
+            // 根据主客场分配给玩家或AI
+            if ((newState.isHomeTeam && isHomeCard) || (!newState.isHomeTeam && !isHomeCard)) {
+              // 玩家获得自己队伍的卡片
+              newState.playerAthleteHand.push(card);
+              recipient = 'player';
+              newState.matchLogs = addLog(newState, {
+                type: 'action',
+                message: `[Dealing #${dealingCount}] Player drew: ${card.nickname} - Player hand: ${newState.playerAthleteHand.length}`
+              });
+            } else {
+              // AI获得对方队伍的卡片
+              newState.aiAthleteHand.push(card);
+              recipient = 'ai';
+              newState.matchLogs = addLog(newState, {
+                type: 'action',
+                message: `[Dealing #${dealingCount}] AI drew: ${card.nickname} - AI hand: ${newState.aiAthleteHand.length}`
+              });
+            }
+            cardDrawn = true;
+          } else {
+            // 卡片已经存在，跳过并记录日志
+            newState.matchLogs = addLog(newState, {
+              type: 'system',
+              message: `DEBUG: Skipping duplicate card: ${card.nickname} (${card.id})`
+            });
+            // 继续抽下一张卡
+            cardDrawn = false;
+          }
+        }
+      }
+      
+      // 只有在成功抽卡后才更新进度
+      if (cardDrawn) {
+        newState.dealingProgress += 1;
+        // 切换抽卡方向，用于动画显示
+        newState.dealingDirection = recipient === 'player' ? 'ai' : 'player';
+        // 添加详细的调试日志
+        newState.matchLogs = addLog(newState, {
+          type: 'system',
+          message: `DEBUG: Dealing #${dealingCount} - From ${deckSource} deck to ${recipient} - Player hand: ${newState.playerAthleteHand.length}, AI hand: ${newState.aiAthleteHand.length}, Home deck: ${newState.homeCardDeck.length}, Away deck: ${newState.awayCardDeck.length}`
+        });
+      }
+      
+      const totalCards = newState.playerAthleteHand.length + newState.aiAthleteHand.length;
+      const maxCards = 20; // Fixed total cards (10 home + 10 away)
+      newState.message = `Dealing cards... ${totalCards}/${maxCards}`;
+      
+      return newState;
     }
     
     default:

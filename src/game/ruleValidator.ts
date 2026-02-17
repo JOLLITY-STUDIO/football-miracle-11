@@ -1,4 +1,5 @@
 import type { AthleteCard, SynergyCard } from '../data/cards';
+import { TacticalIconMatcher } from './tacticalIconMatcher';
 
 export interface ValidationResult {
   valid: boolean;
@@ -8,7 +9,9 @@ export interface ValidationResult {
 
 export interface FieldState {
   zone: number;
-  slots: { position: number; athleteCard: AthleteCard | null; shotMarkers?: number }[];
+  cards: any[];
+  synergyCards: any[];
+  slots: { position: number; athleteCard: AthleteCard | null; shotMarkers?: number; usedShotIcons?: number[] }[];
 }
 
 export interface GameStateForRules {
@@ -68,24 +71,41 @@ export class RuleValidator {
       return { valid: false, reason: 'Invalid column position' };
     }
     
-    // 基于球员类型判断可放置区域
-    // 注意：玩家场地是4-7区域，AI场地是0-3区域
-    const getValidZones = (type: string): number[] => {
-      switch (type) {
-        case 'fw':
-          return [2, 3, 4, 5]; // 前锋可放置在2-5区域（玩家：4-5，AI：2-3）
-        case 'mf':
-          return [1, 2, 5, 6]; // 中场可放置在1、2、5、6区域（玩家：5-6，AI：1-2）
-        case 'df':
-          return [0, 1, 6, 7]; // 后卫可放置在0、1、6、7区域（玩家：6-7，AI：0-1）
-        default:
-          return [];
+    // 基于球员类型和场地区域判断可放置区域
+    // 玩家场地是4-7区域，AI场地是0-3区域
+    const getValidZones = (type: string, isPlayerZone: boolean): number[] => {
+      if (isPlayerZone) {
+        // 玩家场地可放置区域
+        switch (type) {
+          case 'fw':
+            return [4, 5]; // 前锋可放置在4-5区域
+          case 'mf':
+            return [5, 6]; // 中场可放置在5-6区域
+          case 'df':
+            return [6, 7]; // 后卫可放置在6-7区域
+          default:
+            return [];
+        }
+      } else {
+        // AI场地可放置区域
+        switch (type) {
+          case 'fw':
+            return [2, 3]; // 前锋可放置在2-3区域
+          case 'mf':
+            return [1, 2]; // 中场可放置在1-2区域
+          case 'df':
+            return [0, 1]; // 后卫可放置在0-1区域
+          default:
+            return [];
+        }
       }
     };
     
-    const validZones = getValidZones(card.type);
+    // 根据zone判断是玩家场地还是AI场地
+    const isPlayerZone = zone >= 4;
+    const validZones = getValidZones(card.type, isPlayerZone);
     if (!validZones.includes(zone)) {
-      console.log('❌ Card cannot be placed in this zone:', { cardType: card.type, zone, validZones });
+      console.log('❌ Card cannot be placed in this zone:', { cardType: card.type, zone, validZones, isPlayerZone });
       return { valid: false, reason: 'Card cannot be placed in this zone' };
     }
     
@@ -102,22 +122,18 @@ export class RuleValidator {
       return { valid: false, reason: 'Slot already occupied' };
     }
     
-    // 检查场地上是否有其他卡牌（根据场地类型自动判断）
-    // 玩家场地的zone范围是4-7，AI场地是0-3
-    const hasPlayerZones = fieldSlots.some(z => z.zone >= 4);
-    const hasAIZones = fieldSlots.some(z => z.zone < 4);
-    const isPlayerField = hasPlayerZones && !hasAIZones;
+    // 检查场地上是否有其他卡牌
     const hasAnyCard = fieldSlots.some(z => z.slots.some(s => s.athleteCard));
     
-    console.log('🔍 Field state:', { hasPlayerZones, hasAIZones, isPlayerField, hasAnyCard });
+    console.log('🔍 Field state:', { isPlayerZone, hasAnyCard });
     
     // 场上没有其他卡时，前锋不能放在前线
     if (!hasAnyCard && card.type === 'fw') {
-      if (isPlayerField && zone === 4) {
+      if (isPlayerZone && zone === 4) {
         console.log('❌ Forward cannot be placed in Zone 4 when no other cards are on field');
         return { valid: false, reason: 'Forward cannot be placed in Zone 4 when no other cards are on field' };
       }
-      if (!isPlayerField && zone === 3) {
+      if (!isPlayerZone && zone === 3) {
         console.log('❌ Forward cannot be placed in Zone 3 when no other cards are on field');
         return { valid: false, reason: 'Forward cannot be placed in Zone 3 when no other cards are on field' };
       }
@@ -126,7 +142,7 @@ export class RuleValidator {
     // 前锋放置在前线时必须与已放置的另一张卡牌紧邻
     if (card.type === 'fw') {
       // 玩家场地（前线是Zone 4）
-      if (isPlayerField && zone === 4) {
+      if (isPlayerZone && zone === 4) {
         const zone4 = fieldSlots.find(z => z.zone === 4);
         const zone5 = fieldSlots.find(z => z.zone === 5);
         
@@ -145,7 +161,7 @@ export class RuleValidator {
         }
       }
       // AI场地（前线是Zone 3）
-      if (!isPlayerField && zone === 3) {
+      if (!isPlayerZone && zone === 3) {
         const zone3 = fieldSlots.find(z => z.zone === 3);
         const zone2 = fieldSlots.find(z => z.zone === 2);
         
@@ -198,6 +214,15 @@ export class RuleValidator {
     
     if (gameState.phase !== 'firstHalf' && gameState.phase !== 'secondHalf' && gameState.phase !== 'extraTime') {
       return { valid: false, reason: 'Cannot shoot during this phase' };
+    }
+    
+    // 检查是否有完整的进攻图标
+    const tacticalIconMatcher = new TacticalIconMatcher(attackerField);
+    const completeIcons = tacticalIconMatcher.getCompleteIcons();
+    const hasCompleteAttackIcons = completeIcons.some(icon => icon.type === 'attack');
+    
+    if (!hasCompleteAttackIcons) {
+      return { valid: false, reason: 'Need complete attack icon to shoot' };
     }
     
     return { valid: true };

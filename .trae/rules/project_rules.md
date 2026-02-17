@@ -137,3 +137,15 @@ BUG_TRACKING.md bug跟踪表，自动提交到github issues，可以随时追溯
 3. 最后根据用户测试反馈，不断优化游戏设计。
 
 要有面向对象的编程思想。
+
+音效地址：https://www.soundsnap.com/tags/referee_whistle 
+
+Sound design multimedia Chime
+
+项目是热更新的，修改后不需要重启。
+
+不要使用npm run typecheck命令。
+每次修改完代码，先更新版本号，同步版本号和更新的内容到，主动更新bug tracking.md文件。这份文件不仅仅是修改bug，而是所有版本内容变更都要记录。并自行提交到github
+
+非必要不使用弹窗，使用蒙版。
+不要自己npm run dev。

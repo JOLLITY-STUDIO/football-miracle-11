@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AthleteCardComponent } from './AthleteCard';
 import type { FieldZone } from '../types/game';
+import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
 
 interface ShooterSelectorProps {
   playerField: FieldZone[];
@@ -27,6 +28,17 @@ export const ShooterSelector: React.FC<ShooterSelectorProps> = ({
 
   useEffect(() => {
     if (!playerField || playerField.length === 0) {
+      setShootablePlayers([]);
+      return;
+    }
+
+    // 检查是否有完整的进攻图标
+    const matcher = new TacticalIconMatcher(playerField);
+    const completeIcons = matcher.getCompleteIcons();
+    const hasCompleteAttackIcons = completeIcons.some(icon => icon.type === 'attack');
+
+    // 如果没有完整的进攻图标，不显示任何可射门的球员
+    if (!hasCompleteAttackIcons) {
       setShootablePlayers([]);
       return;
     }
@@ -127,7 +139,7 @@ export const ShooterSelector: React.FC<ShooterSelectorProps> = ({
                       faceDown={false}
                       variant="home"
                       disabled={false}
-                      usedShotIcons={Array.from({ length: player.shotMarkers }, (_, i) => 'attack')}
+                      usedShotIcons={Array.from({ length: player.shotMarkers }, (_, i) => i)}
                     />
                   </div>
                   

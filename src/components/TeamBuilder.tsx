@@ -79,9 +79,9 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
         {step === 'select' ? (
           <>
             <div className="bg-black/30 rounded-lg p-4 mb-4">
-              <h2 className="text-white font-bold mb-3">Forwards ({baseathleteCards.filter(c => c.type === 'forward').length})</h2>
+              <h2 className="text-white font-bold mb-3">Forwards ({baseathleteCards.filter(c => c.type === 'fw').length})</h2>
               <div className="flex flex-wrap gap-2">
-                {baseathleteCards.filter(c => c.type === 'forward').map(card => (
+                {baseathleteCards.filter(c => c.type === 'fw').map(card => (
                   <AthleteCardComponent
                     key={card.id}
                     card={card}
@@ -94,9 +94,9 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
             </div>
 
             <div className="bg-black/30 rounded-lg p-4 mb-4">
-              <h2 className="text-white font-bold mb-3">Midfielders ({baseathleteCards.filter(c => c.type === 'midfielder').length})</h2>
+              <h2 className="text-white font-bold mb-3">Midfielders ({baseathleteCards.filter(c => c.type === 'mf').length})</h2>
               <div className="flex flex-wrap gap-2">
-                {baseathleteCards.filter(c => c.type === 'midfielder').map(card => (
+                {baseathleteCards.filter(c => c.type === 'mf').map(card => (
                   <AthleteCardComponent
                     key={card.id}
                     card={card}
@@ -109,9 +109,9 @@ export const TeamBuilder: React.FC<Props> = ({ onComplete }) => {
             </div>
 
             <div className="bg-black/30 rounded-lg p-4 mb-4">
-              <h2 className="text-white font-bold mb-3">Defenders ({baseathleteCards.filter(c => c.type === 'defender').length})</h2>
+              <h2 className="text-white font-bold mb-3">Defenders ({baseathleteCards.filter(c => c.type === 'df').length})</h2>
               <div className="flex flex-wrap gap-2">
-                {baseathleteCards.filter(c => c.type === 'defender').map(card => (
+                {baseathleteCards.filter(c => c.type === 'df').map(card => (
                   <AthleteCardComponent
                     key={card.id}
                     card={card}

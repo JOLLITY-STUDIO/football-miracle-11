@@ -1,5 +1,5 @@
 export type PlayerActionType = 'place' | 'shot' | 'synergy' | 'substitute' | 'teamAction' | 'immediateEffect' | 'penalty' | 'none' | 'organizeAttack';
-export type GamePhase = 'pregame' | 'coinToss' | 'squadSelection' | 'setup' | 'draft' | 'firstHalf' | 'halfTime' | 'secondHalf' | 'fullTime' | 'penaltyShootout';
+export type GamePhase = 'pregame' | 'coinToss' | 'squadSelection' | 'setup' | 'dealing' | 'draft' | 'firstHalf' | 'halfTime' | 'secondHalf' | 'fullTime' | 'penaltyShootout';
 export type TurnPhase = 'start' | 'teamAction' | 'athleteAction' | 'shooting' | 'end';
 export type DuelPhase = 'none' | 'init' | 'select_shot_icon' | 'reveal_attacker' | 'reveal_defender' | 'defender_synergy_selection' | 'reveal_synergy' | 'reveal_skills' | 'summary' | 'result';
 export type ShotResult = 'goal' | 'magicNumber' | 'saved' | 'missed' | null;
