@@ -120,8 +120,8 @@ immediateEffect = 上场即时效果（抽卡、射门等）就是是否速攻�
 gen可以查看截图信息。
 rules\rules.md 这份是原桌游的说明书。没有图片辅助可能有些不清楚的可以跟我讨论。
 可以将原桌游规则和现实现进行比较，完善整个游戏功能。
-BUG_TRACKING.md bug跟踪表，自动提交到github issues，可以随时追溯。
-
+更新BUG_TRACKING.md格式 ：按照脚本期望的格式重新组织bug信息，每个bug需要包含完整的字段BUG_TRACKING.md bug跟踪表，自动提交到github issues，可以随时追溯。
+提交github后，运行npm run sync-bugs同步到github
 
 分步思考，不要跳步
 修复问题先plan

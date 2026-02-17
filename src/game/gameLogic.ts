@@ -38,7 +38,9 @@ export interface GameState {
   aiBench: athleteCard[];
   aiSynergyHand: SynergyCard[];
   synergyDeck: SynergyCard[];
+  synergyDeckId: string;
   synergyDiscard: SynergyCard[];
+  synergyDiscardId: string;
   selectedCard: athleteCard | null;
   isHomeTeam: boolean;
   selectedSynergyCards: SynergyCard[];
@@ -55,8 +57,11 @@ export interface GameState {
   availableDraftCards: athleteCard[];
   discardedDraftCards: athleteCard[];
   starCardDeck: athleteCard[];
+  starCardDeckId: string;
   homeCardDeck: athleteCard[];
+  homeCardDeckId: string;
   awayCardDeck: athleteCard[];
+  awayCardDeckId: string;
   selectedDraftDeck: 'star' | 'home' | 'away';
   pendingPenalty: boolean;
   pendingImmediateEffect: { card: athleteCard; zone: number; slot: number } | null;
@@ -144,7 +149,9 @@ export const createInitialState = (
     aiBench: [],
     aiSynergyHand: [],
     synergyDeck: getSynergyDeckFixed(),
+    synergyDeckId: `synergy_deck_${Date.now()}`,
     synergyDiscard: [],
+    synergyDiscardId: `synergy_discard_${Date.now()}`,
     selectedCard: null,
     isHomeTeam: true,
     selectedSynergyCards: [],
@@ -161,8 +168,11 @@ export const createInitialState = (
     availableDraftCards: [],
     discardedDraftCards: [],
     starCardDeck: starathleteCards,
+    starCardDeckId: `star_deck_${Date.now()}`,
     homeCardDeck: baseathleteCards.filter(card => card.id.startsWith('H')),
+    homeCardDeckId: `home_deck_${Date.now()}`,
     awayCardDeck: baseathleteCards.filter(card => card.id.startsWith('A')),
+    awayCardDeckId: `away_deck_${Date.now()}`,
     selectedDraftDeck: 'star',
     pendingPenalty: false,
     pendingImmediateEffect: null,
@@ -365,14 +375,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         message: `Rock Paper Scissors: Player is ${action.isHomeTeam ? 'Home' : 'Away'}`
       });
       
-      // 洗牌并准备卡组
-      // 不管玩家选择主客场，homeCardDeck始终包含主场卡片，awayCardDeck始终包含客场卡片
-      const shuffledHomeDeck = shuffleArray([...newState.homeCardDeck]);
-      const shuffledAwayDeck = shuffleArray([...newState.awayCardDeck]);
-      
-      // 保存洗牌后的卡组，保持homeCardDeck和awayCardDeck的原始含义
-      newState.homeCardDeck = shuffledHomeDeck;
-      newState.awayCardDeck = shuffledAwayDeck;
+      // 准备卡组 - 不需要洗牌，直接使用原始卡组
+      // 主场卡组给主场一方，客场卡组给客场一方
+      // 保持homeCardDeck和awayCardDeck的原始内容
       
       // 清空手牌，准备通过抽卡动画分发
       newState.playerAthleteHand = [];
@@ -383,12 +388,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       
       newState.matchLogs = addLog(newState, {
         type: 'system',
-        message: `Card decks prepared: Home deck (${shuffledHomeDeck.length} cards), Away deck (${shuffledAwayDeck.length} cards)`
-      });
-      
-      newState.matchLogs = addLog(newState, {
-        type: 'system',
-        message: `Deck sizes: Home deck ${newState.homeCardDeck.length}, Away deck ${newState.awayCardDeck.length}, Total ${newState.homeCardDeck.length + newState.awayCardDeck.length}`
+        message: `Card decks prepared: Home deck (${newState.homeCardDeck.length} cards), Away deck (${newState.awayCardDeck.length} cards)`
       });
       
       // 开始抽卡动画

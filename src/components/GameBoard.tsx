@@ -15,7 +15,7 @@ import PhaseBanner from './PhaseBanner';
 import { RockPaperScissors } from './RockPaperScissors';
 import SquadSelect from './SquadSelect';
 import { CardDealer } from './CardDealer';
-import { CardDeckDisplay } from './CardDeckDisplay';
+import { CardDeckManager } from './CardDeckManager';
 import { DuelOverlay } from './DuelOverlay';
 import { MatchLog } from './MatchLog';
 import { DraftPhase } from './DraftPhase';
@@ -241,7 +241,6 @@ const {
   // Card dealing animation effect
   useEffect(() => {
     let dealingInterval: NodeJS.Timeout;
-    let completionTimer: NodeJS.Timeout;
     
     if (gameState.isDealing) {
       // Start dealing cards with animation
@@ -256,9 +255,6 @@ const {
     return () => {
       if (dealingInterval) {
         clearInterval(dealingInterval);
-      }
-      if (completionTimer) {
-        clearTimeout(completionTimer);
       }
     };
   }, [gameState.isDealing, dispatch]);
@@ -793,7 +789,7 @@ const {
           style={{
             width: `${BASE_WIDTH}px`,
             height: `${BASE_HEIGHT}px`,
-            transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateY(${viewSettings.height}px) scale(${viewSettings.zoom})`,
+            transform: `scale(${autoScale}) rotateX(${viewSettings.pitch}deg) rotateZ(${viewSettings.rotation}deg) translateX(${viewSettings.positionX}px) translateY(${viewSettings.height + viewSettings.positionY}px) scale(${viewSettings.zoom})`,
           }}
         >
 
@@ -820,12 +816,15 @@ const {
                   />
                 )}
                 
-                {/* Card Deck Display */}
-                <CardDeckDisplay 
+                {/* Card Deck Manager */}
+                <CardDeckManager 
                   homeDeckCount={gameState.homeCardDeck.length} 
                   awayDeckCount={gameState.awayCardDeck.length} 
-                  isDealing={gameState.isDealing} 
+                  starDeckCount={gameState.starCardDeck.length} 
+                  isVisible={true} // Always visible
                 />
+                
+
 
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ left: '14px', top: '14px' }} />
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ right: '14px', top: '14px' }} />
@@ -1124,29 +1123,72 @@ const {
             {/* Presets */}
             <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/10">
               <button 
-                onClick={() => setViewSettings({ pitch: 55, rotation: 0, zoom: 1, height: 0 })}
+                onClick={() => setViewSettings({ pitch: 55, rotation: 0, zoom: 1, height: 0, positionX: 0, positionY: 0 })}
                 className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
               >
                 3D Default
               </button>
               <button 
-                onClick={() => setViewSettings({ pitch: 0, rotation: 0, zoom: 0.9, height: 0 })}
+                onClick={() => setViewSettings({ pitch: 0, rotation: 0, zoom: 0.9, height: 0, positionX: 0, positionY: 0 })}
                 className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
               >
                 2D Top-Down
               </button>
               <button 
-                onClick={() => setViewSettings({ pitch: 55, rotation: 180, zoom: 1, height: 0 })}
+                onClick={() => setViewSettings({ pitch: 55, rotation: 180, zoom: 1, height: 0, positionX: 0, positionY: 0 })}
                 className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
               >
                 Opponent View
               </button>
               <button 
-                onClick={() => setViewSettings({ pitch: 60, rotation: 45, zoom: 0.9, height: -50 })}
+                onClick={() => setViewSettings({ pitch: 60, rotation: 45, zoom: 0.9, height: -50, positionX: 0, positionY: 0 })}
                 className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
               >
                 Corner View
               </button>
+            </div>
+            
+            {/* Position Controls */}
+            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10">
+              <div className="col-span-3 flex justify-center">
+                <button 
+                  onClick={() => setViewSettings(prev => ({ ...prev, positionY: prev.positionY + 10 }))}
+                  className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
+                  title="Move Up"
+                >
+                  ↑
+                </button>
+              </div>
+              <button 
+                onClick={() => setViewSettings(prev => ({ ...prev, positionX: prev.positionX - 10 }))}
+                className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
+                title="Move Left"
+              >
+                ←
+              </button>
+              <button 
+                onClick={() => setViewSettings(prev => ({ ...prev, positionX: 0, positionY: 0 }))}
+                className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
+                title="Reset Position"
+              >
+                ⟲
+              </button>
+              <button 
+                onClick={() => setViewSettings(prev => ({ ...prev, positionX: prev.positionX + 10 }))}
+                className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
+                title="Move Right"
+              >
+                →
+              </button>
+              <div className="col-span-3 flex justify-center">
+                <button 
+                  onClick={() => setViewSettings(prev => ({ ...prev, positionY: prev.positionY - 10 }))}
+                  className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs"
+                  title="Move Down"
+                >
+                  ↓
+                </button>
+              </div>
             </div>
             </div>
           </motion.div>
