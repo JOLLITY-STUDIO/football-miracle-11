@@ -1,5 +1,6 @@
 import type { GameState } from '../game/gameLogic';
 import { isHalfTime } from '../game/gameLogic';
+import { TurnPhaseService } from '../game/turnPhaseService';
 
 export const performEndTurn = (state: GameState): GameState => {
   // Switch turns
@@ -9,13 +10,23 @@ export const performEndTurn = (state: GameState): GameState => {
   // Check if we need to reset for half-time (using helper function)
   const isHalfTimeTurn = isHalfTime(state);
   
+  // Check if team action should be skipped for the new turn
+  const shouldSkipTeamAction = TurnPhaseService.shouldSkipTeamAction({
+    ...state,
+    currentTurn: newTurn,
+    turnCount: newTurnCount
+  });
+  
+  // Determine initial phase based on whether team action should be skipped
+  const initialPhase = shouldSkipTeamAction ? 'athleteAction' : 'teamAction';
+  
   let newState: GameState = {
     ...state,
     currentTurn: newTurn,
     turnCount: newTurnCount,
-    turnPhase: 'teamAction',
+    turnPhase: initialPhase,
     isFirstTurn: false,
-    skipTeamAction: false,
+    skipTeamAction: shouldSkipTeamAction,
     isFirstMatchTurn: false
   };
   

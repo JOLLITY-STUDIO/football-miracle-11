@@ -358,14 +358,14 @@ const AthleteCardComponent: React.FC<Props> = ({
             {/* 球服图标 */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
               <div className="w-32 h-32 flex items-center justify-center">
-                {variant === 'home' && (
-                  <span className="text-6xl" style={{ color: '#3b82f6' }}>👕</span>
-                )}
-                {variant === 'away' && (
-                  <span className="text-6xl" style={{ color: '#ef4444' }}>👕</span>
-                )}
                 {card.isStar && (
                   <span className="text-6xl" style={{ color: '#fbbf24' }}>👕</span>
+                )}
+                {!card.isStar && variant === 'home' && (
+                  <span className="text-6xl" style={{ color: '#3b82f6' }}>👕</span>
+                )}
+                {!card.isStar && variant === 'away' && (
+                  <span className="text-6xl" style={{ color: '#ef4444' }}>👕</span>
                 )}
               </div>
             </div>

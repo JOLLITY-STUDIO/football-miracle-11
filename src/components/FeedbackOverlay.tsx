@@ -89,40 +89,75 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
           const style = getFeedbackStyle(msg.type);
           
           return (
-            <motion.div
-              key={msg.id}
-              initial={{ 
-                opacity: 0, 
-                scale: 0.5,
-                y: 0
-              }}
-              animate={{ 
-                opacity: 1, 
-                scale: style.scale,
-                y: -50 * index
-              }}
-              exit={{ 
-                opacity: 0, 
-                scale: 0.5,
-                y: -100
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 20
-              }}
-              className={`
-                absolute
-                bg-gradient-to-br ${style.color}
-                text-white font-black text-2xl
-                px-8 py-4 rounded-2xl
-                shadow-2xl border-4 border-white/30
-                flex items-center gap-4
-              `}
-            >
-              <span className="text-4xl">{style.icon}</span>
-              <span>{msg.message}</span>
-            </motion.div>
+            <div key={msg.id} className="relative">
+              {/* Main Feedback Message */}
+              <motion.div
+                initial={{ 
+                  opacity: 0, 
+                  scale: 0.5,
+                  y: 0,
+                  rotate: msg.type === 'goal' ? -10 : 0
+                }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: style.scale,
+                  y: -50 * index,
+                  rotate: msg.type === 'goal' ? 0 : 0,
+                  filter: [
+                    'drop-shadow(0 0 20px rgba(255,255,255,0.8))',
+                    'drop-shadow(0 0 40px rgba(255,255,255,1))',
+                    'drop-shadow(0 0 30px rgba(255,255,255,0.6))'
+                  ]
+                }}
+                exit={{ 
+                  opacity: 0, 
+                  scale: 0.5,
+                  y: -100,
+                  rotate: msg.type === 'goal' ? 10 : 0
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
+                className={`
+                  absolute
+                  bg-gradient-to-br ${style.color}
+                  text-white font-black text-2xl
+                  px-8 py-4 rounded-2xl
+                  shadow-2xl border-4 border-white/30
+                  flex items-center gap-4
+                  transform-style-3d
+                `}
+              >
+                <motion.span 
+                  className="text-4xl"
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 5, 0]
+                  }}
+                  transition={{ 
+                    duration: 0.5, 
+                    repeat: 2,
+                    repeatDelay: 0.2
+                  }}
+                >
+                  {style.icon}
+                </motion.span>
+                <motion.span
+                  animate={{ 
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{ 
+                    duration: 0.5, 
+                    repeat: 2,
+                    repeatDelay: 0.2
+                  }}
+                >
+                  {msg.message}
+                </motion.span>
+              </motion.div>
+            </div>
           );
         })}
       </AnimatePresence>

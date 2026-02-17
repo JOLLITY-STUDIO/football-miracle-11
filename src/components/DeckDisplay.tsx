@@ -89,3 +89,20 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({ homeDeck, awayDeck, st
               className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg border border-gray-700/50"
               style={{
                 transform: `translateY(${i * 2}px) rotate(${i * 0.5}deg)`,
+                zIndex: 5 - i
+              }}
+            />
+          ))}
+          {/* Deck label */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Away</div>
+              <div className="text-2xl font-bold text-white">{awayDeck.length}</div>
+            </div>
+          </div>
+        </div>
+        <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Deck</div>
+      </motion.div>
+    </motion.div>
+  );
+};

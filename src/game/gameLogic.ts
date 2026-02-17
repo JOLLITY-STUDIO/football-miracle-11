@@ -451,8 +451,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       };      
       newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
       // Use TurnPhaseService to determine initial phase
-      const initialPhase = TurnPhaseService.getInitialPhase(newState);
+      const shouldSkipTeamAction = TurnPhaseService.shouldSkipTeamAction(newState);
+      const initialPhase = shouldSkipTeamAction ? 'athleteAction' : 'teamAction';
       newState.turnPhase = initialPhase;
+      newState.skipTeamAction = shouldSkipTeamAction;
       // Update message based on initial phase
       if (initialPhase === 'athleteAction') {
         newState.message = newState.isHomeTeam ? 'Your turn! Place a card.' : 'AI is thinking...';
@@ -461,7 +463,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       }
       // If AI starts, set aiActionStep to trigger AI actions
       if (!newState.isHomeTeam) {
-        newState.aiActionStep = 'teamAction';
+        newState.aiActionStep = initialPhase === 'athleteAction' ? 'placeCard' : initialPhase;
       }
       newState.matchLogs = addLog(newState, {
         type: 'system',

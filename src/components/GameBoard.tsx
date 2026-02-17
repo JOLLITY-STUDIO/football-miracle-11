@@ -15,7 +15,6 @@ import PhaseBanner from './PhaseBanner';
 import { RockPaperScissors } from './RockPaperScissors';
 import SquadSelect from './SquadSelect';
 import { CardDealer } from './CardDealer';
-import { CardDeckManager } from './CardDeckManager';
 import { DuelOverlay } from './DuelOverlay';
 import { MatchLog } from './MatchLog';
 import { DraftPhase } from './DraftPhase';
@@ -246,7 +245,7 @@ const {
       // Start dealing cards with animation
       dealingInterval = setInterval(() => {
         dispatch({ type: 'DRAW_CARD' });
-      }, 300); // Draw a card every 300ms
+      }, 300); // Draw a card every 300ms for faster dealing
       
       // 移除强制超时，由DRAW_CARD逻辑自动停止
       // 当所有卡片都被抽取后，isDealing会自动设为false
@@ -618,10 +617,24 @@ const {
   // ============================================
   // 环境音控制逻辑
   // ============================================
+  const isMounted = useRef(false);
+  const prevPhase = useRef<string>('');
+  
   useEffect(() => {
-    // 比赛开始时启动环境音
-    if (gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf') {
-      startMatchAmbience();
+    if (!isMounted.current) {
+      // 组件首次挂载，不播放环境音
+      isMounted.current = true;
+      prevPhase.current = gameState.phase;
+      return;
+    }
+    
+    // 比赛开始时启动环境音（仅当从非比赛阶段切换到比赛阶段时）
+    const isMatchPhase = gameState.phase === 'firstHalf' || gameState.phase === 'secondHalf';
+    const wasMatchPhase = prevPhase.current === 'firstHalf' || prevPhase.current === 'secondHalf';
+    
+    if (isMatchPhase && !wasMatchPhase) {
+      // 从非比赛阶段进入比赛阶段，不播放环境音
+      // 移除 startMatchAmbience() 调用
     }
     
     // 比赛结束时停止环境音
@@ -629,11 +642,11 @@ const {
       stopMatchAmbience();
     }
     
+    prevPhase.current = gameState.phase;
+    
     return () => {
       // 清理函数：组件卸载时停止所有环境音
-      if (gameState.phase === 'fullTime' || gameState.phase === 'penaltyShootout') {
-        stopMatchAmbience();
-      }
+      stopMatchAmbience();
     };
   }, [gameState.phase]);
 
@@ -742,21 +755,27 @@ const {
               height: `${Math.random() * 2 + 1}px`,
               opacity: Math.random() * 0.6 + 0.2,
               animationDuration: `${Math.random() * 3 + 2}s`,
+              animationTimingFunction: 'linear',
+              animationIterationCount: 'infinite',
+              animationName: 'starFloat',
+              animationDelay: `${Math.random() * 5}s`,
+              transform: `translateY(0) translateX(0)`,
             }}
           />
         ))}
       </div>
       
       {/* 2. Nebula Layer */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.4]">
+      <div className="absolute inset-0 pointer-events-none opacity-[0.4] animate-nebulaFlow">
         <div className="absolute inset-0 mix-blend-screen" style={{ 
-          backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(120,119,198,0.3), transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,119,198,0.2), transparent 40%), radial-gradient(circle at 40% 80%, rgba(119,255,214,0.2), transparent 40%)' 
+          backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(120,119,198,0.3), transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,119,198,0.2), transparent 40%), radial-gradient(circle at 40% 80%, rgba(119,255,214,0.2), transparent 40%)',
+          backgroundSize: '200% 200%',
         }} />
       </div>
       
       {/* 3. Grid Layer */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-[0.2] mix-blend-overlay" style={{ 
+        <div className="absolute inset-0 opacity-[0.2] mix-blend-overlay animate-gridScroll" style={{ 
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
           backgroundSize: '50px 50px'
         }} />
@@ -768,6 +787,53 @@ const {
           backgroundImage: 'radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.8) 100%)' 
         }} />
       </div>
+      
+      {/* Animation Keyframes */}
+      <style>{`
+        @keyframes starFloat {
+          0% {
+            transform: translateY(0) translateX(0);
+            opacity: 0.4;
+          }
+          50% {
+            transform: translateY(-15px) translateX(5px);
+            opacity: 0.6;
+          }
+          100% {
+            transform: translateY(-30px) translateX(10px);
+            opacity: 0.4;
+          }
+        }
+        
+        @keyframes nebulaFlow {
+          0% {
+            background-position: 0% 0%;
+          }
+          50% {
+            background-position: 100% 100%;
+          }
+          100% {
+            background-position: 0% 0%;
+          }
+        }
+        
+        @keyframes gridScroll {
+          0% {
+            transform: translateY(0) translateX(0);
+          }
+          100% {
+            transform: translateY(-50px) translateX(-50px);
+          }
+        }
+        
+        .animate-nebulaFlow {
+          animation: nebulaFlow 20s ease-in-out infinite;
+        }
+        
+        .animate-gridScroll {
+          animation: gridScroll 10s linear infinite;
+        }
+      `}</style>
 
       {/* Tutorial Guide */}
       <TutorialGuide 
@@ -816,13 +882,7 @@ const {
                   />
                 )}
                 
-                {/* Card Deck Manager */}
-                <CardDeckManager 
-                  homeDeckCount={gameState.homeCardDeck.length} 
-                  awayDeckCount={gameState.awayCardDeck.length} 
-                  starDeckCount={gameState.starCardDeck.length} 
-                  isVisible={true} // Always visible
-                />
+
                 
 
 
@@ -901,6 +961,7 @@ const {
                     }
                   }}
                   viewSettings={viewSettings}
+                  skipTeamAction={gameState.skipTeamAction}
                 />
 
                 {/* Action Buttons */}
@@ -943,6 +1004,9 @@ const {
                   turnPhase={gameState.turnPhase}
                   playerActiveSynergy={gameState.playerActiveSynergy}
                   aiActiveSynergy={gameState.aiActiveSynergy}
+                  homeCardDeckCount={gameState.homeCardDeck.length}
+                  awayCardDeckCount={gameState.awayCardDeck.length}
+                  starCardDeckCount={gameState.starCardDeck.length}
                 />
               </motion.div>
              </div>
@@ -1197,105 +1261,14 @@ const {
 
       {/* 2. HUD Layer - Top (Opponent) */}
       {gameState.phase !== 'coinToss' && (
-        <div className="absolute top-0 left-0 right-0 h-200 z-20 pointer-events-none">
-
-
-         {/* Top Center: Opponent Hand (Arc Layout - Same as Player) */}
-         <div 
-           className="fixed left-1/2 -translate-x-1/2 z-[50]" 
-           style={{ 
-             top: '-100px', // 进一步向上调整，确保不挡住球场
-             height: '200px', 
-             width: `${Math.max(gameState.aiAthleteHand.length * (132 + 20), 400)}px`,
-             maxWidth: '90vw', // 确保不超出屏幕
-             pointerEvents: 'none' // 容器本身不拦截点击
-           }}
-         >
-            <div 
-              className="relative h-full flex justify-center items-center pb-4 perspective-1000" 
-              style={{ width: '100%' }}
-            >
-              <AnimatePresence>
-                  {gameState.aiAthleteHand.map((card, i) => {
-                    // Calculate arc position for AI hand (same as player hand)
-                    const arcAngle = 30;
-                    const arcHeight = 264; // Match player hand arc height
-                    const startAngle = -15;
-                    
-                    const anglePerCard = gameState.aiAthleteHand.length > 1 ? arcAngle / (gameState.aiAthleteHand.length - 1) : 0;
-                    const currentAngle = startAngle + (i * anglePerCard);
-                    const radius = arcHeight;
-                    const radian = (currentAngle * Math.PI) / 180;
-                    
-                    // Calculate position (same as player hand but adjusted for top placement)
-                    const x = Math.sin(radian) * radius;
-                    const baseY = -Math.cos(radian) * radius + radius;
-                    const heightAdjustment = Math.cos(radian) * 80;
-                    const y = -(baseY - heightAdjustment + 150); // Further increased to move higher, ensure no overlap with field
-                    const rotation = currentAngle; // Same rotation as player hand
-                    
-                    return (
-                      <motion.div
-                        key={`ai-hand-${card.id}`}
-                        initial={{
-                          opacity: 0,
-                          scale: 0.8,
-                          x: 1600, // 抽卡区X位置
-                          y: 540,  // 抽卡区Y位置
-                          rotate: 0
-                        }}
-                        animate={setupStep >= 3 ? { 
-                          opacity: 1, 
-                          scale: 1,
-                          x: x,
-                          y: y,
-                          rotate: rotation
-                        } : {
-                          opacity: 0,
-                          scale: 0.8,
-                          x: 1600,
-                          y: 540
-                        }}
-                        exit={{
-                          opacity: 0,
-                          scale: 0.8,
-                          x: 0,
-                          y: 0
-                        }}
-                        whileHover={{ 
-                          scale: 1.5, 
-                          rotate: 0, 
-                          zIndex: 100
-                        }}
-                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        style={{ 
-                          position: 'absolute',
-                          width: '132px',
-                          height: '86px',
-                          left: '50%',
-                          top: '50%',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          zIndex: i,
-                          pointerEvents: 'auto'
-                        }}
-                      >
-                         <AthleteCardComponent 
-                            card={card} 
-                            size="small" 
-                            faceDown={false}
-                            variant="away"
-                         />
-                      </motion.div>
-                    );
-                  })}
-              </AnimatePresence>
-              <div className="absolute top-[-40px] left-1/2 -translate-x-1/2 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold whitespace-nowrap">
-                   OPP HAND: {gameState.aiAthleteHand.length}
-              </div>
-            </div>
-         </div>
-        </div>
+        <AthleteCardGroup
+          cards={gameState.aiAthleteHand}
+          selectedCard={null}
+          setupStep={setupStep}
+          phase={gameState.phase}
+          onCardSelect={() => {}}
+          position="top"
+        />
       )}
 
       {/* 3. HUD Layer - Bottom (Player) */}

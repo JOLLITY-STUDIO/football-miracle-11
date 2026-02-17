@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { ImmediateEffectType } from '../data/cards';
+import clsx from 'clsx';
 
 interface Props {
   effect: ImmediateEffectType;
@@ -103,31 +104,91 @@ export const SkillEffectBadge: React.FC<Props> = ({
       transition={{ type: 'spring', stiffness: 500 }}
       whileHover={{ scale: 1.1 }}
     >
+      {/* Glow Effect */}
+      <motion.div
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.6, 0.3]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="absolute inset-0 rounded-full"
+        style={{
+          backgroundColor: info.color,
+          filter: 'blur(10px)',
+          pointerEvents: 'none'
+        }}
+      />
+      
       <div
         className={clsx(
           "rounded-full flex items-center justify-center border-2 shadow-lg",
           sizeClasses[size].container
         )}
         style={{
-          backgroundColor: '#ffffff', // 统一为纯白底�?          borderColor: info.color
+          backgroundColor: '#ffffff',
+          borderColor: info.color,
+          boxShadow: `0 0 15px ${info.color}40`,
+          position: 'relative',
+          overflow: 'hidden'
         }}
         title={info.description}
       >
-        <span className={sizeClasses[size].icon}>{info.icon}</span>
+        {/* Sparkle Effect */}
+        <motion.div
+          animate={{
+            opacity: [0.2, 0.5, 0.2]
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent 50%)`,
+            pointerEvents: 'none'
+          }}
+        />
+        
+        <motion.span 
+          className={sizeClasses[size].icon}
+          animate={{
+            scale: [1, 1.1, 1],
+            rotate: [0, 5, 0]
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          {info.icon}
+        </motion.span>
       </div>
+      
       {showLabel && (
-        <span
+        <motion.span
           className={clsx("font-bold leading-none", sizeClasses[size].label)}
           style={{ color: info.color }}
+          animate={{
+            y: [0, -2, 0]
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
         >
           {info.label}
-        </span>
+        </motion.span>
       )}
     </motion.div>
   );
 };
-
-import clsx from 'clsx';
 
 export default SkillEffectBadge;
 

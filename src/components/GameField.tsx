@@ -159,7 +159,7 @@ const GameField: React.FC<GameFieldProps> = ({
             left: 0,
             width: '100%',
             height: '100%',
-            transform: 'rotateX(-20deg) scale(1)',
+            transform: 'scale(1)',
             transformStyle: 'preserve-3d',
             pointerEvents: 'auto', // This layer captures all clicks
             zIndex: 1000, // Highest z-index - above everything
@@ -285,19 +285,19 @@ const GameField: React.FC<GameFieldProps> = ({
                         key={`${halfId}-card-${zone.zone}-${colIdx}`}
                         className={clsx("absolute transform-style-3d backface-hidden")}
                         style={{
-                          left: `${cellX}px`,
-                          top: `${cellY}px`,
-                          width: `${CELL_WIDTH * 2}px`,
-                          height: `${CELL_HEIGHT}px`,
-                          transform: `rotateX(-20deg) rotate(${zoneHalfConfig.display.cardRotation}deg) translateZ(1px)`,
-                          transformOrigin: 'center center',
-                          filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
-                          zIndex: 300,
-                          pointerEvents: 'auto',
-                          margin: 0,
-                          padding: 0,
-                          boxSizing: 'border-box'
-                        }}
+                    left: `${cellX}px`,
+                    top: `${cellY}px`,
+                    width: `${CELL_WIDTH * 2}px`,
+                    height: `${CELL_HEIGHT}px`,
+                    transform: `rotate(${zoneHalfConfig.display.cardRotation}deg) translateZ(1px)`,
+                    transformOrigin: 'center center',
+                    filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
+                    zIndex: 300,
+                    pointerEvents: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    boxSizing: 'border-box'
+                  }}
                       >
                          <motion.div
                            initial={false}
@@ -328,13 +328,56 @@ const GameField: React.FC<GameFieldProps> = ({
                               onClick={() => onCardClick?.(card)}
                             />
 
-                            {/* Summon Effect (Flash) */}
-                            <motion.div
-                              initial={{ opacity: 0.8, scale: 1.2 }}
-                              animate={{ opacity: 0, scale: 1.5 }}
-                              transition={{ duration: 0.6, ease: "easeOut" }}
-                              className="absolute inset-0 bg-white pointer-events-none mix-blend-overlay z-50"
-                            />
+                            {/* Anime-style Summon Effect */}
+                            <>
+                              {/* Flash Effect */}
+                              <motion.div
+                                initial={{ opacity: 0.8, scale: 1.2 }}
+                                animate={{ opacity: 0, scale: 1.5 }}
+                                transition={{ duration: 0.6, ease: "easeOut" }}
+                                className="absolute inset-0 bg-white pointer-events-none mix-blend-overlay z-50"
+                              />
+                              
+                              {/* Summon Circles */}
+                              {[...Array(3)].map((_, i) => (
+                                <motion.div
+                                  key={`circle-${i}`}
+                                  initial={{ opacity: 1, scale: 0 }}
+                                  animate={{ opacity: 0, scale: 2 + i }}
+                                  transition={{ 
+                                    duration: 0.8, 
+                                    delay: i * 0.1,
+                                    ease: "easeOut" 
+                                  }}
+                                  className="absolute inset-0 rounded-full border-2 border-white/60 pointer-events-none mix-blend-overlay z-40"
+                                />
+                              ))}
+                              
+                              {/* Sparkle Particles */}
+                              {[...Array(12)].map((_, i) => (
+                                <motion.div
+                                  key={`sparkle-${i}`}
+                                  initial={{ 
+                                    opacity: 1, 
+                                    scale: 0, 
+                                    x: '50%', 
+                                    y: '50%'
+                                  }}
+                                  animate={{ 
+                                    opacity: 0, 
+                                    scale: 1, 
+                                    x: `${50 + (Math.random() - 0.5) * 100}%`, 
+                                    y: `${50 + (Math.random() - 0.5) * 100}%`
+                                  }}
+                                  transition={{ 
+                                    duration: 0.8, 
+                                    delay: i * 0.05,
+                                    ease: "easeOut" 
+                                  }}
+                                  className="absolute w-2 h-2 bg-white rounded-full pointer-events-none mix-blend-overlay z-40"
+                                />
+                              ))}
+                            </>
 
                             {/* Shot Markers (Black Tokens) - Floating above card */}
                             {(slot.shotMarkers || 0) > 0 && (
@@ -378,14 +421,14 @@ const GameField: React.FC<GameFieldProps> = ({
                         key={`preview-${zone.zone}-${colIdx}`}
                         className={clsx("absolute left-0 top-0 pointer-events-none transform-style-3d backface-hidden flex items-center justify-center opacity-80")}
                         style={{
-                          left: `${startCol * CELL_WIDTH}px`,
-                          top: `${cellY}px`,
-                          width: `${CELL_WIDTH * 2}px`,
-                          height: `${CELL_HEIGHT}px`,
-                          transform: `rotateX(-20deg) rotate(${zoneHalfConfig.display.cardRotation}deg) translateZ(1px)`,
-                          transformOrigin: 'center center',
-                          zIndex: 15
-                        }}
+                    left: `${startCol * CELL_WIDTH}px`,
+                    top: `${cellY}px`,
+                    width: `${CELL_WIDTH * 2}px`,
+                    height: `${CELL_HEIGHT}px`,
+                    transform: `rotate(${zoneHalfConfig.display.cardRotation}deg) translateZ(1px)`,
+                    transformOrigin: 'center center',
+                    zIndex: 15
+                  }}
                       >
                         {selectedCard && (
                           <AthleteCardComponent

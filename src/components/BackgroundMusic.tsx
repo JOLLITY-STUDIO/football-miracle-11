@@ -1,14 +1,57 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '../utils/logger';
 
-// Default BGM playlist
+// BGM playlist - includes all available tracks from the bgm directory
+// This list is manually maintained to ensure compatibility and reliability
 const PLAYLIST: string[] = [
+  // Modern Pitch tracks
   'Give_Me_Hope_-_Modern_Pitch.mp3',
-  'Answer_-_Square_a_Saw.mp3',
-  'Around_The_Corner_-_Infraction.mp3',
   'Boys,_Girls,_Toys_&_Words_-_Modern_Pitch.mp3',
   'These_Nights_-_Modern_Pitch.mp3',
+  
+  // Square a Saw tracks
+  'Answer_-_Square_a_Saw.mp3',
+  'Lover_-_Square_a_Saw.mp3',
+  
+  // Infraction tracks
+  'Around_The_Corner_-_Infraction.mp3',
+  
+  // Other tracks
+  'Baldych_-_Lunar_Path_-_Tunguska_Chillout_Grooves_vol.1.mp3',
+  'Blind_girl_(feat._Dia_Yiannopoulou)_-_zero-project.mp3',
+  'Color_Out_-_Host.mp3',
+  'Energy_-_Pokki_DJ_(2).mp3',
+  'Fallen_Star_-_AJC_amp_The_Envelope_Pushers.mp3',
+  'Fire_-_Seth_Power_(2).mp3',
+  'For_Your_Love_(feat._Rashani)_-_Jonay.mp3',
+  'House_of_Gold_-_Stephen_Keaney_(5).mp3',
+  'I\'d_Do_Anything_You_Wanted_-_Lower_Loveday.mp3',
+  'In_Tune_-_Kellee_Maize.mp3',
+  'Je_l\'aime_-_Law\'.mp3',
+  'King_Gizzard_&amp;_the_Lizard_Wizard_-_Deserted_Dunes_Welcome_Weary_Feet_-_Jamendo_Music_(2).mp3',
+  'Les_files_d\'attente_-_Law\'.mp3',
+  'Les_saisons_-_Law\'.mp3',
+  'Madly,_Deeply_(Acoustic)_-_melanieungar.mp3',
+  'Madly,_Deeply_-_melanieungar.mp3',
+  'Mon_mâle_original_-_Law\'.mp3',
+  'Mère_nature_-_Law\'.mp3',
+  'No_Prayers_-_Pokki_DJ_(2).mp3',
+  'ON_SALE_-_Golden_Duck_Orchestra.mp3',
+  'Peyote_-_Kinematic.mp3',
+  'Run_Like_Fire_-_Rasmus_Soderberg.mp3',
+  'Show_Me_-_AIRE.mp3',
+  'Sorry_-_Kavi_and_Travis_Music_Experience.mp3',
+  'Talons_aiguilles_-_Law\'.mp3',
+  'Terre_de_couleurs_-_Law\'.mp3',
+  'The_Soundtrack_Of_Our_Summer_-_theleague.mp3',
+  'The_Way_Of_Life_-_Rasmus_Soderberg.mp3',
+  'Une_étincelle_-_Law\'.mp3',
+  'Vicate_-_Christmas_Lofi_Chill.mp3',
+  'beautiful_-_Secret_Ocean.mp3'
 ];
+
+// Log playlist size for debugging
+console.log('BGM Playlist size:', PLAYLIST.length);
 
 // Function to get a safe track name
 const getSafeTrack = (track: string): string => {
@@ -111,9 +154,15 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
   }, []);
 
   const playNextTrack = useCallback(() => {
-    const nextTrack = pickRandomTrack(currentTrack);
-    setCurrentTrack(nextTrack);
-    // The useEffect listening to currentTrack will trigger the play
+    let nextTrack = pickRandomTrack(currentTrack);
+    // Ensure we get a valid track
+    if (!nextTrack && PLAYLIST.length > 0) {
+      nextTrack = PLAYLIST[Math.floor(Math.random() * PLAYLIST.length)];
+    }
+    if (nextTrack) {
+      setCurrentTrack(nextTrack);
+      // The useEffect listening to currentTrack will trigger the play
+    }
   }, [currentTrack, pickRandomTrack]);
 
   useEffect(() => {

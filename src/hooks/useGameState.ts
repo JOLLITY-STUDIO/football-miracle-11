@@ -50,7 +50,13 @@ export const useGameState = (
     if (playerTeam) {
       return createInitialState(playerTeam.starters, playerTeam.substitutes, playerTeam.initialField);
     }
-    return createInitialState();
+    const initialState = createInitialState();
+    // Quick Start mode: start with coin toss phase for rock paper scissors
+    return {
+      ...initialState,
+      phase: 'coinToss',
+      message: 'Choose your weapon!'
+    };
   });
 
   const dispatch = useCallback((action: GameAction) => {
@@ -104,18 +110,35 @@ export const useGameState = (
     // 检查是否可以放置卡牌
     const canDoAction = (gameState.turnPhase === 'athleteAction' || 
                           gameState.skipTeamAction || 
-                          gameState.turnPhase === 'teamAction' || 
                           (gameState.isFirstTurn && gameState.turnPhase === 'start')) && 
                           gameState.currentTurn === 'player';
     
     const canPlace = canDoAction && (gameState.currentAction === 'none' || gameState.currentAction === 'organizeAttack');
     
+    console.log('🔍 handleSlotClick validation:', {
+      canDoAction,
+      canPlace,
+      turnPhase: gameState.turnPhase,
+      skipTeamAction: gameState.skipTeamAction,
+      currentTurn: gameState.currentTurn,
+      currentAction: gameState.currentAction,
+      selectedCard: gameState.selectedCard?.nickname
+    });
+    
     if (!canPlace) {
+      const errorMessage = gameState.turnPhase === 'teamAction' 
+        ? 'Must complete Team Action first!' 
+        : 'Cannot place card at this time';
+      
+      console.log('❌ Placement rejected:', errorMessage, {
+        currentAction: gameState.currentAction,
+        canDoAction,
+        canPlace
+      });
+      
       setGameState(prev => ({ 
         ...prev, 
-        message: gameState.turnPhase === 'teamAction' 
-          ? 'Must complete Team Action first!' 
-          : 'Cannot place card at this time' 
+        message: errorMessage 
       }));
       playSound('error');
       return;

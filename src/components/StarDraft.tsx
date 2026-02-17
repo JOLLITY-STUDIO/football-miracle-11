@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { athleteCard } from '../data/cards';
 import type { Team } from '../data/teams';
 import { getStarCardsForDraft, shuffleArray } from '../data/teams';
+import { AthleteCardComponent } from './AthleteCard';
 
 interface StarDraftProps {
   team: Team;
@@ -64,24 +65,26 @@ export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) =
           <h2>Draft Complete!</h2>
           <div className="result-section">
             <h3>Your Star Players ({playerDrafted.length})</h3>
-            <div className="drafted-cards">
+            <div className="drafted-cards" style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
               {playerDrafted.map(card => (
-                <div key={card.id} className="draft-card star-card">
-                  <div className="card-name">{card.realName}</div>
-                  <div className="card-position">{card.positionLabel}</div>
-                  <div className="card-stats">ATK:{card.attack} DEF:{card.defense}</div>
+                <div key={card.id}>
+                  <AthleteCardComponent 
+                    card={card} 
+                    size="small"
+                  />
                 </div>
               ))}
             </div>
           </div>
           <div className="result-section">
             <h3>AI Star Players ({aiDrafted.length})</h3>
-            <div className="drafted-cards">
+            <div className="drafted-cards" style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
               {aiDrafted.map(card => (
-                <div key={card.id} className="draft-card star-card-ai">
-                  <div className="card-name">{card.realName}</div>
-                  <div className="card-position">{card.positionLabel}</div>
-                  <div className="card-stats">ATK:{card.attack} DEF:{card.defense}</div>
+                <div key={card.id}>
+                  <AthleteCardComponent 
+                    card={card} 
+                    size="small"
+                  />
                 </div>
               ))}
             </div>
@@ -118,26 +121,19 @@ export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) =
       ) : (
         <div className="draft-options">
           <h3>Choose one star player:</h3>
-          <div className="options-grid">
+          <div className="options-grid" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
             {currentOptions.map(card => (
               <div 
                 key={card.id} 
-                className="draft-option star-card"
                 onClick={() => handlePlayerPick(card)}
+                style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >
-                <div className="card-badge">тн?STAR</div>
-                <div className="card-name">{card.realName}</div>
-                <div className="card-position">{card.positionLabel}</div>
-                <div className="card-type">{card.type}</div>
-                <div className="card-stats">
-                  <span className="stat-atk">ATK: {card.attack}</span>
-                  <span className="stat-def">DEF: {card.defense}</span>
-                </div>
-                <div className="card-icons">
-                  {card.icons.map((icon, i) => (
-                    <span key={i} className="icon-badge">{icon}</span>
-                  ))}
-                </div>
+                <AthleteCardComponent 
+                  card={card} 
+                  size="medium"
+                />
               </div>
             ))}
           </div>
@@ -147,10 +143,13 @@ export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) =
       <div className="drafted-preview">
         <div className="preview-section">
           <h4>Your Stars</h4>
-          <div className="preview-cards">
+          <div className="preview-cards" style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
             {playerDrafted.map(card => (
-              <div key={card.id} className="preview-card">
-                {card.realName}
+              <div key={card.id}>
+                <AthleteCardComponent 
+                  card={card} 
+                  size="tiny"
+                />
               </div>
             ))}
           </div>
@@ -159,4 +158,3 @@ export const StarDraft: React.FC<StarDraftProps> = ({ team, onDraftComplete }) =
     </div>
   );
 };
-

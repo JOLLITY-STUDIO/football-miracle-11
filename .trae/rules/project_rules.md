@@ -148,4 +148,5 @@ Sound design multimedia Chime
 每次修改完代码，先更新版本号，同步版本号和更新的内容到，主动更新bug tracking.md文件。这份文件不仅仅是修改bug，而是所有版本内容变更都要记录。并自行提交到github
 
 非必要不使用弹窗，使用蒙版。
-不要自己npm run dev。
+不要自己npm run dev。除非是我要求的。
+图标排版遵循二八定律,不如背面图片的排版。

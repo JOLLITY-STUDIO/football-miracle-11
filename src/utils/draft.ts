@@ -7,16 +7,16 @@ export const startDraftRound = (state: GameState): GameState => {
   let draftPool: athleteCard[];
   switch (state.selectedDraftDeck) {
     case 'star':
-      draftPool = [...starathleteCards];
+      draftPool = [...state.starCardDeck];
       break;
     case 'home':
-      draftPool = [...baseathleteCards.filter(card => card.id.startsWith('H')), ...starathleteCards];
+      draftPool = [...state.homeCardDeck, ...state.starCardDeck];
       break;
     case 'away':
-      draftPool = [...baseathleteCards.filter(card => card.id.startsWith('A')), ...starathleteCards];
+      draftPool = [...state.awayCardDeck, ...state.starCardDeck];
       break;
     default:
-      draftPool = [...starathleteCards];
+      draftPool = [...state.starCardDeck];
   }
 
   // 从选择的卡组中随机选择3张卡片，过滤掉已经选择和丢弃的卡片
@@ -68,6 +68,20 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
     const isAlreadyInHand = state.playerAthleteHand.some(c => c.id === selectedCard.id);
     const newPlayerHand = isAlreadyInHand ? state.playerAthleteHand : [...state.playerAthleteHand, selectedCard];
     
+    // Remove selected card from the corresponding deck
+    let newStarCardDeck = [...state.starCardDeck];
+    let newHomeCardDeck = [...state.homeCardDeck];
+    let newAwayCardDeck = [...state.awayCardDeck];
+    
+    // Check which deck the card came from and remove it
+    if (newStarCardDeck.some(card => card.id === selectedCard.id)) {
+      newStarCardDeck = newStarCardDeck.filter(card => card.id !== selectedCard.id);
+    } else if (newHomeCardDeck.some(card => card.id === selectedCard.id)) {
+      newHomeCardDeck = newHomeCardDeck.filter(card => card.id !== selectedCard.id);
+    } else if (newAwayCardDeck.some(card => card.id === selectedCard.id)) {
+      newAwayCardDeck = newAwayCardDeck.filter(card => card.id !== selectedCard.id);
+    }
+    
     // If player picks first (starting from draftStep=1), after player picks it's AI's turn
     // If AI picked first then player picks (starting from draftStep=1 but AI already picked), after player pick go to discard phase
     const isPlayerFirst = state.draftStep === 1 && state.availableDraftCards.length === 3; // When player picks first, starts with 3 cards
@@ -79,6 +93,9 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
         ...state,
         playerAthleteHand: newPlayerHand,
         availableDraftCards: remainingCards,
+        starCardDeck: newStarCardDeck,
+        homeCardDeck: newHomeCardDeck,
+        awayCardDeck: newAwayCardDeck,
         draftStep: 2, // AI选择阶段
         message: `You selected ${selectedCard.name}. AI is choosing...`
       };
@@ -88,6 +105,9 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
         ...state,
         playerAthleteHand: newPlayerHand,
         availableDraftCards: remainingCards,
+        starCardDeck: newStarCardDeck,
+        homeCardDeck: newHomeCardDeck,
+        awayCardDeck: newAwayCardDeck,
         draftStep: 3, // Discard phase
         message: `You selected ${selectedCard.name}. Discarding remaining card...`
       };
@@ -97,6 +117,9 @@ export const pickDraftCard = (state: GameState, cardIndex: number): GameState =>
         ...state,
         playerAthleteHand: newPlayerHand,
         availableDraftCards: remainingCards,
+        starCardDeck: newStarCardDeck,
+        homeCardDeck: newHomeCardDeck,
+        awayCardDeck: newAwayCardDeck,
         draftStep: 2, // AI selection phase
         message: `You selected ${selectedCard.name}. AI is choosing...`
       };
@@ -171,17 +194,20 @@ export const discardDraftCard = (state: GameState): GameState => {
       const playerSubstitutes = playerCards.slice(10); // Remaining as substitutes
       
       return {
-        ...state,
-        availableDraftCards: [],
-        discardedDraftCards: newDiscardedDraftCards,
-        aiAthleteHand: aiStarters,
-        aiBench: aiSubstitutes,
-        playerAthleteHand: playerStarters,
-        playerBench: playerSubstitutes,
-        phase: 'squadSelection',
-        draftStep: 0,
-        message: 'Draft complete! Now set your squad.'
-      };
+    ...state,
+    availableDraftCards: [],
+    discardedDraftCards: newDiscardedDraftCards,
+    aiAthleteHand: aiStarters,
+    aiBench: aiSubstitutes,
+    playerAthleteHand: playerStarters,
+    playerBench: playerSubstitutes,
+    starCardDeck: [], // Clear remaining star cards after draft
+    homeCardDeck: [], // Clear remaining home cards after draft
+    awayCardDeck: [], // Clear remaining away cards after draft
+    phase: 'squadSelection',
+    draftStep: 0,
+    message: 'Draft complete! Now set your squad.'
+  };
     }
   
   // Proceed to next draft round
@@ -221,17 +247,20 @@ export const discardDraftCard = (state: GameState): GameState => {
     const playerSubstitutes = playerCards.slice(10); // Remaining as substitutes
     
     return {
-      ...state,
-      availableDraftCards: [],
-      discardedDraftCards: newDiscardedDraftCards,
-      aiAthleteHand: aiStarters,
-      aiBench: aiSubstitutes,
-      playerAthleteHand: playerStarters,
-      playerBench: playerSubstitutes,
-      phase: 'squadSelection',
-      draftStep: 0,
-      message: 'Draft complete! Now set your squad.'
-    };
+    ...state,
+    availableDraftCards: [],
+    discardedDraftCards: newDiscardedDraftCards,
+    aiAthleteHand: aiStarters,
+    aiBench: aiSubstitutes,
+    playerAthleteHand: playerStarters,
+    playerBench: playerSubstitutes,
+    starCardDeck: [], // Clear remaining star cards after draft
+    homeCardDeck: [], // Clear remaining home cards after draft
+    awayCardDeck: [], // Clear remaining away cards after draft
+    phase: 'squadSelection',
+    draftStep: 0,
+    message: 'Draft complete! Now set your squad.'
+  };
   }
   
   // Draft order alternates: Round 1 - Away picks first, Round 2 - Home picks first, Round 3 - Away picks first

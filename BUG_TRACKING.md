@@ -200,6 +200,160 @@
   - 下一曲按钮现在显示正确的图标
   - 用户体验得到改善
 
+### BUG-2026-02-18-014: Cannot Place Cards on Field
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 游戏逻辑，卡牌放置
+- **相关文件**:
+  - `src/hooks/useGameState.ts`
+- **问题描述**: Players were unable to place cards on the field, even during the athlete action phase.
+- **根本原因**: The `handleSlotClick` function in `useGameState.ts` was allowing card placement during the team action phase, but the `gameReducer` was rejecting it because the team action phase's `allowPlaceCard` configuration was set to false, causing inconsistency in validation logic.
+- **修复方案**: Updated the `canDoAction` calculation in `useGameState.ts` to remove the team action phase from the allowed phases for card placement, ensuring consistency with the game reducer's validation logic.
+- **版本**: 0.2.54
+- **Git提交**: N/A
+- **影响分析**:
+  - Players can now properly place cards during the athlete action phase
+  - The validation logic is now consistent across the codebase
+  - The game flow is more predictable
+
+### BUG-2026-02-18-015: Star Card Preview Using Basic Display
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: UI设计，明星卡预览
+- **相关文件**:
+  - `src/components/StarDraft.tsx`
+- **问题描述**: The StarDraft component was using basic div elements to display star cards instead of the AthleteCardComponent, resulting in inconsistent card display across the application.
+- **根本原因**: 明星卡预览页面没有使用统一的选手卡组件
+- **修复方案**: Updated the StarDraft component to use AthleteCardComponent for displaying star cards in all sections: card selection options, drafted player stars, and AI drafted stars, ensuring consistent card display across the application.
+- **版本**: 0.2.55
+- **Git提交**: N/A
+- **影响分析**:
+  - Star cards now use the same AthleteCardComponent as other card displays
+  - Visual consistency is improved across the application
+  - User experience is enhanced with better card previews
+
+### BUG-2026-02-18-016: Background Music Random Play Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 音频系统，用户体验
+- **相关文件**:
+  - `src/components/BackgroundMusic.tsx`
+- **问题描述**: Background music was not playing randomly across all available tracks, and sometimes stopped when clicking the next track button.
+- **根本原因**: 1) The playlist only contained 5 tracks instead of all available songs in the bgm directory, 2) The playNextTrack function didn't properly handle cases where no valid track was returned.
+- **修复方案**: 1) Implemented automatic playlist generation using Vite's glob import to include all mp3 files from the bgm directory, 2) Improved the playNextTrack function to ensure it always gets a valid track by falling back to a random track from the full playlist if needed.
+- **版本**: 0.2.56
+- **Git提交**: N/A
+- **影响分析**:
+  - Background music now randomly plays across all available tracks (40+ songs)
+  - The next track button now reliably selects a new random track without stopping playback
+  - Playlist automatically updates when new songs are added to the bgm directory
+
+### BUG-2026-02-18-017: Static Background Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: UI设计，用户体验
+- **相关文件**:
+  - `src/components/GameBoard.tsx`
+- **问题描述**: The main game interface background was static and lacked dynamic elements.
+- **根本原因**: 背景层没有动画效果，视觉效果单调。
+- **修复方案**: Added dynamic background effects including star floating animation, nebula flow animation, and grid scrolling animation to create a more immersive visual experience.
+- **版本**: 0.2.57
+- **Git提交**: N/A
+- **影响分析**:
+  - Game interface now has dynamic background effects
+  - Visual immersion is enhanced
+  - User experience is improved with subtle animations
+
+### BUG-2026-02-18-019: Static Visual Effects Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: UI设计，用户体验
+- **相关文件**:
+  - `src/components/DuelOverlay.tsx`
+  - `src/components/SynergyCard.tsx`
+  - `src/components/SkillEffectBadge.tsx`
+  - `src/components/BenchArea.tsx`
+  - `src/components/PhaseBanner.tsx`
+  - `src/components/FeedbackOverlay.tsx`
+- **问题描述**: The game lacked anime-style dynamic visual effects for key actions and events.
+- **根本原因**: 游戏中的关键操作和事件缺少动漫风格的视觉效果。
+- **修复方案**: Implemented anime-style visual effects including enhanced shot duel animations, synergy card flip effects, skill activation effects, substitution animations, and turn transition animations to create a more immersive and visually engaging experience.
+- **版本**: 0.2.58
+- **Git提交**: N/A
+- **影响分析**:
+  - Game now features anime-style dynamic visual effects
+  - Key actions and events are more visually engaging
+  - User experience is enhanced with immersive animations
+  - Visual feedback is more immediate and satisfying
+
+### BUG-2026-02-18-018: Ambient Sound Playback on Game Start
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 音频系统，用户体验
+- **相关文件**:
+  - `src/components/GameBoard.tsx`
+- **问题描述**: Ambient sounds were playing immediately when entering the main game interface, even before the match started.
+- **根本原因**: The GameBoard component was starting ambient sounds on initial mount if the game state was already in a match phase.
+- **修复方案**: Updated the ambient sound control logic to track component mount status and only play ambient sounds for phase changes after initial mount, removing the automatic ambient sound start for match phases.
+- **版本**: 0.2.58
+- **Git提交**: N/A
+- **影响分析**:
+  - Ambient sounds no longer play immediately when entering the game interface
+  - Audio experience is more controlled
+  - User experience is improved with more appropriate sound timing
+
+### BUG-2026-02-18-020: Inconsistent Highlight and Click Logic
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 游戏逻辑，卡牌放置，用户体验
+- **相关文件**:
+  - `src/components/CenterField.tsx`
+  - `src/components/GameBoard.tsx`
+- **问题描述**: Field highlights were showing valid placement positions, but clicking on them was not allowing card placement due to inconsistent validation logic between highlight display and click handling.
+- **根本原因**: The `canPlaceCards` calculation in `CenterField.tsx` was missing the `skipTeamAction` condition, while the `handleSlotClick` function in `useGameState.ts` included this condition, causing inconsistency in validation logic.
+- **修复方案**: Updated `CenterField.tsx` to include the `skipTeamAction` parameter and modify the `canDoAction` calculation to match the logic in `useGameState.ts`, ensuring consistency between highlight display and click handling.
+- **版本**: 0.2.59
+- **Git提交**: N/A
+- **影响分析**:
+  - Field highlights now accurately reflect clickable positions
+  - Card placement now works consistently when highlights are shown
+  - User experience is improved with more predictable interaction
+  - Validation logic is now consistent across the codebase
+
+### BUG-2026-02-18-021: Incorrect skipTeamAction Reset
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 游戏逻辑，回合管理，卡牌放置
+- **相关文件**:
+  - `src/utils/endTurn.ts`
+- **问题描述**: The `skipTeamAction` flag was being incorrectly reset to `false` at the start of every turn, causing the game to enter the team action phase even when there were no pass/press icons on the field.
+- **根本原因**: The `performEndTurn` function was hardcoding `skipTeamAction: false` for every new turn, ignoring the actual game state and placement rules.
+- **修复方案**: Updated `performEndTurn` to use `TurnPhaseService.shouldSkipTeamAction` to determine if team action should be skipped for the new turn, ensuring the game properly skips the team action phase when there are no pass/press icons on the field.
+- **版本**: 0.2.60
+- **Git提交**: N/A
+- **影响分析**:
+  - Game now properly skips team action phase when no pass/press icons are available
+  - Card placement is now possible immediately after turn start when team action is skipped
+  - Game flow is more consistent with the rules
+  - User experience is improved with more predictable turn progression
+
+### BUG-2026-02-18-022: Incorrect skipTeamAction in FINISH_SQUAD_SELECT
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 游戏逻辑，回合管理，卡牌放置
+- **相关文件**:
+  - `src/game/gameLogic.ts`
+- **问题描述**: The `skipTeamAction` flag was being hardcoded to `false` when entering the firstHalf phase, causing the game to enter the team action phase even when there were no pass/press icons on the field.
+- **根本原因**: The `FINISH_SQUAD_SELECT` case was hardcoding `skipTeamAction: false` and not properly updating it based on the actual game state.
+- **修复方案**: Updated `FINISH_SQUAD_SELECT` case to use `TurnPhaseService.shouldSkipTeamAction` to determine if team action should be skipped, ensuring consistent game state management when entering the match from the squad selection phase.
+- **版本**: 0.2.61
+- **Git提交**: N/A
+- **影响分析**:
+  - Game now properly skips team action phase at match start when no pass/press icons are available
+  - Card placement is now possible immediately at match start when team action is skipped
+  - Game flow is more consistent with the rules
+  - User experience is improved with more predictable match start behavior
+
 ## Current Status
 - ✅ Draft system now properly tracks AI-selected cards
 - ✅ AI now has both starters in hand and substitutes on the bench
@@ -215,6 +369,15 @@
 - ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
 ## Version History
+- **0.2.63**: Removed preview deck phase after card dealing, streamlining the draft process to start immediately with shuffling
+- **0.2.62**: [Previous version changes]
+- **0.2.61**: Fixed incorrect skipTeamAction in FINISH_SQUAD_SELECT by updating it to use TurnPhaseService.shouldSkipTeamAction for determining if team action should be skipped at match start
+- **0.2.60**: Fixed incorrect skipTeamAction reset by updating performEndTurn to use TurnPhaseService.shouldSkipTeamAction for determining if team action should be skipped, ensuring proper game flow when no pass/press icons are available
+- **0.2.59**: Fixed inconsistent highlight and click logic by updating CenterField.tsx to include skipTeamAction parameter and ensure validation logic consistency with useGameState.ts
+- **0.2.58**: Fixed ambient sound playback issue by updating GameBoard component to not play ambient sounds immediately when entering the main game interface
+- **0.2.57**: Added dynamic background effects including star floating animation, nebula flow animation, and grid scrolling animation
+- **0.2.55**: Updated StarDraft component to use AthleteCardComponent for displaying star cards, ensuring consistent card display across the application
+- **0.2.54**: Fixed issue where players couldn't place cards on the field by ensuring consistency in validation logic between useGameState and gameReducer
 - **0.2.53**: Added unique IDs for synergy card decks (synergyDeckId, synergyDiscardId) to ensure proper identification and management
 - **0.2.52**: Added unique IDs for all card decks (starCardDeckId, homeCardDeckId, awayCardDeckId) to ensure proper identification and management
 - **0.2.51**: Added CardDeck and CardDeckManager components for unified deck display system, showing home, away, and star decks with consistent visual design

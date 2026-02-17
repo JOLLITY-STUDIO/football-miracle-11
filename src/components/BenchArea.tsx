@@ -41,17 +41,40 @@ export const BenchArea: React.FC<Props> = ({
               {[...displayAiBench].reverse().map((card, index) => (
                 <motion.div
                   key={card.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="relative transform scale-90 origin-center"
+                  initial={{ opacity: 0, x: 20, scale: 0.8, rotate: 10 }}
+                  animate={{ opacity: 1, x: 0, scale: 0.9, rotate: 0 }}
+                  exit={{ opacity: 0, x: -20, scale: 0.8, rotate: -10 }}
+                  transition={{ 
+                    delay: index * 0.1,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20
+                  }}
+                  className="relative transform origin-center"
                 >
                   <AthleteCardComponent
                     card={card}
                     size="tiny"
                     variant="away"
                     faceDown={false} 
+                  />
+                  {/* Anime-style Glow Effect */}
+                  <motion.div
+                    animate={{
+                      scale: [0.9, 1.1, 0.9],
+                      opacity: [0.2, 0.4, 0.2]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.3)',
+                      filter: 'blur(6px)',
+                      pointerEvents: 'none'
+                    }}
                   />
                 </motion.div>
               ))}
@@ -78,17 +101,47 @@ export const BenchArea: React.FC<Props> = ({
               {displayPlayerBench.map((card, index) => (
                 <motion.div
                   key={card.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="relative transform origin-center hover:scale-105 transition-transform"
+                  initial={{ opacity: 0, x: 20, scale: 0.8, rotate: -10 }}
+                  animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, x: -20, scale: 0.8, rotate: 10 }}
+                  transition={{ 
+                    delay: index * 0.1,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20
+                  }}
+                  className="relative transform origin-center group"
                   onClick={() => {
                     if (isPlayerTurn && playerSubstitutionsLeft > 0 && onPlayerBenchClick) {
                       onPlayerBenchClick(card);
                     }
                   }}
+                  whileHover={{ 
+                    scale: 1.1,
+                    rotate: [0, 2, 0],
+                    y: -5
+                  }}
+                  whileTap={{ scale: 0.95 }}
                 >
+                  {/* Anime-style Glow Effect */}
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      opacity: [0.2, 0.4, 0.2]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{
+                      backgroundColor: 'rgba(34, 197, 94, 0.3)',
+                      filter: 'blur(8px)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                  
                   <AthleteCardComponent
                     card={card}
                     size="tiny"
@@ -96,10 +149,26 @@ export const BenchArea: React.FC<Props> = ({
                     selected={selectedBenchCard?.id === card.id}
                     disabled={!isPlayerTurn || playerSubstitutionsLeft <= 0}
                   />
+                  
                   {isPlayerTurn && playerSubstitutionsLeft > 0 && (
-                     <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex items-center justify-center rounded transition-opacity cursor-pointer">
-                        <span className="text-white text-[0.6rem] font-bold uppercase tracking-wider border border-white px-1 rounded">SUB</span>
-                     </div>
+                    <motion.div 
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity cursor-pointer"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <motion.span 
+                        className="text-white text-[0.6rem] font-bold uppercase tracking-wider border border-white px-1 rounded"
+                        animate={{
+                          scale: [1, 1.1, 1]
+                        }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        SUB
+                      </motion.span>
+                    </motion.div>
                   )}
                 </motion.div>
               ))}

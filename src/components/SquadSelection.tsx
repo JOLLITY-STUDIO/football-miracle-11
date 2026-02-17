@@ -207,10 +207,12 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
   draftedStars,
   onComplete,
 }) => {
-  const [step, setStep] = useState<'select' | 'formation'>('select');
+  const [step, setStep] = useState<'select' | 'formation' | 'animating'>('select');
   const allPlayers = [...team.basePlayers, ...draftedStars];
   const [selectedStarters, setSelectedStarters] = useState<athleteCard[]>([]);
   const [selectedSubstitutes, setSelectedSubstitutes] = useState<athleteCard[]>([]);
+  const [animatingSubstitutes, setAnimatingSubstitutes] = useState<athleteCard[]>([]);
+  const [animationIndex, setAnimationIndex] = useState(0);
 
   const handleTogglePlayer = (player: athleteCard) => {
     const isStarter = selectedStarters.some(p => p.id === player.id);
@@ -250,6 +252,115 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
     if (selectedSubstitutes.some(p => p.id === player.id)) return 'substitute';
     return 'none';
   };
+
+  const handleStartAnimation = () => {
+    if (canComplete) {
+      setAnimatingSubstitutes(selectedSubstitutes);
+      setAnimationIndex(0);
+      setStep('animating');
+      
+      // Start animation sequence
+      const animateNext = () => {
+        setAnimationIndex(prev => {
+          const nextIndex = prev + 1;
+          if (nextIndex > selectedSubstitutes.length) {
+            // Animation complete, go to formation step
+            setTimeout(() => {
+              setStep('formation');
+            }, 500);
+            return prev;
+          }
+          // Animate next card
+          setTimeout(animateNext, 500);
+          return nextIndex;
+        });
+      };
+      
+      // Start the animation sequence
+      setTimeout(animateNext, 500);
+    }
+  };
+
+  if (step === 'animating') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        {/* Backdrop with blur */}
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+        {/* Animation Content */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative z-10 w-full max-w-4xl bg-gradient-to-br from-stone-900 to-black p-8 rounded-xl border border-stone-700"
+        >
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Placing Substitutes</h2>
+          
+          <div className="flex flex-col items-center gap-8">
+            {/* Animation Area */}
+            <div className="relative w-full h-64 bg-stone-800/50 rounded-lg border border-stone-700/50 flex items-center justify-center">
+              {/* Substitute Bench */}
+              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-3/4 h-16 bg-stone-700 rounded-lg flex items-center justify-around">
+                <span className="text-xs text-stone-400">SUB BENCH</span>
+              </div>
+              
+              {/* Animating Cards */}
+              {animatingSubstitutes.map((sub, index) => {
+                const isAnimating = index < animationIndex;
+                const isComplete = index < animationIndex - 1;
+                
+                return (
+                  <motion.div
+                    key={sub.id}
+                    initial={{ y: -50, opacity: 0, x: Math.random() * 100 - 50 }}
+                    animate={{
+                      y: isComplete ? 0 : isAnimating ? [50, 0] : -50,
+                      opacity: isComplete ? 1 : isAnimating ? 1 : 0,
+                      x: isComplete ? index * 60 - 60 : Math.random() * 100 - 50,
+                      scale: isComplete ? 0.8 : 1
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      delay: isAnimating ? 0 : 0
+                    }}
+                    className={`absolute bottom-16 w-20 h-28 ${isComplete ? 'z-10' : 'z-20'}`}
+                  >
+                    <div className="w-full h-full bg-gradient-to-br from-stone-800 to-stone-900 rounded border border-stone-600 flex flex-col items-center justify-center shadow-lg">
+                      <span className="text-xl">{sub.isStar ? '⭐' : '👤'}</span>
+                      <span className="text-[10px] text-white text-center px-1 leading-tight mt-1">{sub.realName}</span>
+                      <span className="text-[9px] text-stone-400">SUB</span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+            
+            {/* Progress Indicator */}
+            <div className="w-full max-w-md">
+              <div className="flex justify-between text-sm text-stone-400 mb-2">
+                <span>Placing substitutes</span>
+                <span>{Math.min(animationIndex - 1, selectedSubstitutes.length)}/{selectedSubstitutes.length}</span>
+              </div>
+              <div className="w-full h-2 bg-stone-700 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${Math.min((animationIndex / selectedSubstitutes.length) * 100, 100)}%` }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full bg-green-500"
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  }
 
   if (step === 'formation') {
     return (
@@ -389,7 +500,7 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
           <div className="selection-actions">
             <button
               className={`confirm-btn ${canComplete ? 'enabled' : 'disabled'}`}
-              onClick={() => canComplete && onComplete(selectedStarters, selectedSubstitutes)}
+              onClick={handleStartAnimation}
               disabled={!canComplete}
             >
               {canComplete ? 'Start Match' : `Need ${10 - selectedStarters.length} starters and ${3 - selectedSubstitutes.length} substitutes`}

@@ -70,10 +70,10 @@ export const FieldInteractionLayer: React.FC<FieldInteractionLayerProps> = ({
   // Top half (zones 0-3) uses aiField
   const targetField = halfId === 'bottom' ? playerField : aiField;
 
-  // Check if this cell is occupied (simple and direct check)
+  // Check if this cell is occupied (check both slots for the card)
   const currentZone = targetField.find((z: any) => z.zone === zone);
   const isOccupied = currentZone?.slots.some((slot: any) => 
-    slot.position === colIdx && slot.athleteCard !== null
+    (slot.position === startColForPlacement || slot.position === startColForPlacement + 1) && slot.athleteCard !== null
   ) || false;
   
   // Debug logging before validation
@@ -102,7 +102,7 @@ export const FieldInteractionLayer: React.FC<FieldInteractionLayerProps> = ({
 
   // Validate placement (only if not occupied and not the second column of a card)
   let validationResult;
-  if (selectedCard && (canPlaceCards !== false) && halfConfig.interaction.interactive && !isOccupied) {
+  if (selectedCard && canPlaceCards && halfConfig.interaction.interactive && !isOccupied) {
     console.log('🔧 Calling CardPlacementService.validatePlacement with:', {
       selectedCard: selectedCard.nickname,
       targetField: targetField.map(z => ({ zone: z.zone, hasCards: z.slots.some((s: any) => s.athleteCard) })),

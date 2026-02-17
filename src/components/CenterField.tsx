@@ -34,6 +34,7 @@ interface Props {
     zoom: number;
     height: number;
   };
+  skipTeamAction?: boolean;
 }
 
 export const CenterField: React.FC<Props> = ({
@@ -60,10 +61,12 @@ export const CenterField: React.FC<Props> = ({
   onCompleteIconsCalculated,
   onIconClick,
   viewSettings = { pitch: 0, rotation: 0, zoom: 1, height: 0 },
+  skipTeamAction = false,
 }) => {
   // Calculate canPlaceCards based on game state
-  // Allow card placement in teamAction, athleteAction, and start phases
-  const canDoAction = (turnPhase === 'teamAction' || turnPhase === 'athleteAction' || turnPhase === 'start') && currentTurn === 'player';
+  // Allow card placement in athleteAction, start phases, or when team action is skipped
+  // Match the logic in useGameState.ts handleSlotClick function
+  const canDoAction = (turnPhase === 'athleteAction' || skipTeamAction || turnPhase === 'start') && currentTurn === 'player';
   const canPlaceCards = canDoAction && (currentAction === 'none' || currentAction === 'organizeAttack');
 
   // Calculate pitch dimensions from configuration
@@ -85,7 +88,7 @@ export const CenterField: React.FC<Props> = ({
         <FieldVisuals shootMode={shootMode} onCloseShootMode={onCloseShootMode} />
         
         {/* Game Field Content - Positioned inside the green area */}
-        <div className="absolute z-40 pointer-events-auto" style={{ 
+        <div className="absolute z-40 pointer-events-none" style={{ 
           top: `${FIELD_CONFIG.FIELD_PADDING}px`,
           left: `${FIELD_CONFIG.FIELD_PADDING}px`,
           width: `${PITCH_WIDTH}px`,

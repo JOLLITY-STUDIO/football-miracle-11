@@ -1089,11 +1089,27 @@ export const DuelOverlay: React.FC<DuelOverlayProps> = ({
               </div>
 
               <motion.div 
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 0.5, repeat: 3 }}
+                initial={{ scale: 0, opacity: 0, rotate: -10 }}
+                animate={{ 
+                  scale: [0, 1.2, 1],
+                  opacity: [0, 1, 1],
+                  rotate: [-10, 5, 0],
+                  filter: [
+                    'drop-shadow(0 0 20px rgba(255,255,255,0.8))',
+                    'drop-shadow(0 0 60px rgba(255,255,255,1))',
+                    'drop-shadow(0 0 40px rgba(255,255,255,0.6))'
+                  ]
+                }}
+                transition={{ 
+                  duration: 0.8, 
+                  ease: "easeOut"
+                }}
                 className={clsx(
-                  "text-9xl font-black italic tracking-tighter uppercase drop-shadow-[0_0_60px_rgba(255,255,255,0.5)]",
-                  (result === 'goal' || result === 'magicNumber') ? "text-yellow-400" : "text-gray-400"
+                  "text-9xl font-black italic tracking-tighter uppercase",
+                  result === 'goal' && "text-yellow-400 drop-shadow-[0_0_60px_rgba(255,215,0,0.8)]",
+                  result === 'magicNumber' && "text-purple-400 drop-shadow-[0_0_60px_rgba(168,85,247,0.8)]",
+                  result === 'saved' && "text-blue-400 drop-shadow-[0_0_60px_rgba(59,130,246,0.8)]",
+                  result === 'missed' && "text-gray-400 drop-shadow-[0_0_30px_rgba(156,163,175,0.5)]"
                 )}
               >
                 {result === 'goal' && "GOAL!"}
