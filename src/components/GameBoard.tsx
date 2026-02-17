@@ -15,6 +15,7 @@ import PhaseBanner from './PhaseBanner';
 import { RockPaperScissors } from './RockPaperScissors';
 import SquadSelect from './SquadSelect';
 import { CardDealer } from './CardDealer';
+import { CardDeckDisplay } from './CardDeckDisplay';
 import { DuelOverlay } from './DuelOverlay';
 import { MatchLog } from './MatchLog';
 import { DraftPhase } from './DraftPhase';
@@ -818,6 +819,13 @@ const {
                     count={1} // Show single card animation
                   />
                 )}
+                
+                {/* Card Deck Display */}
+                <CardDeckDisplay 
+                  homeDeckCount={gameState.homeCardDeck.length} 
+                  awayDeckCount={gameState.awayCardDeck.length} 
+                  isDealing={gameState.isDealing} 
+                />
 
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ left: '14px', top: '14px' }} />
                 <div className="absolute w-5 h-5 rounded-full bg-gradient-to-b from-stone-300 to-stone-600 border border-black/50 shadow-inner" style={{ right: '14px', top: '14px' }} />

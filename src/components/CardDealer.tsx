@@ -47,33 +47,33 @@ export const CardDealer: React.FC<CardDealerProps> = ({ isDealing, type, count }
   const displayCount = Math.min(cardCount, 15);
 
   return (
-    <AnimatePresence>
-      {Array.from({ length: displayCount }).map((_, i) => (
-        <motion.div
-          key={`${type}-${i}-${count}`}
-          initial={{ 
-            x: startX,
-            y: startY,
-            z: 200 + (i * 2),
-            rotateY: 0,
-            rotateZ: 0,
-            opacity: 0,
-            scale: 0.2
-          }}
-          animate={{ 
-            x: [startX, startX, targetX + (i - displayCount/2) * 40],
-            y: [startY, startY - 100, targetY],
-            z: [200, 250, 200],
-            rotateY: [0, 90, 180],
-            rotateZ: [0, 15, (i - displayCount/2) * 2],
-            opacity: [0, 1, 1, 0],
-            scale: [0.2, 1.2, 1.0, 0.8]
-          }}
-          transition={{ 
-            duration: 2.0,
-            delay: i * 0.15,
-            ease: "easeInOut"
-          }}
+      <AnimatePresence>
+        {Array.from({ length: displayCount }).map((_, i) => (
+          <motion.div
+            key={`${type}-${i}-${count}-${Date.now()}`}
+            initial={{ 
+              x: startX,
+              y: startY,
+              z: 200 + (i * 2),
+              rotateY: 0,
+              rotateZ: 0,
+              opacity: 0,
+              scale: 0.2
+            }}
+            animate={{ 
+              x: [startX, startX - 100, targetX + (i - displayCount/2) * 40],
+              y: [startY, startY - 150, startY - 100, targetY],
+              z: [200, 250, 220, 200],
+              rotateY: [0, 90, 180, 180],
+              rotateZ: [0, 15, 5, (i - displayCount/2) * 2],
+              opacity: [0, 1, 1, 1, 0],
+              scale: [0.2, 1.2, 1.1, 1.0, 0.8]
+            }}
+            transition={{ 
+              duration: 2.5,
+              delay: i * 0.15,
+              ease: "easeInOut"
+            }}
           className="fixed w-[132px] h-[86px] rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center border-2 border-white/30 z-[200] pointer-events-none transform-style-3d overflow-hidden"
           style={{ 
             backgroundColor: color,

@@ -82,6 +82,8 @@
 - ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
 ## Version History
+- **0.2.45**: Added CardDeckDisplay component to show real-time deck counts during dealing phase, providing visual feedback of home and away deck sizes as cards are dealt
+- **0.2.44**: Fixed background music next track icon in game mode, replacing garbled icon with correct ⏭️ icon
 - **0.2.43**: Fixed background music next track icon in game mode, replacing garbled icon with correct ⏭️ icon
 - **0.2.42**: Implemented adaptive font sizing for player card text (nickname and real name) to ensure complete display
 - **0.2.41**: Fixed player card nickname line break issue by adding whitespace-nowrap and text-ellipsis classes
