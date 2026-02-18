@@ -1,13 +1,17 @@
 import type { athleteCard } from '../data/cards';
 import type { FieldZone } from '../types/game';
 import { calculateAttackBonus, calculateDefenseBonus } from '../game/tactics';
+import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
 
-export const calculateAttackPower = (card: athleteCard, zones: any[], usedShotIcons: number[] = []): number => {
+export const calculateAttackPower = (card: athleteCard, zones: FieldZone[], usedShotIcons: number[] = []): number => {
   let power = card.power || 0;
   
-  const attackIcons = card.iconPositions.filter(pos => pos.type === 'attack');
-  const availableAttackIcons = attackIcons.filter((_, index) => !usedShotIcons.includes(index));
-  power += availableAttackIcons.length;
+  // 使用 TacticalIconMatcher 计算激活的进攻图标数量
+  const matcher = new TacticalIconMatcher(zones);
+  const iconCounts = matcher.getIconCounts();
+  const activatedAttackIcons = iconCounts.attack;
+  
+  power += activatedAttackIcons;
   
   const attackBonus = calculateAttackBonus(zones);
   power += attackBonus;

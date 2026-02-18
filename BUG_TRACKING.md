@@ -405,6 +405,27 @@
   - Visual clarity is improved with icons displayed in their proper positions
   - User understanding of icon activation is enhanced
 
+### BUG-2026-02-18-026: Shooting Logic Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 射门系统，用户体验
+- **相关文件**:
+  - `src/components/ShooterSelector.tsx`
+- **问题描述**: Shooting was allowing players to select any player with attack icons, not just those with activated attack icons, and the selection UI was focused on players rather than the activated icons.
+- **根本原因**: The ShooterSelector component was displaying all players with attack icons instead of focusing on activated attack icons, and the selection logic was not properly tied to the actual activated icons on the field.
+- **修复方案**: Updated the ShooterSelector component to:
+  1. Display only activated attack icons instead of all players with attack icons
+  2. Show the position and associated player card for each activated attack icon
+  3. Allow users to select activated icons directly for shooting
+  4. From the selected icon, find the corresponding player to execute the shot
+- **版本**: 0.2.68
+- **Git提交**: N/A
+- **影响分析**:
+  - Users now select activated attack icons directly instead of players
+  - Shooting is only possible when there are activated attack icons on the field
+  - The selection UI provides clear visual feedback of which icons are activated
+  - User understanding of the shooting mechanic is enhanced
+
 ## Current Status
 - ✅ Draft system now properly tracks AI-selected cards
 - ✅ AI now has both starters in hand and substitutes on the bench
@@ -420,6 +441,7 @@
 - ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
 ## Version History
+- **0.2.68**: Updated shooting logic to allow users to select activated attack icons directly instead of players, ensuring shooting is only possible when there are activated attack icons on the field
 - **0.2.67**: Fixed field icon position issue by updating checkFieldIconMatches to adjust slot index based on icon position, ensuring right-side icons appear in the correct slots, and updated createHorizontalCompleteIcon to calculate centerX correctly for horizontal synergy icons
 - **0.2.66**: Fixed adjacent LB and RB synergy icon issue by updating checkHorizontalMatch to use slotIndex + 2 instead of slotIndex + 1, ensuring proper horizontal matching between cards that occupy two slots
 - **0.2.65**: Fixed field icon positioning issue by updating createFieldIconCompleteIcon to adjust slot index based on actual icon position, ensuring left and right defense icons appear in their respective slots

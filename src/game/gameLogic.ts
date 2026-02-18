@@ -356,6 +356,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       }
       
       if (nextPhase === 'none') {
+        // Resolve shot before clearing pendingShot
+        if (state.pendingShot) {
+          newState = resolveShot(newState);
+        }
         newState.pendingShot = null;
       }
       
