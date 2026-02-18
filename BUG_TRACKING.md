@@ -354,6 +354,57 @@
   - Game flow is more consistent with the rules
   - User experience is improved with more predictable match start behavior
 
+### BUG-2026-02-18-023: Field Icon Positioning Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 战术图标系统，视觉效果
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: Field icons (defense icons in zone 7) were appearing in incorrect positions, often overlapping or showing in empty slots.
+- **根本原因**: The `createFieldIconCompleteIcon` method was always using the original slotIndex for positioning, regardless of whether the icon was on the left or right side of the card.
+- **修复方案**: Updated the `createFieldIconCompleteIcon` method to adjust the slot index based on the actual icon position, ensuring left position icons use the original slotIndex and right position icons use slotIndex + 1.
+- **版本**: 0.2.65
+- **Git提交**: N/A
+- **影响分析**:
+  - Field icons now appear in the correct positions based on their location on the card
+  - Both left and right defense icons are now visible in their respective slots
+  - Visual clarity is improved with no more overlapping icons
+  - User understanding of icon activation is enhanced
+
+### BUG-2026-02-18-024: Adjacent LB and RB Synergy Icon Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 战术图标系统，协同效果
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: Adjacent LB (left back) and RB (right back) cards were not activating synergy icons when placed next to each other.
+- **根本原因**: The `checkHorizontalMatch` method was checking for adjacent slots (slotIndex + 1) instead of skipping one slot (slotIndex + 2) to account for each card occupying two slots on the field.
+- **修复方案**: Updated the `checkHorizontalMatch` method to use `slotIndex + 2` instead of `slotIndex + 1` when checking for adjacent horizontal matches, ensuring it checks the correct slot position for neighboring cards.
+- **版本**: 0.2.66
+- **Git提交**: N/A
+- **影响分析**:
+  - Adjacent LB and RB cards now properly activate synergy icons when placed next to each other
+  - The tactical icon matching system now correctly accounts for each card occupying two slots
+  - Synergy effects between fullback cards are now properly recognized
+  - User understanding of card placement and synergy activation is enhanced
+
+### BUG-2026-02-18-025: Field Icon Position Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 战术图标系统，视觉效果
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: Field icons (defense icons in zone 7) were appearing in incorrect positions, and horizontal synergy icons were not displayed in the expected location.
+- **根本原因**: 1) The `checkFieldIconMatches` method was not adjusting slot index based on icon position, causing right-side icons to appear in left-side slots. 2) The `createHorizontalCompleteIcon` method was calculating centerX incorrectly, causing horizontal synergy icons to appear in the wrong position.
+- **修复方案**: 1) Updated `checkFieldIconMatches` to adjust slot index based on icon position, using `slotIndex + 1` for right-side icons. 2) Updated `createHorizontalCompleteIcon` to calculate centerX as the start position of the right card's front column, ensuring horizontal synergy icons appear in the correct location.
+- **版本**: 0.2.67
+- **Git提交**: N/A
+- **影响分析**:
+  - Field icons now appear in the correct positions based on their location on the card
+  - Horizontal synergy icons now appear in the expected location near the right card's left edge
+  - Visual clarity is improved with icons displayed in their proper positions
+  - User understanding of icon activation is enhanced
+
 ## Current Status
 - ✅ Draft system now properly tracks AI-selected cards
 - ✅ AI now has both starters in hand and substitutes on the bench
@@ -369,6 +420,10 @@
 - ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
 ## Version History
+- **0.2.67**: Fixed field icon position issue by updating checkFieldIconMatches to adjust slot index based on icon position, ensuring right-side icons appear in the correct slots, and updated createHorizontalCompleteIcon to calculate centerX correctly for horizontal synergy icons
+- **0.2.66**: Fixed adjacent LB and RB synergy icon issue by updating checkHorizontalMatch to use slotIndex + 2 instead of slotIndex + 1, ensuring proper horizontal matching between cards that occupy two slots
+- **0.2.65**: Fixed field icon positioning issue by updating createFieldIconCompleteIcon to adjust slot index based on actual icon position, ensuring left and right defense icons appear in their respective slots
+- **0.2.64**: [Previous version changes]
 - **0.2.63**: Removed preview deck phase after card dealing, streamlining the draft process to start immediately with shuffling
 - **0.2.62**: [Previous version changes]
 - **0.2.61**: Fixed incorrect skipTeamAction in FINISH_SQUAD_SELECT by updating it to use TurnPhaseService.shouldSkipTeamAction for determining if team action should be skipped at match start

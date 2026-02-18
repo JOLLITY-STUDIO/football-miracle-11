@@ -62,10 +62,11 @@ export const performTeamAction = (state: GameState, action: 'pass' | 'press', ic
     }
   }
   
-  // Clamp position between 0-100 and snap to nearest 20% grid
+  // Clamp position between 0-100 and snap to middle of nearest 20% grid
   newControlPosition = Math.max(0, Math.min(100, newControlPosition));
-  // Snap to nearest 20% grid
-  newControlPosition = Math.round(newControlPosition / 20) * 20;
+  // Snap to middle of nearest 20% grid (10%, 30%, 50%, 70%, 90%)
+  const gridIndex = Math.round((newControlPosition - 10) / 20);
+  newControlPosition = Math.max(10, Math.min(90, gridIndex * 20 + 10));
   
   return {
     ...state,

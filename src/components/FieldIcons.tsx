@@ -209,7 +209,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ zIndex: 1 }}
+      style={{ zIndex: 100 }}
     >
       {/* AI半场图标 */}
       {/* AI defense icons (top row) - 半圆激活区域 */}
@@ -324,7 +324,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
         );
       })}
       
-      {/* Player defense icons (bottom of player half) - 半圆激活区域 */}
+      {/* Initial field defense icons (always visible) */}
       {Array.from({ length: COLS }).map((_, colIdx) => {
         // 创建半圆激活区域 - 从左到右
         const isInActiveZone = (colIdx > 0 && colIdx < 7);
@@ -360,7 +360,6 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
           </g>
         );
       })}
-
     </svg>
   );
 };

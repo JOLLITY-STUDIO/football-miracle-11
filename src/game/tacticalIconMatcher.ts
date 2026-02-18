@@ -68,16 +68,6 @@ export class TacticalIconMatcher {
     const fieldIcon = fieldIcons.find(icon => icon.zone === zoneNum);
     if (!fieldIcon) return;
 
-    // 定义卡片图标位置与slot位置的对应关系
-    // slot-topLeft 对应卡片左侧slot位置
-    // slot-topRight 对应卡片右侧slot位置
-    const iconSlotMap: Record<string, number> = {
-      'slot-topLeft': slotIndex,      // 左侧图标对应左侧slot
-      'slot-topRight': slotIndex + 1, // 右侧图标对应右侧slot
-      'slot-bottomLeft': slotIndex,   // 底部左侧图标对应左侧slot
-      'slot-bottomRight': slotIndex + 1 // 底部右侧图标对应右侧slot
-    };
-
     // 定义不同zone中需要匹配的卡片图标位置
     const positionMap: Record<number, string[]> = {
       0: ['slot-topLeft', 'slot-topRight'],    // AI半场顶部：卡片顶部图标
@@ -96,31 +86,32 @@ export class TacticalIconMatcher {
       );
 
       if (cardIcon) {
-        // 获取该图标对应的slot位置
-        const cardSlot = iconSlotMap[position];
-        
-        // 确保slot位置在有效范围内
-        if (cardSlot !== undefined && cardSlot >= 0 && cardSlot < 8) {
-          const pairKey = `f-${zoneNum}-${cardSlot}-${fieldIcon.type}-${position}`;
-          if (processedPairs.has(pairKey)) continue;
-          processedPairs.add(pairKey);
+        // 生成唯一的键，使用卡片ID和位置，确保每个卡片的每个位置只创建一个图标
+        const pairKey = `f-${card.id}-${zoneNum}-${fieldIcon.type}-${position}`;
+        if (processedPairs.has(pairKey)) continue;
+        processedPairs.add(pairKey);
 
-          // 创建与球场初始图标匹配的完整图标
-          const completeIcon = this.createFieldIconCompleteIcon(
-            {
-              type: cardIcon.type,
-              zone: zoneNum,
-              slot: cardSlot,
-              position: cardIcon.position,
-              card
-            },
-            fieldIcon.type,
-            zoneNum,
-            cardSlot
-          );
-
-          this.completeIcons.push(completeIcon);
+        // 根据卡片图标的位置调整插槽索引
+        // 对于右侧位置的图标，使用 slotIndex + 1
+        let adjustedSlotIndex = slotIndex;
+        if (position.includes('Right')) {
+          adjustedSlotIndex = slotIndex + 1;
         }
+
+        const completeIcon = this.createFieldIconCompleteIcon(
+          {
+            type: cardIcon.type,
+            zone: zoneNum,
+            slot: adjustedSlotIndex,
+            position: cardIcon.position,
+            card
+          },
+          fieldIcon.type,
+          zoneNum,
+          adjustedSlotIndex
+        );
+
+        this.completeIcons.push(completeIcon);
       }
     }
   }
@@ -129,6 +120,7 @@ export class TacticalIconMatcher {
     const CELL_WIDTH = FIELD_DIMENSIONS.BASE_CELL_WIDTH;
     const CELL_HEIGHT = FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
     
+    // 直接使用传入的slotIndex，因为已经在调用前调整过了
     const centerX = slotIndex * CELL_WIDTH + CELL_WIDTH / 2;
     const centerY = zoneNum * CELL_HEIGHT + CELL_HEIGHT / 2;
 
@@ -265,13 +257,16 @@ export class TacticalIconMatcher {
   }
 
   private checkHorizontalMatch(card: AthleteCard, zoneNum: number, slotIndex: number, processedPairs: Set<string>): void {
-    const rightSlot = slotIndex + 1;
+    // 检查右侧相邻卡片，考虑每张卡片占据两个插槽
+    // 如果当前卡片从 slotIndex 开始，那么相邻卡片应该从 slotIndex + 2 开始
+    const rightSlot = slotIndex + 2;
     
     if (rightSlot >= 8) return;
     
     const zone = this.fieldZones.find(z => z.zone === zoneNum);
     if (!zone) return;
     
+    // 检查右侧卡片是否存在
     const rightSlotData = zone.slots[rightSlot];
     if (!rightSlotData?.athleteCard) return;
     
@@ -288,20 +283,16 @@ export class TacticalIconMatcher {
       horizontalPositionPairs = [
         // 左侧卡片右侧位置与右侧卡片左侧位置匹配（因为旋转后左右互换）
         { leftCardPos: 'slot-middleRight', rightCardPos: 'slot-middleLeft' },
-        { leftCardPos: 'slot-bottomRight', rightCardPos: 'slot-bottomLeft' },
         // 左侧卡片左侧位置与右侧卡片右侧位置匹配（因为旋转后左右互换）
-        { leftCardPos: 'slot-middleLeft', rightCardPos: 'slot-middleRight' },
-        { leftCardPos: 'slot-bottomLeft', rightCardPos: 'slot-bottomRight' }
+        { leftCardPos: 'slot-middleLeft', rightCardPos: 'slot-middleRight' }
       ];
     } else {
       // 玩家半场：正常位置对
       horizontalPositionPairs = [
         // 左侧卡片右侧位置与右侧卡片左侧位置匹配
         { leftCardPos: 'slot-middleRight', rightCardPos: 'slot-middleLeft' },
-        { leftCardPos: 'slot-bottomRight', rightCardPos: 'slot-bottomLeft' },
         // 左侧卡片左侧位置与右侧卡片右侧位置匹配
-        { leftCardPos: 'slot-middleLeft', rightCardPos: 'slot-middleRight' },
-        { leftCardPos: 'slot-bottomLeft', rightCardPos: 'slot-bottomRight' }
+        { leftCardPos: 'slot-middleLeft', rightCardPos: 'slot-middleRight' }
       ];
     }
     
@@ -316,9 +307,9 @@ export class TacticalIconMatcher {
       );
       
       if (leftCardIcon && rightCardIcon && leftCardIcon.type === rightCardIcon.type) {
-        const positionKey = pair.leftCardPos.includes('middle') ? 'middle' : 'bottom';
+        const positionKey = 'middle';
         const pairKey = `h-${zoneNum}-${slotIndex}-${rightSlot}-${leftCardIcon.type}-${positionKey}`;
-        if (processedPairs.has(pairKey)) return;
+        if (processedPairs.has(pairKey)) continue;
         processedPairs.add(pairKey);
         
         const completeIcon = this.createHorizontalCompleteIcon(
@@ -493,7 +484,10 @@ export class TacticalIconMatcher {
     const CELL_WIDTH = FIELD_DIMENSIONS.BASE_CELL_WIDTH;
     const CELL_HEIGHT = FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
     
-    const centerX = (leftHalf.slot * CELL_WIDTH + rightHalf.slot * CELL_WIDTH) / 2 + CELL_WIDTH / 2;
+    // 计算图标位置为右边卡前面那一列的起始位置
+    // 例如：LB在3-4列，RB在5-6列，图标在5列的起始位置
+    const rightFrontColumn = rightHalf.slot; // 右边卡的前面那一列
+    const centerX = rightFrontColumn * CELL_WIDTH;
     const centerY = leftHalf.zone * CELL_HEIGHT + CELL_HEIGHT / 2;
 
     return {

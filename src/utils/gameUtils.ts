@@ -48,19 +48,11 @@ export const calculateActivatedIconPositions = (playerField: FieldZone[], aiFiel
       zone.slots.forEach(slot => {
         if (slot.athleteCard) {
           const card = slot.athleteCard;
-          const cardKey = `${card.id}-${zone.zone}-${slot.position}`;
+          const cardKey = `${card.id}-${zone.zone}`;
           
-          // Skip if this card has already been processed for this slot
+          // Skip if this card has already been processed for this zone
           if (processedCards.has(cardKey)) return;
           processedCards.add(cardKey);
-          
-          // Define icon position to slot position mapping
-          const iconSlotMap: Record<string, number> = {
-            'slot-topLeft': slot.position,
-            'slot-topRight': slot.position + 1,
-            'slot-bottomLeft': slot.position,
-            'slot-bottomRight': slot.position + 1
-          };
           
           // Define which icon positions are relevant for each zone and icon type
           const relevantPositionsByZone: Record<number, { positions: string[]; iconTypes: string[] }> = {
@@ -74,17 +66,37 @@ export const calculateActivatedIconPositions = (playerField: FieldZone[], aiFiel
           if (!relevantPositions) return;
           
           // Only add activated positions for relevant icon positions and types
-          card.iconPositions.forEach((iconPos: any) => {
-            if (relevantPositions.positions.includes(iconPos.position) && relevantPositions.iconTypes.includes(iconPos.type)) {
-              const targetSlot = iconSlotMap[iconPos.position];
-              if (targetSlot !== undefined && targetSlot >= 0 && targetSlot < 8) {
+          if (zone.zone === 7) {
+            // For defense icons in zone 7, always activate both the current slot and the next slot
+            // This ensures both bottomLeft and bottomRight defense icons are activated for CBs
+            activatedPositions.push({
+              zone: zone.zone,
+              position: slot.position
+            });
+            // Always activate the right adjacent slot for defense icons in zone 7
+            if (slot.position + 1 < 8) {
+              activatedPositions.push({
+                zone: zone.zone,
+                position: slot.position + 1
+              });
+            }
+          } else {
+            // For other zones, use the original logic
+            card.iconPositions.forEach((iconPos: any) => {
+              if (relevantPositions.positions.includes(iconPos.position) && relevantPositions.iconTypes.includes(iconPos.type)) {
                 activatedPositions.push({
                   zone: zone.zone,
-                  position: targetSlot
+                  position: slot.position
                 });
+                if (iconPos.position.includes('Right') && slot.position + 1 < 8) {
+                  activatedPositions.push({
+                    zone: zone.zone,
+                    position: slot.position + 1
+                  });
+                }
               }
-            }
-          });
+            });
+          }
         }
       });
     });
