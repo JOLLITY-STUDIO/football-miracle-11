@@ -305,13 +305,10 @@ export class TacticalIconMatcher {
   }
 
   private checkHorizontalMatch(card: AthleteCard, zoneNum: number, slotIndex: number, processedPairs: Set<string>): void {
-    // 检查是否在AI半场（zone < 4），因为AI卡片被旋转了180度
-    const isAIZone = zoneNum < 4;
-    
     // 检查相邻卡片，考虑每张卡片占据两个插槽
-    // 对于玩家半场，检查右侧卡片（slotIndex + 2）
-    // 对于AI半场，检查左侧卡片（slotIndex - 2）因为卡片旋转后左右互换
-    const adjacentSlot = isAIZone ? slotIndex - 2 : slotIndex + 2;
+    // 检查右侧卡片（slotIndex + 2）
+    // 无论AI还是玩家半场，卡片在球场上的物理位置都是从左到右排列的
+    const adjacentSlot = slotIndex + 2;
     
     if (adjacentSlot < 0 || adjacentSlot >= 8) return;
     
@@ -329,11 +326,11 @@ export class TacticalIconMatcher {
     const adjacentCardTactics = RotationUtils.getTacticsForZone(adjacentCard.tactics, adjacentCard.rotatedTactics, zoneNum);
     
     // 定义所有可能的水平匹配位置对
+    // 对于水平匹配，总是检查当前卡片的右侧位置与相邻卡片的左侧位置
     const horizontalPositionPairs = [
-      // 当前卡片右侧位置与相邻卡片左侧位置匹配
       { currentCardPos: 'slot-middleRight', adjacentCardPos: 'slot-middleLeft' },
-      // 当前卡片左侧位置与相邻卡片右侧位置匹配
-      { currentCardPos: 'slot-middleLeft', adjacentCardPos: 'slot-middleRight' }
+      { currentCardPos: 'slot-topRight', adjacentCardPos: 'slot-topLeft' },
+      { currentCardPos: 'slot-bottomRight', adjacentCardPos: 'slot-bottomLeft' }
     ];
     
     // 检查每个位置对的匹配
@@ -342,76 +339,45 @@ export class TacticalIconMatcher {
       let currentCardIcon = null;
       let adjacentCardIcon = null;
       
-      // 统一检查逻辑，不再区分AI和玩家半场
+      // 检查当前卡片的右侧位置
       if (pair.currentCardPos === 'slot-middleRight') {
         currentCardIcon = currentCardTactics.right?.right ? { type: currentCardTactics.right.right, position: pair.currentCardPos } : null;
       } else if (pair.currentCardPos === 'slot-topRight') {
         currentCardIcon = currentCardTactics.right?.top ? { type: currentCardTactics.right.top, position: pair.currentCardPos } : null;
       } else if (pair.currentCardPos === 'slot-bottomRight') {
         currentCardIcon = currentCardTactics.right?.down ? { type: currentCardTactics.right.down, position: pair.currentCardPos } : null;
-      } else if (pair.currentCardPos === 'slot-middleLeft') {
-        currentCardIcon = currentCardTactics.left?.left ? { type: currentCardTactics.left.left, position: pair.currentCardPos } : null;
-      } else if (pair.currentCardPos === 'slot-topLeft') {
-        currentCardIcon = currentCardTactics.left?.top ? { type: currentCardTactics.left.top, position: pair.currentCardPos } : null;
-      } else if (pair.currentCardPos === 'slot-bottomLeft') {
-        currentCardIcon = currentCardTactics.left?.down ? { type: currentCardTactics.left.down, position: pair.currentCardPos } : null;
       }
       
+      // 检查相邻卡片的左侧位置
       if (pair.adjacentCardPos === 'slot-middleLeft') {
         adjacentCardIcon = adjacentCardTactics.left?.left ? { type: adjacentCardTactics.left.left, position: pair.adjacentCardPos } : null;
       } else if (pair.adjacentCardPos === 'slot-topLeft') {
         adjacentCardIcon = adjacentCardTactics.left?.top ? { type: adjacentCardTactics.left.top, position: pair.adjacentCardPos } : null;
       } else if (pair.adjacentCardPos === 'slot-bottomLeft') {
         adjacentCardIcon = adjacentCardTactics.left?.down ? { type: adjacentCardTactics.left.down, position: pair.adjacentCardPos } : null;
-      } else if (pair.adjacentCardPos === 'slot-middleRight') {
-        adjacentCardIcon = adjacentCardTactics.right?.right ? { type: adjacentCardTactics.right.right, position: pair.adjacentCardPos } : null;
-      } else if (pair.adjacentCardPos === 'slot-topRight') {
-        adjacentCardIcon = adjacentCardTactics.right?.top ? { type: adjacentCardTactics.right.top, position: pair.adjacentCardPos } : null;
-      } else if (pair.adjacentCardPos === 'slot-bottomRight') {
-        adjacentCardIcon = adjacentCardTactics.right?.down ? { type: adjacentCardTactics.right.down, position: pair.adjacentCardPos } : null;
       }
       
       if (currentCardIcon && adjacentCardIcon && currentCardIcon.type === adjacentCardIcon.type) {
-        const positionKey = 'middle';
+        const positionKey = pair.currentCardPos.split('-')[1];
         const pairKey = `h-${zoneNum}-${Math.min(slotIndex, adjacentSlot)}-${Math.max(slotIndex, adjacentSlot)}-${currentCardIcon.type}-${positionKey}`;
         if (processedPairs.has(pairKey)) continue;
         processedPairs.add(pairKey);
         
         // 确保leftHalf是左侧的卡片，rightHalf是右侧的卡片
-        let leftHalf, rightHalf;
-        if (slotIndex < adjacentSlot) {
-          // 当前卡片在左侧，相邻卡片在右侧
-          leftHalf = {
-            type: currentCardIcon.type,
-            zone: zoneNum,
-            slot: slotIndex,
-            position: currentCardIcon.position,
-            card
-          };
-          rightHalf = {
-            type: adjacentCardIcon.type,
-            zone: zoneNum,
-            slot: adjacentSlot,
-            position: adjacentCardIcon.position,
-            card: adjacentCard
-          };
-        } else {
-          // 当前卡片在右侧，相邻卡片在左侧
-          leftHalf = {
-            type: adjacentCardIcon.type,
-            zone: zoneNum,
-            slot: adjacentSlot,
-            position: adjacentCardIcon.position,
-            card: adjacentCard
-          };
-          rightHalf = {
-            type: currentCardIcon.type,
-            zone: zoneNum,
-            slot: slotIndex,
-            position: currentCardIcon.position,
-            card
-          };
-        }
+        const leftHalf = {
+          type: currentCardIcon.type,
+          zone: zoneNum,
+          slot: slotIndex,
+          position: currentCardIcon.position,
+          card
+        };
+        const rightHalf = {
+          type: adjacentCardIcon.type,
+          zone: zoneNum,
+          slot: adjacentSlot,
+          position: adjacentCardIcon.position,
+          card: adjacentCard
+        };
         
         const completeIcon = this.createHorizontalCompleteIcon(leftHalf, rightHalf);
         

@@ -131,14 +131,17 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
       const aiCoords = calculateAICoordinates(icon.centerX, icon.centerY);
       finalX = aiCoords.x;
       finalY = aiCoords.y;
-      // 应用180度旋转
-      transform = `rotate(180 ${finalX} ${finalY})`;
     }
 
     // 转换坐标到SVG坐标系
     const svgCoords = convertToSVGCoordinates(finalX, finalY);
     finalX = svgCoords.x;
     finalY = svgCoords.y;
+
+    if (!isPlayer) {
+      // 应用180度旋转，使用转换后的SVG坐标系坐标作为旋转中心点
+      transform = `rotate(180 ${finalX} ${finalY})`;
+    }
 
     // 生成更唯一的键，基于图标位置和类型
     const uniqueKey = `${isPlayer ? 'player' : 'ai'}-${icon.type}-${Math.round(finalX)}-${Math.round(finalY)}`;
@@ -194,8 +197,10 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
           height="40"
           href={iconImage}
           transform={transform}
+          preserveAspectRatio="xMidYMid meet"
           style={{
-            filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.3))`
+            filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.3))`,
+            zIndex: 10
           }}
         />
 
