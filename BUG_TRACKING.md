@@ -751,6 +751,58 @@
   - 水平匹配逻辑现在能正确处理AI卡片的旋转
   - 游戏机制在AI半场和玩家半场保持一致
 
+### BUG-2026-02-19-047: AI Icon Position Adjustment Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 战术图标系统，AI对战
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: AI LWF卡片（A02）在zone 3 6-7列时，进攻图标显示在第7列，位置不正确。
+- **根本原因**: 代码中存在重复的isAIZone变量声明，且位置调整逻辑混乱，导致AI卡片的图标位置计算错误。
+- **修复方案**: 1) 移除重复的isAIZone变量声明，2) 重构位置调整逻辑，为AI半场和玩家半场使用不同的调整规则，确保图标显示在正确的位置。
+- **版本**: 0.2.88
+- **Git提交**: N/A
+- **影响分析**:
+  - 修复了AI卡片图标位置不正确的问题
+  - 确保AI LWF卡片在zone 3 6-7列时，进攻图标显示在正确的位置
+  - 代码逻辑更加清晰，移除了重复变量
+  - 位置调整逻辑更加准确和一致
+
+### BUG-2026-02-19-048: AI Horizontal Icon Position Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 战术图标系统，AI对战
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+  - `src/components/CompleteIconsOverlay.tsx`
+- **问题描述**: AI半场zone 3位置，RWF在4-5列，LWF在6-7列时，生成的水平拼合图标没有显示在两列之间（5-6列之间）。
+- **根本原因**: 1) `createHorizontalCompleteIcon`方法中图标位置计算逻辑不正确，2) `CompleteIconsOverlay.tsx`中AI图标的坐标计算有误，对x坐标进行了不必要的水平翻转。
+- **修复方案**: 1) 更新`createHorizontalCompleteIcon`方法，确保图标显示在两张卡片之间的中心位置，2) 修改`CompleteIconsOverlay.tsx`中的`calculateAICoordinates`方法，移除对AI图标x坐标的水平翻转。
+- **版本**: 0.2.89
+- **Git提交**: N/A
+- **影响分析**:
+  - 修复了AI水平拼合图标位置不正确的问题
+  - 确保AI RWF和LWF之间的拼合图标显示在5-6列之间
+  - 修正了AI图标坐标计算逻辑，确保位置准确
+  - 保持了AI卡片图标激活的正确机制
+
+### BUG-2026-02-19-049: AI Horizontal Icon Parameter Order Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 战术图标系统，AI对战
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: AI半场zone 3位置，RWF在4-5列，LWF在6-7列时，生成的水平拼合图标仍然没有显示在两列之间（5-6列之间）。
+- **根本原因**: 在检查水平匹配时，当从右侧卡片（LWF）检查左侧相邻卡片（RWF）时，传递给`createHorizontalCompleteIcon`方法的参数顺序错误，导致leftHalf和rightHalf的slot值颠倒，从而计算出错误的图标位置。
+- **修复方案**: 更新`checkHorizontalMatch`方法，确保传递给`createHorizontalCompleteIcon`方法的参数顺序正确，始终将左侧卡片作为leftHalf，右侧卡片作为rightHalf。
+- **版本**: 0.2.90
+- **Git提交**: N/A
+- **影响分析**:
+  - 修复了AI水平拼合图标位置计算错误的问题
+  - 确保AI RWF和LWF之间的拼合图标正确显示在5-6列之间
+  - 修正了水平匹配参数传递的逻辑，确保leftHalf和rightHalf的顺序正确
+  - 保持了AI卡片图标激活的正确机制
+
 ### BUG-2026-02-19-044: Background Music Control Issue
 - **发现日期**: 2026-02-19
 - **修复日期**: 2026-02-19
@@ -815,6 +867,10 @@
 - ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
 ## Version History
+- **0.2.90**: Fixed AI horizontal icon parameter order issue by updating checkHorizontalMatch method to ensure correct parameter order when calling createHorizontalCompleteIcon, always passing the left card as leftHalf and right card as rightHalf regardless of check order
+- **0.2.89**: Fixed AI horizontal icon position issue by updating createHorizontalCompleteIcon method to ensure icons display in the center between two cards, and modifying calculateAICoordinates in CompleteIconsOverlay.tsx to remove unnecessary horizontal flipping of x coordinates for AI icons
+- **0.2.88**: Fixed AI icon position adjustment issue by removing duplicate isAIZone variable declaration and restructuring position adjustment logic to use different rules for AI half and player half, ensuring icons display in correct positions
+- **0.2.87**: Fixed AI card icon rotation issue by updating horizontal matching logic to use reversed position pairs for AI half (zone < 4), ensuring correct left-right matching logic for rotated AI cards
 - **0.2.86**: Fixed type errors in `AthleteCard.tsx` by updating `getIconImage` function to accept `SkillIconType` and explicitly typing `iconPositions` array with `IconPosition` type, ensuring skill icons and half icons render correctly
 - **0.2.85**: Fixed background music control issue by updating `BackgroundMusic.tsx` to control both background music and ambient sounds with a single toggle, ensuring the music off button closes all sounds including ambient noise
 - **0.2.84**: Created `RotationUtils` tool class to centralize rotation logic, updated all card data with `rotatedTactics` property, and modified `tacticalIconMatcher.ts` to use `RotationUtils.getTacticsForZone` method

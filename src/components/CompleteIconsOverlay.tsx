@@ -87,15 +87,31 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
   const calculateAICoordinates = (x: number, y: number) => {
     // 场地宽度
     const fieldWidth = FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH;
-    // 场地高度的一半
-    const halfFieldHeight = FIELD_CONFIG.rowsPerHalf * FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
     
-    // 列镜像：水平翻转x坐标
+    // AI半场的球员是水平翻转显示的，所以图标位置也需要水平翻转
+    // 这样图标才能显示在对应的球员位置旁边
     const mirroredX = fieldWidth - x;
-    // 垂直位置调整：AI半场在顶部
+    // 垂直位置保持不变
     const adjustedY = y;
     
     return { x: mirroredX, y: adjustedY };
+  };
+
+  /**
+   * 将场地坐标转换为SVG坐标系坐标
+   */
+  const convertToSVGCoordinates = (x: number, y: number) => {
+    // 场地宽度
+    const fieldWidth = FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH;
+    // 场地高度
+    const fieldHeight = FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
+    
+    // SVG坐标系以场地中心为原点
+    // 转换为相对于中心的坐标
+    const svgX = x - fieldWidth / 2;
+    const svgY = y - fieldHeight / 2;
+    
+    return { x: svgX, y: svgY };
   };
 
   /**
@@ -118,6 +134,11 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
       // 应用180度旋转
       transform = `rotate(180 ${finalX} ${finalY})`;
     }
+
+    // 转换坐标到SVG坐标系
+    const svgCoords = convertToSVGCoordinates(finalX, finalY);
+    finalX = svgCoords.x;
+    finalY = svgCoords.y;
 
     // 生成更唯一的键，基于图标位置和类型
     const uniqueKey = `${isPlayer ? 'player' : 'ai'}-${icon.type}-${Math.round(finalX)}-${Math.round(finalY)}`;
@@ -166,24 +187,17 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
         />
         
         {/* 图标图片 */}
-        <foreignObject
+        <image
           x={finalX - 20}
           y={finalY - 20}
           width="40"
           height="40"
+          xlinkHref={iconImage}
           transform={transform}
-        >
-          <img
-            src={iconImage}
-            alt={`Complete ${icon.type} icon`}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.3))`
-            }}
-          />
-        </foreignObject>
+          style={{
+            filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.3))`
+          }}
+        />
 
         {/* 脉冲动画 */}
         <motion.circle
@@ -212,16 +226,21 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
     <svg
       className="absolute inset-0 w-full h-full"
       style={{ zIndex: 1000 }}
+      viewBox={`-${FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH / 2} -${FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT / 2} ${FIELD_CONFIG.columns * FIELD_DIMENSIONS.BASE_CELL_WIDTH} ${FIELD_CONFIG.rowsPerHalf * 2 * FIELD_DIMENSIONS.BASE_CELL_HEIGHT}`}
+      xmlns="http://www.w3.org/2000/svg"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
     >
       {/* 渲染玩家的完整图标 */}
-      {playerCompleteIcons.map((icon, index) => 
-        renderCompleteIcon(icon, index, true)
-      )}
+      {playerCompleteIcons.map((icon, index) => {
+        console.log('Player icon position:', { x: icon.centerX, y: icon.centerY, type: icon.type });
+        return renderCompleteIcon(icon, index, true);
+      })}
       
       {/* 渲染AI的完整图标 */}
-      {aiCompleteIcons.map((icon, index) => 
-        renderCompleteIcon(icon, index, false)
-      )}
+      {aiCompleteIcons.map((icon, index) => {
+        console.log('AI icon position:', { x: icon.centerX, y: icon.centerY, type: icon.type });
+        return renderCompleteIcon(icon, index, false);
+      })}
     </svg>
   );
 };
