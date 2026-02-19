@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '../utils/logger';
+import { toggleAmbient, stopMatchAmbience } from '../utils/audio';
 
 // BGM playlist - includes all available tracks from the bgm directory
 // This list is manually maintained to ensure compatibility and reliability
@@ -292,12 +293,15 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
     
     // Update global settings
     const settings = syncAudioSettings();
-    const newSettings = { ...settings, bgm: newBgmEnabled };
+    const newSettings = { ...settings, bgm: newBgmEnabled, ambient: newBgmEnabled };
     localStorage.setItem('game_audio_settings', JSON.stringify(newSettings));
     window.dispatchEvent(new Event('audioSettingsChanged'));
 
     if (isPlaying) {
       audioRef.current.pause();
+      // Also stop all ambient sounds
+      stopMatchAmbience(1000);
+      toggleAmbient(false);
     } else {
       const base = import.meta.env.BASE_URL;
       const sourceUrl = audioRef.current.src;
@@ -324,6 +328,9 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
         // Don't update playing state on error
         return;
       });
+      
+      // Enable ambient sounds when music is enabled
+      toggleAmbient(true);
     }
     
     setIsPlaying(!isPlaying);

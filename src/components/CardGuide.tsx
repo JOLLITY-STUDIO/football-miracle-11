@@ -261,7 +261,7 @@ export const CardGuide: React.FC<Props> = ({ onBack }) => {
                 {penaltyCards.map((card, i) => (
                   <div key={card.id} className="bg-stone-700/50 rounded-lg p-4 text-center">
                     <div className="text-4xl mb-2"></div>
-                    <div className="font-bold text-yellow-400">{card.nickname}</div>
+                    <div className="font-bold text-yellow-400">{card.name}</div>
                     <div className="text-sm text-stone-400">+{card.points} pts</div>
                     <span className="text-xs text-stone-500">#{i + 1}</span>
                   </div>

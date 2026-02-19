@@ -25,12 +25,14 @@ export const SynergySlot: React.FC<Props> = ({
     attack: '#E53935',
     defense: '#1E88E5',
     special: '#43A047',
+    tackle: '#FB8C00',
   };
 
   const labelMap = {
     attack: '进攻 (RED)',
     defense: '防守 (BLUE)',
     special: '战术 (GREEN)',
+    tackle: '铲球 (ORANGE)',
   };
 
   const totalStars = cards.reduce((sum, card) => sum + (card.stars || 0), 0);
@@ -43,10 +45,13 @@ export const SynergySlot: React.FC<Props> = ({
         <div 
           className="w-8 h-8 rounded border-2 border-white flex items-center justify-center"
           style={{
-            backgroundColor: colorMap[type],
+            backgroundColor: colorMap[type] || colorMap.special,
           }}
         >
-          <img src="/icons/attack_ball.svg" alt="Attack" className="w-6 h-6" />
+          {type === 'attack' && <img src="/icons/icon-shoot.svg" alt="Attack" className="w-6 h-6" />}
+          {type === 'defense' && <img src="/icons/icon-defense.svg" alt="Defense" className="w-6 h-6" />}
+          {type === 'special' && <img src="/icons/icon-pass.png" alt="Special" className="w-6 h-6" />}
+          {type === 'tackle' && <img src="/icons/icon-press.svg" alt="Tackle" className="w-6 h-6" />}
         </div>
         
         {/* Card Slot */}

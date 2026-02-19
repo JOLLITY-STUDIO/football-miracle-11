@@ -52,8 +52,7 @@ export const CardStack: React.FC<CardStackProps> = ({
                     isStar: type === 'star', 
                     unlocked: true, 
                     unlockCondition: '', 
-                    icons: [], 
-                    iconPositions: [], 
+                    icons: [],
                     immediateEffect: 'none' 
                   }} as athleteCard
                   size="large"

@@ -19,13 +19,13 @@ export function PWAStatus() {
         logger.info('Service Worker registered:', registration);
         setSWReady(true);
       },
-      onRegisterError(error) {
+      onRegisterError(error: any) {
         console.error('Service Worker registration error:', error);
       },
     });
 
     return () => {
-      updateSW.then((unregister) => unregister?.());
+      updateSW.then((unregister: (() => void) | undefined) => unregister?.());
     };
   }, []);
 

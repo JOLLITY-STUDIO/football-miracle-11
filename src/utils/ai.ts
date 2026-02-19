@@ -7,11 +7,11 @@ import { RuleValidator } from '../game/ruleValidator';
 const getValidZones = (type: string): number[] => {
   switch (type) {
     case 'fw':
-      return [2, 3]; // 前锋可放置在2-3区域（AI半场）
+      return [3, 2]; // 前锋优先尝试3区域，再尝试2区域（AI半场）
     case 'mf':
-      return [1, 2]; // 中场只能放置在1、2行（AI半场）
+      return [2, 1]; // 中场优先尝试2区域，再尝试1区域（AI半场）
     case 'df':
-      return [0, 1]; // 后卫只能放置在0、1行（AI半场）
+      return [1, 0]; // 后卫优先尝试1区域，再尝试0区域（AI半场）
     default:
       return [];
   }

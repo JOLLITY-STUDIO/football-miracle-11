@@ -23,7 +23,7 @@ export const BaseCard: React.FC<Props> = ({ size = 'medium', children, className
   return (
     <div 
       style={{ width: `${config.width}px`, height: `${config.height}px`, minWidth: `${config.width}px`, minHeight: `${config.height}px` }}
-      className={`rounded-xl flex-shrink-0 relative overflow-hidden ${className ?? ''}`}
+      className={`rounded-xl flex-shrink-0 relative ${className ?? ''}`}
     >
       {children}
     </div>

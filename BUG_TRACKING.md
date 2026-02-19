@@ -426,6 +426,346 @@
   - The selection UI provides clear visual feedback of which icons are activated
   - User understanding of the shooting mechanic is enhanced
 
+### BUG-2026-02-18-027: Card Dealing Speed Optimization
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 游戏流程，用户体验
+- **相关文件**:
+  - `src/components/GameBoard.tsx`
+- **问题描述**: Card dealing after home/away selection was taking too long, exceeding the desired 5-second limit.
+- **根本原因**: The dealing interval was set to 300ms per card, which would take approximately 6 seconds to deal all 20 cards.
+- **修复方案**: Reduced the dealing interval from 300ms to 200ms per card, ensuring all 20 cards are dealt within approximately 4 seconds, well within the 5-second limit.
+- **版本**: 0.2.69
+- **Git提交**: N/A
+- **影响分析**:
+  - Card dealing now completes within the 5-second time limit
+  - Game flow is more streamlined after home/away selection
+  - Users experience faster transition to the draft phase
+  - Maintains clear card dealing animations while speeding up the process
+
+### BUG-2026-02-18-028: Pressure Icon Activation Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 战术图标系统，游戏机制
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: Pressure icons were not activating when LWF (zone 5, columns 3-4) and DMF (zone 6, columns 2-3) cards were placed with pressure icons in specific positions.
+- **根本原因**: The vertical icon matching logic was missing position pairs for LWF's bottom-left pressure icon to connect with DMF's top-right pressure icon.
+- **修复方案**: Updated the vertical position pairs in both checkVerticalMatch methods (for checking bottom and top adjacent cards) to include additional position pairs that support LWF and DMF pressure icon activation.
+- **版本**: 0.2.70
+- **Git提交**: N/A
+- **影响分析**:
+  - Pressure icons now properly activate between LWF and DMF cards in the specified positions
+  - The tactical icon matching system is more comprehensive
+  - Users can now benefit from pressure icon synergies in more card placement scenarios
+  - Game mechanics are more consistent with expected behavior
+
+### BUG-2026-02-18-029: AI Half Attack Icon Activation Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 战术图标系统，游戏机制
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: Attack icons were not activating when AI AMF (zone 1, columns 4-5) and AI LWF (zone 2, columns 4-5) cards were placed with attack icons in the top-right position.
+- **根本原因**: The vertical icon matching logic for AI half was missing position pairs for AMF's top-right attack icon to connect with LWF's top-right attack icon.
+- **修复方案**: Updated the vertical position pairs in both checkVerticalMatch methods (for checking bottom and top adjacent cards) to include additional position pairs that support AMF and LWF attack icon activation in AI half.
+- **版本**: 0.2.71
+- **Git提交**: N/A
+- **影响分析**:
+  - Attack icons now properly activate between AMF and LWF cards in AI half
+  - The tactical icon matching system is more comprehensive for both player and AI halves
+  - AI team can now benefit from attack icon synergies in more card placement scenarios
+  - Game mechanics are more consistent across both halves of the field
+
+### BUG-2026-02-18-030: AI Half Pressure Icon Activation Issue
+- **发现日期**: 2026-02-18
+- **修复日期**: 2026-02-18
+- **影响范围**: 战术图标系统，游戏机制
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: Pressure icons were not activating when AI DMF (zone 1, same starting column) and AI RWF (zone 2, same starting column) cards were placed with pressure icons in specific positions.
+- **根本原因**: The vertical icon matching logic for AI half was missing position pairs for DMF's top-right pressure icon to connect with RWF's bottom-right pressure icon.
+- **修复方案**: Updated the vertical position pairs in both checkVerticalMatch methods (for checking bottom and top adjacent cards) to include additional position pairs that support DMF and RWF pressure icon activation in AI half.
+- **版本**: 0.2.72
+- **Git提交**: N/A
+- **影响分析**:
+  - Pressure icons now properly activate between DMF and RWF cards in AI half
+  - The tactical icon matching system is more comprehensive for both player and AI halves
+  - AI team can now benefit from pressure icon synergies in more card placement scenarios
+  - Game mechanics are more consistent across both halves of the field
+
+### BUG-2026-02-19-031: Duplicate Attributes in AthleteCardGroup
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 代码质量，构建过程
+- **相关文件**:
+  - `src/components/AthleteCardGroup.tsx`
+- **问题描述**: The AthleteCardGroup component had duplicate JSX attributes including "transition", "whileHover", and "style", causing Vite warnings during the build process.
+- **根本原因**: The component had redundant attribute definitions, with some attributes defined multiple times with slightly different values.
+- **修复方案**: Removed duplicate attributes, keeping only the most comprehensive definitions for each attribute.
+- **版本**: 0.2.73
+- **Git提交**: N/A
+- **影响分析**:
+  - Eliminated Vite warnings during build process
+  - Improved code quality and maintainability
+  - Ensured consistent attribute values throughout the component
+  - No functional changes to the component's behavior
+
+### BUG-2026-02-19-032: AI Zone 3 Placement Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: AI逻辑，球员放置系统
+- **相关文件**:
+  - `src/utils/ai.ts`
+- **问题描述**: AI was not placing players in Zone 3 (AI's front line), only placing them in Zone 2 and below.
+- **根本原因**: The AI's zone selection priority was set to try Zone 2 before Zone 3 for forwards, and the validation rules prevented placing forwards in Zone 3 when no other cards were on the field.
+- **修复方案**: Updated the `getValidZones` function in `ai.ts` to prioritize Zone 3 for forwards, Zone 2 for midfielders, and Zone 1 for defenders, ensuring AI attempts to place players in their most forward valid positions first.
+- **版本**: 0.2.74
+- **Git提交**: N/A
+- **影响分析**:
+  - AI now attempts to place forwards in Zone 3 (front line) when possible
+  - AI's offensive positioning is more aggressive and realistic
+  - Game balance is improved with AI using all available zones
+  - Players will now face AI players in Zone 3 during matches
+
+### BUG-2026-02-19-033: Pressure Icon Consistency Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 图标系统，视觉一致性
+- **相关文件**:
+  - `src/components/AthleteCard.tsx`
+  - `src/components/CompleteIconsOverlay.tsx`
+  - `src/data/cards.ts`
+- **问题描述**: Pressure icons and skills were using inconsistent image resources across different components.
+- **根本原因**: Different components were referencing different image paths for pressure icons.
+- **修复方案**: Standardized all pressure icon references to use `/icons/press_up.svg` consistently across all components and card types.
+- **版本**: 0.2.75
+- **Git提交**: N/A
+- **影响分析**:
+  - All pressure icons now use the same consistent SVG resource
+  - Visual consistency is improved across the entire game
+  - Icon loading is more efficient with a single shared resource
+  - No functional changes to game mechanics
+
+### BUG-2026-02-19-034: Skill Icon Display Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 技能系统，视觉显示
+- **相关文件**:
+  - `src/components/AthleteCard.tsx`
+- **问题描述**: Skill icons (e.g., pressure skill on Overlap King) were not being displayed on player cards, and when displayed, they were not using the correct SVG resource.
+- **根本原因**: The AthleteCard component was only rendering immediateEffect badges and not processing the skills array, causing skill icons to be invisible.
+- **修复方案**: Added skill icon rendering logic to the AthleteCard component, ensuring pressure-type skills use `/icons/press_up.svg` and applying special effects for lightning-enabled skills.
+- **版本**: 0.2.76
+- **Git提交**: N/A
+- **影响分析**:
+  - Skill icons now appear on player cards next to immediate effect badges
+  - Pressure skills now use the consistent `/icons/press_up.svg` resource
+  - Skills with lightning effects have special visual highlighting
+  - Players can now see all active skills on their player cards
+
+### BUG-2026-02-19-035: Field Visuals Improvements
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 球场视觉效果，用户体验
+- **相关文件**:
+  - `src/components/FieldVisuals.tsx`
+- **问题描述**: 1) 禁区没有弧线显示，2) 球场外没有球门显示。
+- **根本原因**: 禁区弧线绘制逻辑存在问题，且缺少球门绘制代码。
+- **修复方案**: 1) 修复禁区弧线绘制逻辑，使用嵌套div和overflow:hidden实现正确的弧线效果，2) 在球场外添加球门绘制代码，分别在顶部和底部添加球门结构。
+- **版本**: 0.2.77
+- **Git提交**: N/A
+- **影响分析**:
+  - 禁区现在显示正确的弧线
+  - 球场外添加了球门结构
+  - 球场视觉效果更加完整和真实
+  - 用户体验得到改善
+
+### BUG-2026-02-19-036: AthleteCard name Property Error
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 换人系统，错误处理
+- **相关文件**:
+  - `src/utils/substitution.ts`
+- **问题描述**: 终端报错显示 `Property 'name' does not exist on type 'AthleteCard'`，导致换人功能无法正常工作。
+- **根本原因**: `substitution.ts` 文件中使用了 `incomingCard.name` 和 `outgoingCard.name`，但 `AthleteCard` 接口中没有 `name` 属性，只有 `nickname` 和 `realName` 属性。
+- **修复方案**: 将 `substitution.ts` 文件中的 `name` 属性改为 `nickname` 属性。
+- **版本**: 0.2.78
+- **Git提交**: N/A
+- **影响分析**:
+  - 换人功能现在可以正常工作
+  - 终端不再报错
+  - 游戏流程更加顺畅
+
+### BUG-2026-02-19-037: Ambient Sound Type Definition Error
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 环境音系统，类型定义
+- **相关文件**:
+  - `src/utils/audio.ts`
+- **问题描述**: 终端报错显示类型定义错误，包括 `AmbientType` 缺少 `'crowd_chant'` 和 `'match'` 类型，以及 `stopMatchAmbience` 和 `triggerCrowdReaction` 函数参数不匹配。
+- **根本原因**: `audio.ts` 文件中的类型定义和函数参数与 `AmbientControls.tsx` 文件中的使用不匹配。
+- **修复方案**: 1) 在 `AmbientType` 中添加 `'crowd_chant'` 和 `'match'` 类型，2) 更新 `AmbientManager` 类添加新的环境音类型，3) 修复 `stopMatchAmbience` 和 `triggerCrowdReaction` 函数的参数定义。
+- **版本**: 0.2.78
+- **Git提交**: N/A
+- **影响分析**:
+  - 环境音系统现在可以正常工作
+  - 终端不再报错
+  - 类型定义更加完整和准确
+
+### BUG-2026-02-19-038: IconPosition Type Definition Error
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 球员卡系统，类型定义
+- **相关文件**:
+  - `src/components/AthleteCard.tsx`
+  - `src/data/cards.ts`
+- **问题描述**: 终端报错显示 `Cannot find name 'IconPosition'`，导致球员卡无法正常显示。
+- **根本原因**: `IconPosition` 类型已被移除，改用 `Tactics` 接口，但代码中仍然在使用 `IconPosition` 类型。
+- **修复方案**: 1) 在 `AthleteCard.tsx` 文件中添加 `IconPosition` 类型定义，2) 在 `cards.ts` 文件中添加 `IconWithPosition` 接口定义。
+- **版本**: 0.2.79
+- **Git提交**: N/A
+- **影响分析**:
+  - 球员卡现在可以正常显示
+  - 终端不再报错
+  - 类型定义更加完整和准确
+
+### BUG-2026-02-19-039: Penalty Arc Position Error
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 球场视觉效果，用户体验
+- **相关文件**:
+  - `src/components/FieldVisuals.tsx`
+- **问题描述**: 禁区弧线位置不对，宽度不符合要求。
+- **根本原因**: 弧线的位置、宽度和方向设置不正确。
+- **修复方案**: 1) 调整弧线宽度为2格，2) 修正弧线位置，3) 调整弧线方向，确保对手禁区和玩家禁区的弧线方向正确。
+- **版本**: 0.2.80
+- **Git提交**: N/A
+- **影响分析**:
+  - 禁区弧线现在显示在正确的位置
+  - 弧线宽度符合要求（2格）
+  - 弧线方向正确
+  - 球场视觉效果更加完整和真实
+
+### BUG-2026-02-19-040: AI Attack Icon Activation Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 战术图标系统，AI对战
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: AI对手方，CF在zone 2 6-7列，zone 3 同位置LWF，应该激活的一个进攻图标的但是没有。
+- **根本原因**: 垂直图标匹配逻辑没有考虑AI卡片旋转180度的影响，导致图标位置映射错误。
+- **修复方案**: 更新`checkVerticalMatch`方法，为AI卡片添加位置旋转映射，确保正确识别垂直方向的图标匹配。
+- **版本**: 0.2.81
+- **Git提交**: N/A
+- **影响分析**:
+  - AI队伍现在可以正确激活垂直方向的进攻图标
+  - 游戏机制在AI半场和玩家半场保持一致
+  - 战术图标匹配系统更加准确
+  - 用户将面对更加合理的AI对手
+
+### BUG-2026-02-19-041: AI Horizontal Icon Activation Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 战术图标系统，AI对战
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: 由于AI的场上的球员是水平旋转180的，所以他的图标列也是反的，激活的时候应该反位置。
+- **根本原因**: 水平图标匹配逻辑没有考虑AI卡片水平旋转180度的影响，总是检查右侧相邻卡片而不是左侧。
+- **修复方案**: 更新`checkHorizontalMatch`方法，为AI卡片添加水平旋转逻辑，检查左侧相邻卡片（slotIndex - 2）而不是右侧，并调整位置对映射。
+- **版本**: 0.2.82
+- **Git提交**: N/A
+- **影响分析**:
+  - AI队伍现在可以正确激活水平方向的图标
+  - 游戏机制在AI半场和玩家半场保持一致
+  - 战术图标匹配系统更加准确
+  - 用户将面对更加合理的AI对手
+
+### BUG-2026-02-19-042: AI Icon Rotation System Refactor
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 战术图标系统，AI对战，代码架构
+- **相关文件**:
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: AI卡片图标激活逻辑过于复杂，需要为每个匹配方法单独处理旋转逻辑。
+- **根本原因**: 缺少统一的AI方向处理机制，导致代码重复和维护困难。
+- **修复方案**: 1) 在`tacticalIconMatcher.ts`中添加`getRotatedTactics`方法，根据卡片所在zone自动处理180度旋转，2) 更新所有匹配方法使用旋转后的tactics。
+- **版本**: 0.2.83
+- **Git提交**: N/A
+- **影响分析**:
+  - 代码架构更加清晰，使用统一的旋转机制
+  - 减少了代码重复，提高了可维护性
+  - AI卡片图标激活逻辑更加准确
+  - 为未来功能扩展提供了更好的基础
+
+### BUG-2026-02-19-043: Rotation Logic Extraction
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 代码架构，可维护性
+- **相关文件**:
+  - `src/utils/rotationUtils.ts`
+  - `src/data/cards.ts`
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: 旋转逻辑分散在多个文件中，缺乏统一的工具类管理。
+- **根本原因**: 旋转逻辑没有集中管理，导致代码重复和维护困难。
+- **修复方案**: 1) 创建`RotationUtils`工具类，集中管理旋转相关逻辑，2) 更新所有卡片数据添加`rotatedTactics`属性，3) 修改`tacticalIconMatcher.ts`使用`RotationUtils.getTacticsForZone`方法。
+- **版本**: 0.2.84
+- **Git提交**: N/A
+- **影响分析**:
+  - 代码架构更加清晰，使用专门的工具类管理旋转逻辑
+  - 减少了代码重复，提高了可维护性
+  - 旋转逻辑更加集中，便于后续修改和扩展
+  - 为所有卡片添加了`rotatedTactics`属性，确保AI卡片正确旋转
+
+### BUG-2026-02-19-044: Background Music Control Issue
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 音频系统，用户体验
+- **相关文件**:
+  - `src/components/BackgroundMusic.tsx`
+- **问题描述**: 首页的音乐关闭按钮只关闭了背景音乐，没有关闭环境音。
+- **根本原因**: 音乐控制逻辑没有联动环境音控制。
+- **修复方案**: 修改`BackgroundMusic.tsx`中的`togglePlay`函数，当关闭音乐时同时关闭环境音，当开启音乐时同时开启环境音。
+- **版本**: 0.2.85
+- **Git提交**: N/A
+- **影响分析**:
+  - 音乐关闭按钮现在可以关闭所有声音（包括环境音）
+  - 音乐开启按钮现在可以开启所有声音
+  - 用户体验更加统一和直观
+  - 音频系统控制更加一致
+
+### BUG-2026-02-19-045: Type Error - SkillIconType Cannot Be Assigned to TacticalIcon
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 类型系统，代码编译
+- **相关文件**:
+  - `src/components/AthleteCard.tsx`
+- **问题描述**: 类型"SkillIconType"的参数不能赋给类型"TacticalIcon"的参数，不能将类型"breakthrough"分配给类型"TacticalIcon"。
+- **根本原因**: `getIconImage`函数只接受`TacticalIcon`类型，但被调用时传入了`SkillIconType`值。
+- **修复方案**: 更新`getIconImage`函数以接受`SkillIconType`类型，并添加对"breakthrough"和"breakthroughAll"技能类型的处理。
+- **版本**: 0.2.86
+- **Git提交**: N/A
+- **影响分析**:
+  - 消除了类型错误，确保代码编译通过
+  - 技能图标现在可以正确显示
+  - 类型系统更加准确
+
+### BUG-2026-02-19-046: Type Error - String Cannot Be Assigned to IconPosition
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 类型系统，代码编译
+- **相关文件**:
+  - `src/components/AthleteCard.tsx`
+- **问题描述**: 类型"{ type: TacticalIcon; position: string; }"的参数不能赋给类型"{ type: TacticalIcon; position: IconPosition; }"的参数，属性"position"的类型不兼容。
+- **根本原因**: `iconPositions`数组没有正确类型化，导致TypeScript将`position`属性推断为通用`string`而不是特定的`IconPosition`类型。
+- **修复方案**: 显式将`iconPositions`数组类型化为`{ type: TacticalIcon; position: IconPosition }[]`。
+- **版本**: 0.2.86
+- **Git提交**: N/A
+- **影响分析**:
+  - 消除了类型错误，确保代码编译通过
+  - 半圆图标现在可以正确渲染
+  - 类型系统更加准确
+
 ## Current Status
 - ✅ Draft system now properly tracks AI-selected cards
 - ✅ AI now has both starters in hand and substitutes on the bench
@@ -441,6 +781,24 @@
 - ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
 ## Version History
+- **0.2.86**: Fixed type errors in `AthleteCard.tsx` by updating `getIconImage` function to accept `SkillIconType` and explicitly typing `iconPositions` array with `IconPosition` type, ensuring skill icons and half icons render correctly
+- **0.2.85**: Fixed background music control issue by updating `BackgroundMusic.tsx` to control both background music and ambient sounds with a single toggle, ensuring the music off button closes all sounds including ambient noise
+- **0.2.84**: Created `RotationUtils` tool class to centralize rotation logic, updated all card data with `rotatedTactics` property, and modified `tacticalIconMatcher.ts` to use `RotationUtils.getTacticsForZone` method
+- **0.2.83**: Updated tactical icon matcher to use unified AI direction handling with `getRotatedTactics` method, ensuring consistent icon activation for AI cards
+- **0.2.82**: Fixed AI horizontal icon activation issue by adding horizontal rotation logic for AI cards, checking left adjacent cards instead of right
+- **0.2.81**: Fixed AI attack icon activation issue by adding position rotation mapping for vertical icon matching in AI half
+- **0.2.80**: Fixed penalty arc position error by adjusting arc width to 2 cells, correcting arc positions, and ensuring proper arc directions for both opponent and player penalty areas
+- **0.2.79**: Fixed IconPosition type definition error by adding IconPosition type definition to AthleteCard.tsx and IconWithPosition interface to cards.ts
+- **0.2.78**: Fixed AthleteCard name property error by updating substitution.ts to use nickname instead of name, and fixed ambient sound type definition errors by adding missing ambient types and updating function signatures
+- **0.2.77**: Fixed field visuals by adding proper penalty area arcs and球门 structures outside the pitch, improving overall visual realism
+- **0.2.76**: Added skill icon rendering to AthleteCard component, ensuring pressure skills use `/icons/press_up.svg` and displaying all skill icons on player cards
+- **0.2.75**: Standardized pressure icon references to use `/icons/press_up.svg` consistently across all components and card types, ensuring visual consistency for pressure icons and skills
+- **0.2.74**: Fixed AI Zone 3 placement issue by updating the `getValidZones` function in `ai.ts` to prioritize Zone 3 for forwards, Zone 2 for midfielders, and Zone 1 for defenders, ensuring AI attempts to place players in their most forward valid positions first
+- **0.2.73**: Fixed duplicate attributes in AthleteCardGroup component by removing redundant JSX attributes including "transition", "whileHover", and "style", eliminating Vite warnings during build process
+- **0.2.72**: Fixed AI half pressure icon activation issue by adding additional vertical position pairs in the tactical icon matching logic, ensuring DMF (zone 1, same starting column) and RWF (zone 2, same starting column) pressure icons properly connect in AI half
+- **0.2.71**: Fixed AI half attack icon activation issue by adding additional vertical position pairs in the tactical icon matching logic, ensuring AMF (zone 1, columns 4-5) and LWF (zone 2, columns 4-5) attack icons properly connect in AI half
+- **0.2.70**: Fixed pressure icon activation issue by adding additional vertical position pairs in the tactical icon matching logic, ensuring LWF (zone 5, columns 3-4) and DMF (zone 6, columns 2-3) pressure icons properly connect
+- **0.2.69**: Optimized card dealing speed by reducing the dealing interval from 300ms to 200ms per card, ensuring all 20 cards are dealt within the 5-second time limit after home/away selection
 - **0.2.68**: Updated shooting logic to allow users to select activated attack icons directly instead of players, ensuring shooting is only possible when there are activated attack icons on the field
 - **0.2.67**: Fixed field icon position issue by updating checkFieldIconMatches to adjust slot index based on icon position, ensuring right-side icons appear in the correct slots, and updated createHorizontalCompleteIcon to calculate centerX correctly for horizontal synergy icons
 - **0.2.66**: Fixed adjacent LB and RB synergy icon issue by updating checkHorizontalMatch to use slotIndex + 2 instead of slotIndex + 1, ensuring proper horizontal matching between cards that occupy two slots

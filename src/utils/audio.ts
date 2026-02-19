@@ -130,7 +130,7 @@ export const playSound = (type: SoundType) => {
 };
 
 // Ambient sound types
-export type AmbientType = 'crowd' | 'stadium' | 'rain' | 'wind';
+export type AmbientType = 'crowd' | 'stadium' | 'rain' | 'wind' | 'crowd_chant' | 'match';
 
 // Ambient sound manager
 class AmbientManager {
@@ -138,7 +138,9 @@ class AmbientManager {
     crowd: null,
     stadium: null,
     rain: null,
-    wind: null
+    wind: null,
+    crowd_chant: null,
+    match: null
   };
   private playing: Set<AmbientType> = new Set();
   private enabled: boolean = true;
@@ -226,11 +228,11 @@ export const startMatchAmbience = () => {
   ambientManager.play('stadium');
 };
 
-export const stopMatchAmbience = () => {
+export const stopMatchAmbience = (fadeOutMs: number = 0) => {
   ambientManager.stopAll();
 };
 
-export const triggerCrowdReaction = () => {
+export const triggerCrowdReaction = (reaction: 'ooh' | 'applause' | 'boo' | 'cheer') => {
   // Play a short crowd cheer
   playSound('cheer');
 };

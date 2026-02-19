@@ -40,7 +40,7 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
   // 计算图标数量并通知父组件
   React.useEffect(() => {
     if (onIconCountsCalculated) {
-      const playerCounts = playerMatcher.getIconCounts();
+      const playerCounts = playerMatcher.getPlayerIconCounts();
       onIconCountsCalculated(playerCounts);
     }
   }, [playerMatcher, onIconCountsCalculated]);
@@ -51,15 +51,15 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
   const getIconImage = (type: TacticalIcon): string => {
     switch (type) {
       case 'attack':
-        return '/icons/attack_ball.svg';
+        return '/icons/icon-shoot.svg';
       case 'defense':
-        return '/icons/defense_shield.svg';
+        return '/icons/icon-defense.svg';
       case 'pass':
-        return '/cards/skills/icon-pass.png';
+        return '/icons/icon-pass.png';
       case 'press':
-        return '/icons/press_up.svg';
+        return '/icons/icon-press.svg';
       default:
-        return '/icons/attack_ball.svg';
+        return '/icons/icon-shoot.svg';
     }
   };
 

@@ -143,8 +143,16 @@ function performTeamAction(state, action) {
   
   if (action === 'pass') {
     const passCount = state.currentTurn === 'player' 
-      ? state.playerField.reduce((sum, zone) => sum + countIcons(zone.cards, 'pass'), 0)
-      : state.aiField.reduce((sum, zone) => sum + countIcons(zone.cards, 'pass'), 0)
+      ? state.playerField.reduce((sum, zone) => {
+          return sum + zone.cards.reduce((cardSum, card) => {
+            return cardSum + (card.icons || []).filter(icon => icon === 'pass').length
+          }, 0)
+        }, 0)
+      : state.aiField.reduce((sum, zone) => {
+          return sum + zone.cards.reduce((cardSum, card) => {
+            return cardSum + (card.icons || []).filter(icon => icon === 'pass').length
+          }, 0)
+        }, 0)
     
     const drawCount = Math.min(passCount, 5)
     const drawnCards = state.synergyDeck.splice(0, drawCount)
@@ -162,8 +170,16 @@ function performTeamAction(state, action) {
     }
   } else if (action === 'press') {
     const pressCount = state.currentTurn === 'player'
-      ? state.playerField.reduce((sum, zone) => sum + countIcons(zone.cards, 'press'), 0)
-      : state.aiField.reduce((sum, zone) => sum + countIcons(zone.cards, 'press'), 0)
+      ? state.playerField.reduce((sum, zone) => {
+          return sum + zone.cards.reduce((cardSum, card) => {
+            return cardSum + (card.icons || []).filter(icon => icon === 'press').length
+          }, 0)
+        }, 0)
+      : state.aiField.reduce((sum, zone) => {
+          return sum + zone.cards.reduce((cardSum, card) => {
+            return cardSum + (card.icons || []).filter(icon => icon === 'press').length
+          }, 0)
+        }, 0)
     
     const newControlPosition = Math.min(state.controlPosition + pressCount, 10)
     

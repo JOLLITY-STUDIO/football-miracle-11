@@ -19,11 +19,15 @@ export const calculateAttackPower = (card: athleteCard, zones: FieldZone[], used
   return power;
 };
 
-export const calculateDefensePower = (card: athleteCard, zones: any[]): number => {
+export const calculateDefensePower = (card: athleteCard, zones: FieldZone[]): number => {
   let power = card.power || 0;
   
-  const defenseIcons = card.iconPositions.filter(pos => pos.type === 'defense');
-  power += defenseIcons.length;
+  // 使用 TacticalIconMatcher 计算激活的防守图标数量
+  const matcher = new TacticalIconMatcher(zones);
+  const iconCounts = matcher.getIconCounts();
+  const activatedDefenseIcons = iconCounts.defense;
+  
+  power += activatedDefenseIcons;
   
   const defenseBonus = calculateDefenseBonus(zones);
   power += defenseBonus;
@@ -86,20 +90,22 @@ export const calculateActivatedIconPositions = (playerField: FieldZone[], aiFiel
             }
           } else {
             // For other zones, use the original logic
-            card.iconPositions.forEach((iconPos: any) => {
-              if (relevantPositions.positions.includes(iconPos.position) && relevantPositions.iconTypes.includes(iconPos.type)) {
-                activatedPositions.push({
-                  zone: zone.zone,
-                  position: slot.position
-                });
-                if (iconPos.position.includes('Right') && slot.position + 1 < 8) {
+            if (card.iconPositions) {
+              card.iconPositions.forEach((iconPos: any) => {
+                if (relevantPositions.positions.includes(iconPos.position) && relevantPositions.iconTypes.includes(iconPos.type)) {
                   activatedPositions.push({
                     zone: zone.zone,
-                    position: slot.position + 1
+                    position: slot.position
                   });
+                  if (iconPos.position.includes('Right') && slot.position + 1 < 8) {
+                    activatedPositions.push({
+                      zone: zone.zone,
+                      position: slot.position + 1
+                    });
+                  }
                 }
-              }
-            });
+              });
+            }
           }
         }
       });

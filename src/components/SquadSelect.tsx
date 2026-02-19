@@ -19,8 +19,8 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
       const orderA = typeOrder[a.type as keyof typeof typeOrder] ?? 3;
       const orderB = typeOrder[b.type as keyof typeof typeOrder] ?? 3;
       if (orderA !== orderB) return orderA - orderB;
-      const nameA = a.nickname || a.name || '';
-      const nameB = b.nickname || b.name || '';
+      const nameA = a.nickname || a.realName || '';
+      const nameB = b.nickname || b.realName || '';
       return nameA.localeCompare(nameB);
     });
   }, [allPlayers]);
@@ -52,22 +52,22 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
 
   const autoSelect = () => {
     playSound('click');
-    const byType: { defender: AthleteCard[]; midfielder: AthleteCard[]; forward: AthleteCard[] } = { defender: [], midfielder: [], forward: [] };
+    const byType: { df: AthleteCard[]; mf: AthleteCard[]; fw: AthleteCard[] } = { df: [], mf: [], fw: [] };
     sortedPlayers.forEach(p => {
-      if (p.type === 'defender' || p.type === 'midfielder' || p.type === 'forward') {
+      if (p.type === 'df' || p.type === 'mf' || p.type === 'fw') {
         byType[p.type].push(p);
       }
     });
     
     const selected = new Set<string>();
     // Select best players based on position distribution
-    const needForwards = Math.min(3, byType.forward.length);
-    const needMidfielders = Math.min(4, byType.midfielder.length);
-    const needDefenders = Math.min(3, byType.defender.length);
+    const needForwards = Math.min(3, byType.fw.length);
+    const needMidfielders = Math.min(4, byType.mf.length);
+    const needDefenders = Math.min(3, byType.df.length);
     
-    byType.forward.slice(0, needForwards).forEach(p => selected.add(p.id));
-    byType.midfielder.slice(0, needMidfielders).forEach(p => selected.add(p.id));
-    byType.defender.slice(0, needDefenders).forEach(p => selected.add(p.id));
+    byType.fw.slice(0, needForwards).forEach(p => selected.add(p.id));
+    byType.mf.slice(0, needMidfielders).forEach(p => selected.add(p.id));
+    byType.df.slice(0, needDefenders).forEach(p => selected.add(p.id));
     
     // Fill remaining if needed
     if (selected.size < 10) {
@@ -166,7 +166,6 @@ const SquadSelect: React.FC<Props> = ({ allPlayers, onConfirm, isHomeTeam }) => 
                     {console.log('Card data:', {
                       id: card.id,
                       name: card.nickname,
-                      iconPositions: card.iconPositions,
                       icons: card.icons
                     })}
                     <AthleteCardComponent

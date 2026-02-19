@@ -42,12 +42,12 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
             <div className="card-name">{slot.athleteCard.realName}</div>
             <div className="card-position">{slot.athleteCard.positionLabel}</div>
             <div className="card-icons">
-              {slot.athleteCard.iconPositions.map((icon, idx) => (
+              {slot.athleteCard.icons.slice(0, 4).map((icon, idx) => (
                 <div
                   key={idx}
                   className="icon-dot"
-                  style={{ backgroundColor: ICON_COLORS[icon.type] || '#888' }}
-                  title={icon.type}
+                  style={{ backgroundColor: ICON_COLORS[icon] || '#888' }}
+                  title={icon}
                 />
               ))}
             </div>

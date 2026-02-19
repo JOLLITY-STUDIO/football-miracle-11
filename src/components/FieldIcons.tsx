@@ -35,7 +35,7 @@ const calculateCompleteIcons = (field: FieldZone[]): { passCount: number; pressC
           
           // Check if any adjacent card has pass icons in complementary slots
           const hasComplementaryPass = adjacentSlots.some((adjSlot, adjIndex) => {
-            if (!adjSlot.athleteCard) return false;
+            if (!adjSlot || !adjSlot.athleteCard) return false;
             
             // Check if adjacent card has pass icons
             if (!adjSlot.athleteCard.icons.includes('pass')) return false;
@@ -57,7 +57,7 @@ const calculateCompleteIcons = (field: FieldZone[]): { passCount: number; pressC
           
           // Check if any adjacent card has press icons in complementary slots
           const hasComplementaryPress = adjacentSlots.some((adjSlot, adjIndex) => {
-            if (!adjSlot.athleteCard) return false;
+            if (!adjSlot || !adjSlot.athleteCard) return false;
             
             // Check if adjacent card has press icons
             if (!adjSlot.athleteCard.icons.includes('press')) return false;
@@ -83,18 +83,18 @@ const getAdjacentSlots = (field: FieldZone[], zoneIndex: number, slotIndex: numb
   const adjacent = [];
   
   // Check same zone, adjacent slots
-  if (slotIndex > 0) {
+  if (slotIndex > 0 && field[zoneIndex]) {
     adjacent.push(field[zoneIndex].slots[slotIndex - 1]);
   }
-  if (slotIndex < field[zoneIndex].slots.length - 1) {
+  if (field[zoneIndex] && slotIndex < field[zoneIndex].slots.length - 1) {
     adjacent.push(field[zoneIndex].slots[slotIndex + 1]);
   }
   
   // Check adjacent zones, same slot
-  if (zoneIndex > 0) {
+  if (zoneIndex > 0 && field[zoneIndex - 1]) {
     adjacent.push(field[zoneIndex - 1].slots[slotIndex]);
   }
-  if (zoneIndex < field.length - 1) {
+  if (zoneIndex < field.length - 1 && field[zoneIndex + 1]) {
     adjacent.push(field[zoneIndex + 1].slots[slotIndex]);
   }
   
@@ -231,7 +231,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
             >
               <div style={createIconStyle(0, colIdx, false, activePositions)}>
                 <img
-                  src="/icons/defense_shield.svg"
+                  src="/icons/icon-defense.svg"
                   alt="AI Defense"
                   style={{
                     width: getActiveIconStyle(0, colIdx, false, activePositions).width,
@@ -268,7 +268,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
             >
               <div style={createIconStyle(3, colIdx, false, activePositions)}>
                 <img
-                  src="/icons/attack_ball.svg"
+                  src="/icons/icon-shoot.svg"
                   alt="AI Attack"
                   style={{
                     width: getActiveIconStyle(3, colIdx, false, activePositions).width,
@@ -306,7 +306,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
             >
               <div style={createIconStyle(4, colIdx, true, activePositions)}>
                 <img
-                  src="/icons/attack_ball.svg"
+                  src="/icons/icon-shoot.svg"
                   alt="Player Attack"
                   style={{
                     width: getActiveIconStyle(4, colIdx, true, activePositions).width,
@@ -343,7 +343,7 @@ const FieldIcons: React.FC<FieldIconsProps> = ({
             >
               <div style={createIconStyle(7, colIdx, true, activePositions)}>
                 <img
-                  src="/icons/defense_shield.svg"
+                  src="/icons/icon-defense.svg"
                   alt="Player Defense"
                   style={{
                     width: getActiveIconStyle(7, colIdx, true, activePositions).width,

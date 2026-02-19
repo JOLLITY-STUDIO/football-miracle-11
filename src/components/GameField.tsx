@@ -149,7 +149,7 @@ const GameField: React.FC<GameFieldProps> = ({
               target: e.target,
               currentTarget: e.currentTarget,
               halfId,
-              selectedCard: selectedCard?.name,
+              selectedCard: selectedCard?.nickname,
               canPlaceCards
             });
           }}
@@ -515,7 +515,7 @@ const GameField: React.FC<GameFieldProps> = ({
             playerField={playerField}
             aiField={aiField}
             onIconCountsCalculated={onCompleteIconsCalculated}
-            onIconClick={onIconClick}
+            {...(onIconClick && { onIconClick })}
           />
         )}
         

@@ -1,15 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { ImmediateEffectType } from '../data/cards';
+import type { SkillEffectType } from '../data/cards';
 import clsx from 'clsx';
 
 interface Props {
-  effect: ImmediateEffectType;
+  effect: SkillEffectType;
   size?: 'small' | 'medium' | 'large';
   showLabel?: boolean;
 }
 
-const getEffectInfo = (effect: ImmediateEffectType) => {
+const getEffectInfo = (effect: SkillEffectType) => {
   switch (effect) {
     case 'move_control_1':
       return {

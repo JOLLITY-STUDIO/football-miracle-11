@@ -361,6 +361,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           newState = resolveShot(newState);
         }
         newState.pendingShot = null;
+        newState.turnPhase = 'end';
       }
       
       return newState;

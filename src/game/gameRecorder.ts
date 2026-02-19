@@ -1,5 +1,5 @@
 import type { athleteCard, SynergyCard } from '../data/cards';
-import type { GamePhase } from './gameLogic';
+import type { GamePhase } from '../types/game';
 
 export type ActionType = 
   | 'place_card'
@@ -146,7 +146,7 @@ export function formatAction(action: GameAction, athleteCards: athleteCard[], sy
       return `${actor} ${cardById(action.details.cardId as string)} placed at ${action.details.zone}line`;
     case 'attack':
       const result = action.details.success ? 'Success' : 'Failed';
-      return `${actor}Attackedï¼?{result}ï¼?Attack:${action.details.attackPower} vs Defense:${action.details.defensePower})`;
+      return `${actor}Attackedï¿½?{result}ï¿½?Attack:${action.details.attackPower} vs Defense:${action.details.defensePower})`;
     case 'select_synergy':
       return `${actor} selected synergy card: ${synergyById(action.details.cardId as string)}`;
     case 'end_turn':

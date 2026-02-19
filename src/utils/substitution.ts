@@ -49,6 +49,6 @@ export const performSubstitution = (
       aiBench: newBench,
       aiUsedShotIcons: newUsedShotIcons
     }),
-    message: `${incomingCard.name} substituted for ${outgoingCard.name} - used shot icons reset`
+    message: `${incomingCard.nickname} substituted for ${outgoingCard.nickname} - used shot icons reset`
   };
 };

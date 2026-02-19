@@ -69,11 +69,56 @@ export const MatchLog: React.FC<MatchLogProps> = ({ logs }) => {
   };
 
   const formatTimestamp = (timestamp: Date) => {
-    return timestamp.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      minute: '2-digit', 
+    return timestamp.toLocaleTimeString('en-US', {
+      hour12: false,
+      minute: '2-digit',
       second: '2-digit',
-      fractionalSecondDigits: 1 
+      fractionalSecondDigits: 1
+    });
+  };
+
+  const formatDetailedTimestamp = (timestamp: Date) => {
+    return timestamp.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const handleCopyLogs = () => {
+    if (logs.length === 0) return;
+
+    let detailedLogs = '=== MAGIC NUMBER ELEVEN - MATCH LOGS ===\n';
+    detailedLogs += '=====================================\n\n';
+    detailedLogs += `Match Start: ${formatDetailedTimestamp(logs[0].timestamp)}\n`;
+    detailedLogs += `Match End: ${formatDetailedTimestamp(logs[logs.length - 1].timestamp)}\n`;
+    detailedLogs += `Total Entries: ${logs.length}\n\n`;
+    detailedLogs += '=====================================\n\n';
+
+    logs.forEach((entry, index) => {
+      detailedLogs += `[${index + 1}] ${formatDetailedTimestamp(entry.timestamp)}\n`;
+      detailedLogs += `Type: ${entry.type.toUpperCase()}\n`;
+      if (entry.phase) detailedLogs += `Phase: ${entry.phase}\n`;
+      if (entry.step) detailedLogs += `Step: ${entry.step}\n`;
+      if (entry.attacker) detailedLogs += `Attacker: ${entry.attacker}\n`;
+      if (entry.defender) detailedLogs += `Defender: ${entry.defender}\n`;
+      if (entry.attackPower !== undefined) detailedLogs += `Attack Power: ${entry.attackPower}\n`;
+      if (entry.defensePower !== undefined) detailedLogs += `Defense Power: ${entry.defensePower}\n`;
+      if (entry.synergyCards !== undefined) detailedLogs += `Synergy Cards: ${entry.synergyCards}\n`;
+      if (entry.skills && entry.skills.length > 0) detailedLogs += `Skills: ${entry.skills.join(', ')}\n`;
+      if (entry.result) detailedLogs += `Result: ${entry.result.toUpperCase()}\n`;
+      detailedLogs += `Message: ${entry.message}\n`;
+      detailedLogs += '-------------------------------------\n\n';
+    });
+
+    navigator.clipboard.writeText(detailedLogs).then(() => {
+      alert('Match logs copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy logs:', err);
     });
   };
 
@@ -81,10 +126,19 @@ export const MatchLog: React.FC<MatchLogProps> = ({ logs }) => {
     <div className="flex flex-col h-full w-full bg-black/40 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden shadow-2xl">
       <div className="px-4 py-2 border-b border-white/10 bg-white/5 flex items-center justify-between">
         <h3 className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Match Log</h3>
-        <div className="flex gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500/50 animate-pulse" />
-          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50" />
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500/50" />
+        <div className="flex gap-2">
+          <button 
+            onClick={handleCopyLogs}
+            disabled={logs.length === 0}
+            className="text-[9px] px-3 py-1 bg-white/10 hover:bg-white/20 rounded border border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+          >
+            📋 Copy
+          </button>
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500/50 animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50" />
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500/50" />
+          </div>
         </div>
       </div>
       

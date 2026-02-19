@@ -158,8 +158,8 @@ const {
       return zone.slots.some(slot => {
         if (!slot.athleteCard) return false;
         const attackIconCount = slot.athleteCard.icons.filter((icon: string) => icon === 'attack').length;
-        const usedShotMarkers = slot.shotMarkers || 0;
-        return attackIconCount > usedShotMarkers;
+        const usedShotIcons = gameState.playerUsedShotIcons[slot.athleteCard.id] || [];
+        return attackIconCount > usedShotIcons.length;
       });
     });
     
@@ -245,7 +245,7 @@ const {
       // Start dealing cards with animation
       dealingInterval = setInterval(() => {
         dispatch({ type: 'DRAW_CARD' });
-      }, 300); // Draw a card every 300ms for faster dealing
+      }, 200); // Draw a card every 200ms to complete dealing within 5 seconds
       
       // 移除强制超时，由DRAW_CARD逻辑自动停止
       // 当所有卡片都被抽取后，isDealing会自动设为false
@@ -655,11 +655,11 @@ const {
     if (gameState.pendingShot && gameState.turnPhase === 'end') {
       const result = gameState.pendingShot.result;
       if (result === 'goal' || result === 'magicNumber') {
-        triggerCrowdReaction();
+        triggerCrowdReaction('cheer');
       } else if (result === 'saved') {
-        triggerCrowdReaction();
+        triggerCrowdReaction('applause');
       } else if (result === 'missed') {
-        triggerCrowdReaction();
+        triggerCrowdReaction('ooh');
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -979,7 +979,7 @@ const {
                   }}
 
                   onShoot={handleShoot}
-                  canShoot={hasAttackIconsOnField()}
+                  canShoot={hasShootablePlayers()}
                 />
                 
 

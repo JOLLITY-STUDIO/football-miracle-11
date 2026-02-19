@@ -12,7 +12,7 @@
  */
 
 import type { AthleteCard } from '../data/cards';
-import type { FieldState } from '../types/game';
+import type { FieldZone } from '../types/game';
 import { RuleValidator } from './ruleValidator';
 import { 
   VALID_ZONES, 

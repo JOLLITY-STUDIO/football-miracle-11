@@ -1,10 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { TacticalIcon, IconWithPosition } from '../data/cards';
+import type { TacticalIcon } from '../data/cards';
 
 interface Props {
   icons: TacticalIcon[];
-  iconPositions?: IconWithPosition[];
   size?: number;
   showConnectionLines?: boolean;
 }
@@ -37,7 +36,6 @@ const getIconBgColor = (icon: TacticalIcon): string => {
 
 export const HemisphereIcons: React.FC<Props> = ({
   icons,
-  iconPositions,
   size = 60,
   showConnectionLines = true
 }) => {

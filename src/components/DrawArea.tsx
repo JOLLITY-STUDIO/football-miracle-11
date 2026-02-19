@@ -28,7 +28,7 @@ export const DrawArea: React.FC<Props> = ({
         {showFaceDownAthletes && Array.from({ length: faceDownAthleteCount }, (_, index) => (
           <div key={`face-down-athlete-${index}`} className="relative transform hover:-translate-y-4 transition-transform">
             <AthleteCardComponent
-              card={{ id: `temp_${index}`, nickname: '', realName: '', type: 'fw', positionLabel: '', isStar: false, unlocked: true, unlockCondition: '', icons: [], iconPositions: [], immediateEffect: 'none' }}
+              card={{ id: `temp_${index}`, nickname: '', realName: '', type: 'fw', positionLabel: '', isStar: false, unlocked: true, unlockCondition: '', icons: [], immediateEffect: 'none' }}
               size="small"
               faceDown={true}
               variant="home"

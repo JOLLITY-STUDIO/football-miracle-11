@@ -23,9 +23,11 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
   
   // Relative dimensions for field elements
   const CENTER_CIRCLE_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.2; // 20% of smallest dimension
-  const PENALTY_ARC_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.15; // 15% of smallest dimension
+  const PENALTY_ARC_RADIUS = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.1; // 10% of smallest dimension (reduced height)
   const CORNER_SIZE = Math.min(PITCH_WIDTH, PITCH_HEIGHT) * 0.05; // 5% of smallest dimension
   const PENALTY_SPOT_POSITION = GOAL_AREA_HEIGHT + (PENALTY_AREA_HEIGHT * 0.5);
+  // Penalty arc width (2 cells)
+  const PENALTY_ARC_WIDTH = FIELD_CONFIG.BASE_CELL_WIDTH * 2;
 
   return (
     <div 
@@ -66,6 +68,18 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
       />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/90 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.6)] z-30" />
       
+      {/* Goals outside the pitch */}
+      {/* Opponent Goal */}
+      <div 
+        className="absolute top-[-30px] left-1/2 -translate-x-1/2 border-b-[4px] border-x-[4px] border-white/80 bg-white/10 pointer-events-none z-30"
+        style={{ width: `${GOAL_AREA_WIDTH}px`, height: `30px` }}
+      />
+      {/* Player Goal */}
+      <div 
+        className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 border-t-[4px] border-x-[4px] border-white/80 bg-white/10 pointer-events-none z-30"
+        style={{ width: `${GOAL_AREA_WIDTH}px`, height: `30px` }}
+      />
+
       {/* Goals and Areas (Proportional to cells) */}
       {/* Opponent Area */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-30">
@@ -82,15 +96,19 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
         {/* Penalty Spot */}
         <div className="absolute top-[${PENALTY_SPOT_POSITION}px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
         {/* Penalty Arc */}
-        <div 
-          className="absolute top-[${GOAL_AREA_HEIGHT + PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-b-[4px] border-white/80 rounded-b-full bg-transparent"
-          style={{ 
-            width: `${PENALTY_ARC_RADIUS * 2}px`, 
-            height: `${PENALTY_ARC_RADIUS}px`, 
-            borderRadius: `${PENALTY_ARC_RADIUS}px ${PENALTY_ARC_RADIUS}px 0 0`,
-            clipPath: 'inset(0 0 -100% 0)'
-          }}
-        />
+        <svg 
+          className="absolute bottom-[${PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2" 
+          width={`${PENALTY_ARC_WIDTH}px`} 
+          height={`${PENALTY_ARC_RADIUS}px`} 
+          style={{ overflow: 'visible' }}
+        >
+          <path 
+            d={`M 0 0 Q ${PENALTY_ARC_WIDTH / 2} ${PENALTY_ARC_RADIUS} ${PENALTY_ARC_WIDTH} 0`} 
+            stroke="rgba(255,255,255,0.8)" 
+            strokeWidth="4" 
+            fill="none" 
+          />
+        </svg>
       </div>
 
       {/* Player Area */}
@@ -108,14 +126,19 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
         {/* Penalty Spot */}
         <div className="absolute bottom-[${PENALTY_SPOT_POSITION}px] w-2.5 h-2.5 bg-white/90 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
         {/* Penalty Arc */}
-        <div 
-          className="absolute bottom-[${GOAL_AREA_HEIGHT + PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2 border-t-[4px] border-white/80 rounded-t-full bg-transparent"
-          style={{ 
-            width: `${PENALTY_ARC_RADIUS * 2}px`, 
-            height: `${PENALTY_ARC_RADIUS}px`, 
-            borderRadius: `0 0 ${PENALTY_ARC_RADIUS}px ${PENALTY_ARC_RADIUS}px`
-          }}
-        />
+        <svg 
+          className="absolute top-[${PENALTY_AREA_HEIGHT}px] left-1/2 -translate-x-1/2" 
+          width={`${PENALTY_ARC_WIDTH}px`} 
+          height={`${PENALTY_ARC_RADIUS}px`} 
+          style={{ overflow: 'visible' }}
+        >
+          <path 
+            d={`M 0 ${PENALTY_ARC_RADIUS} Q ${PENALTY_ARC_WIDTH / 2} 0 ${PENALTY_ARC_WIDTH} ${PENALTY_ARC_RADIUS}`} 
+            stroke="rgba(255,255,255,0.8)" 
+            strokeWidth="4" 
+            fill="none" 
+          />
+        </svg>
       </div>
       
       {/* Corners */}
@@ -146,7 +169,7 @@ export const FieldVisuals: React.FC<FieldVisualsProps> = ({
             className="text-white text-sm mb-8"
             onClick={(e) => e.stopPropagation()}
           >
-            Click on a player with âš?icon to shoot
+            Click on a player with ï¿½?icon to shoot
           </div>
           <button
             onClick={onCloseShootMode}

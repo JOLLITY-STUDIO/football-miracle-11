@@ -30,13 +30,20 @@ export const performEndTurn = (state: GameState): GameState => {
     isFirstMatchTurn: false
   };
   
-  // Reset used shot icons at half-time
+  // Reset used shot icons at half-time or end of turn
   if (isHalfTimeTurn) {
     newState.playerUsedShotIcons = {};
     newState.aiUsedShotIcons = {};
     newState.message = 'Half-time! All used shot icons have been reset.';
     // Skip team action phase after half-time, go directly to player action
     newState.turnPhase = 'athleteAction';
+  } else {
+    // Reset used shot icons at end of turn for the current player
+    if (state.currentTurn === 'player') {
+      newState.playerUsedShotIcons = {};
+    } else {
+      newState.aiUsedShotIcons = {};
+    }
   }
   
   // Reset for new turn

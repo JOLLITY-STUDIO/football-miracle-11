@@ -44,7 +44,7 @@ export const AmbientControls: React.FC<Props> = ({ isOpen, onClose }) => {
     saveSettings(newEnabled, ambientVolume);
     
     if (!newEnabled) {
-      stopMatchAmbience(1000);
+      stopMatchAmbience();
       setPlayingAmbients(new Set());
     }
   };
@@ -57,14 +57,14 @@ export const AmbientControls: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const toggleSpecificAmbient = (type: AmbientType) => {
     if (playingAmbients.has(type)) {
-      stopAmbient(type, 1000);
+      stopAmbient(type);
       setPlayingAmbients(prev => {
         const newSet = new Set(prev);
         newSet.delete(type);
         return newSet;
       });
     } else {
-      playAmbient(type, 2000);
+      playAmbient(type);
       setPlayingAmbients(prev => new Set(prev).add(type));
     }
   };
@@ -188,7 +188,7 @@ export const AmbientControls: React.FC<Props> = ({ isOpen, onClose }) => {
                     启动比赛氛围
                   </button>
                   <button
-                    onClick={() => stopMatchAmbience(2000)}
+                    onClick={() => stopMatchAmbience()}
                     disabled={!ambientEnabled}
                     className="flex-1 py-2 px-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm font-medium hover:bg-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >

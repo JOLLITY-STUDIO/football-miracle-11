@@ -59,7 +59,7 @@ export default defineConfig({
     //   }
     // })
   ],
-  base: '/magic-number-eleven/',
+  base: './',
   server: {
     port: 3002,
     strictPort: true,

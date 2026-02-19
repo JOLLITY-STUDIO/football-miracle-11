@@ -1,13 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import type { AthleteCard, TacticalIcon, IconPosition } from '../data/cards';
+import type { AthleteCard, TacticalIcon, SkillIconType } from '../data/cards';
 import { SkillEffectBadge } from './SkillEffectBadge';
 import { BaseCard } from './BaseCard';
 import { logger } from '../utils/logger';
 
 // Type alias for clarity
 type athleteCardType = AthleteCard;
+
+// Icon position type for half icons
+type IconPosition = 'slot-topLeft' | 'slot-topRight' | 'slot-middleLeft' | 'slot-middleRight' | 'slot-bottomLeft' | 'slot-bottomRight';
 
 interface Props {
   card: athleteCardType;
@@ -47,13 +50,15 @@ const getCardBgColor = (type: string): string => {
   return 'bg-gradient-to-br from-gray-800 to-gray-900';
 };
 
-const getIconImage = (icon: TacticalIcon): string => {
+const getIconImage = (icon: SkillIconType): string => {
   switch (icon) {
-    case 'attack': return '/icons/attack_ball.svg';
-    case 'defense': return '/icons/defense_shield.svg';
-    case 'pass': return '/icons/synergy_plus.svg'; // 协同图标
-    case 'press': return '/icons/press_up.svg';
-    default: return '/icons/attack_ball.svg';
+    case 'attack': return '/icons/icon-shoot.svg';
+    case 'defense': return '/icons/icon-defense.svg';
+    case 'pass': return '/icons/icon-pass.png';
+    case 'press': return '/icons/icon-press.svg';
+    case 'breakthrough': return '/icons/icon-shoot.svg';
+    case 'breakthroughAll': return '/icons/icon-shoot.svg';
+    default: return '/icons/icon-shoot.svg';
   }
 };
 
@@ -146,6 +151,14 @@ const AthleteCardComponent: React.FC<Props> = ({
     const isShotIcon = iconPos.type === 'attack';
     const isUsed = isShotIcon && (usedShotIcons?.includes(index) || false);
     
+    // 调整裁剪路径，使用圆形裁剪确保显示正确的半圆形
+    const clipPathStyle = {
+      top: `circle(50% at 50% 0%)`, // 显示下半部分（凹进顶部的半圆）
+      bottom: `circle(50% at 50% 100%)`, // 显示上半部分（凹进底部的半圆）
+      left: `circle(50% at 0% 50%)`, // 显示右半部分（凹进左侧的半圆）
+      right: `circle(50% at 100% 50%)` // 显示左半部分（凹进右侧的半圆）
+    }[info.edge] || 'circle(50% at 50% 50%)';
+    
     // 统一所有图标的容器大小，确保图标图片大小一致
     const containerSize = halfIconDiameter;
     const containerStyle: React.CSSProperties = {
@@ -158,19 +171,11 @@ const AthleteCardComponent: React.FC<Props> = ({
       zIndex: 15,
       overflow: 'visible',
       filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))',
-      ...(info.edge === 'top' ? { top: 0, left: info.pos, transform: 'translateX(-50%) translateY(-50%)' } :
-          info.edge === 'bottom' ? { bottom: 0, left: info.pos, transform: 'translateX(-50%) translateY(50%)' } :
-          info.edge === 'left' ? { top: info.pos, left: 0, transform: 'translateX(-50%) translateY(-50%)' } :
-          { top: info.pos, right: 0, transform: 'translateX(50%) translateY(-50%)' })
+      ...(info.edge === 'top' ? { top: 0, left: info.pos, transform: 'translateX(-50%)' } :
+          info.edge === 'bottom' ? { bottom: 0, left: info.pos, transform: 'translateX(-50%)' } :
+          info.edge === 'left' ? { top: info.pos, left: 0, transform: 'translateY(-50%)' } :
+          { top: info.pos, right: 0, transform: 'translateY(-50%)' })
     };
-
-    // 调整裁剪路径，使用统一的容器大小，确保显示正确的半张
-    const clipPathStyle = {
-      top: `inset(50% 0 0 0)`, // 显示下半部分
-      bottom: `inset(0 0 50% 0)`, // 显示上半部分
-      left: `inset(0 0 0 50%)`, // 显示右半部分
-      right: `inset(0 50% 0 0)` // 显示左半部分
-    }[info.edge] || 'inset(0 0 0 0)';
 
     return (
       <div
@@ -219,8 +224,11 @@ const AthleteCardComponent: React.FC<Props> = ({
               height: `${containerSize}px`,
               objectFit: 'contain', 
               filter: isUsed ? 'grayscale(100%)' : 'none',
-              // 移除 transform，让图标自然居中显示
-              transform: 'none'
+              // 移动图标以显示正确的半部分
+              transform: info.edge === 'top' ? 'translateY(-50%)' : 
+                         info.edge === 'bottom' ? 'translateY(50%)' : 
+                         info.edge === 'left' ? 'translateX(-50%)' : 
+                         info.edge === 'right' ? 'translateX(50%)' : 'none'
             }}
           />
         </div>
@@ -266,7 +274,7 @@ const AthleteCardComponent: React.FC<Props> = ({
         {/* Front Face - 横版布局 左右各半 */}
         <div
           className={clsx(
-            "absolute inset-0 flex overflow-hidden rounded-lg"
+            "absolute inset-0 flex rounded-lg"
           )}
           style={{ backfaceVisibility: 'hidden' }}
         >
@@ -340,12 +348,52 @@ const AthleteCardComponent: React.FC<Props> = ({
                     />
                   </div>
                 )}
+                
+                {/* 技能图标*/}
+                {card.skills?.map((skill, index) => (
+                  <div key={`skill-${index}`} className="w-5 h-5 flex items-center justify-center">
+                    <img
+                      src={getIconImage(skill.type)}
+                      alt={skill.description || skill.type}
+                      className="w-full h-full object-contain"
+                      style={{
+                        filter: skill.hasLightning ? 'drop-shadow(0 0 2px #fbbf24)' : 'none'
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* 半圆图标 - 仅在存在图标时绘�?*/}
-          {card.iconPositions?.map((iconPos, index) => renderHalfIcon(iconPos, index))}
+          {/* 半圆图标 - 仅在存在图标时绘制*/}
+          {(() => {
+            // 从tactics转换为图标位置
+            const iconPositions: { type: TacticalIcon; position: IconPosition }[] = [];
+            if (card.tactics?.left) {
+              if (card.tactics.left.left) {
+                iconPositions.push({ type: card.tactics.left.left, position: 'slot-middleLeft' });
+              }
+              if (card.tactics.left.top) {
+                iconPositions.push({ type: card.tactics.left.top, position: 'slot-topLeft' });
+              }
+              if (card.tactics.left.down) {
+                iconPositions.push({ type: card.tactics.left.down, position: 'slot-bottomLeft' });
+              }
+            }
+            if (card.tactics?.right) {
+              if (card.tactics.right.top) {
+                iconPositions.push({ type: card.tactics.right.top, position: 'slot-topRight' });
+              }
+              if (card.tactics.right.down) {
+                iconPositions.push({ type: card.tactics.right.down, position: 'slot-bottomRight' });
+              }
+              if (card.tactics.right.right) {
+                iconPositions.push({ type: card.tactics.right.right, position: 'slot-middleRight' });
+              }
+            }
+            return iconPositions.map((iconPos, index) => renderHalfIcon(iconPos, index));
+          })()}
         </div>
 
         {/* Back Face */}

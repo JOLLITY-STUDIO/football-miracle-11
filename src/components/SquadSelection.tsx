@@ -70,10 +70,10 @@ const FormationView: React.FC<{
   const handleConfirm = () => {
     // Convert placedCards map to FieldZone[]
     const field: FieldZone[] = [
-      { zone: 1, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
-      { zone: 2, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
-      { zone: 3, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
-      { zone: 4, slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
+      { zone: 1, cards: [], synergyCards: [], slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
+      { zone: 2, cards: [], synergyCards: [], slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
+      { zone: 3, cards: [], synergyCards: [], slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
+      { zone: 4, cards: [], synergyCards: [], slots: [{ position: 1, athleteCard: null, shotMarkers: 0 }, { position: 2, athleteCard: null, shotMarkers: 0 }, { position: 3, athleteCard: null, shotMarkers: 0 }, { position: 4, athleteCard: null, shotMarkers: 0 }] },
     ];
 
     placedCards.forEach((pos, cardId) => {

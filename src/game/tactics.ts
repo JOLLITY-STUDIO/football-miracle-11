@@ -1,5 +1,38 @@
 import type { athleteCard, TacticalIcon, IconWithPosition } from '../data/cards';
 
+// 从tactics中提取图标位置
+function getIconPositionsFromTactics(card: athleteCard): IconWithPosition[] {
+  const iconPositions: IconWithPosition[] = [];
+  
+  // 处理左侧列
+  if (card.tactics.left) {
+    if (card.tactics.left.left) {
+      iconPositions.push({ type: card.tactics.left.left, position: 'slot-middleLeft' });
+    }
+    if (card.tactics.left.top) {
+      iconPositions.push({ type: card.tactics.left.top, position: 'slot-topLeft' });
+    }
+    if (card.tactics.left.down) {
+      iconPositions.push({ type: card.tactics.left.down, position: 'slot-bottomLeft' });
+    }
+  }
+  
+  // 处理右侧列
+  if (card.tactics.right) {
+    if (card.tactics.right.top) {
+      iconPositions.push({ type: card.tactics.right.top, position: 'slot-topRight' });
+    }
+    if (card.tactics.right.down) {
+      iconPositions.push({ type: card.tactics.right.down, position: 'slot-bottomRight' });
+    }
+    if (card.tactics.right.right) {
+      iconPositions.push({ type: card.tactics.right.right, position: 'slot-middleRight' });
+    }
+  }
+  
+  return iconPositions;
+}
+
 export interface TacticalSlot {
   id: string;
   zone: number;
@@ -226,8 +259,9 @@ export function calculateTacticalConnections(
       if (!slot.athleteCard) continue;
 
       const card = slot.athleteCard;
+      const cardIconPositions = getIconPositionsFromTactics(card);
       
-      for (const iconWithPos of card.iconPositions) {
+      for (const iconWithPos of cardIconPositions) {
         const matchingPos = MATCHING_POSITIONS[iconWithPos.position];
         if (!matchingPos) continue;
 
@@ -239,7 +273,8 @@ export function calculateTacticalConnections(
           const pairKey = [slot.id, adjSlot.id, iconWithPos.type].sort().join('-');
           if (processedPairs.has(pairKey)) continue;
 
-          const hasMatchingIcon = adjSlot.athleteCard.iconPositions.some(
+          const adjCardIconPositions = getIconPositionsFromTactics(adjSlot.athleteCard);
+          const hasMatchingIcon = adjCardIconPositions.some(
             pos => pos.position === matchingPos && pos.type === iconWithPos.type
           );
 

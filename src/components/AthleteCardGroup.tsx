@@ -123,30 +123,14 @@ export const AthleteCardGroup: React.FC<AthleteCardGroupProps> = ({
                     transition: { duration: 0.2 },
                     zIndex: 9999
                   }}
+                  whileTap={{ scale: isSelected ? 1.15 : 0.95, transition: { duration: 0.1 } }}
                   exit={{
                     opacity: 0,
                     scale: 0.8,
                     x: 0,
                     y: 0
                   }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 200, 
-                    damping: 20,
-                    duration: 0.8
-                  }}
                   onClick={() => handleCardClick(card)}
-                  whileHover={{ scale: isSelected ? 1.2 : 1.05, transition: { duration: 0.2 } }}
-                  whileTap={{ scale: isSelected ? 1.15 : 0.95, transition: { duration: 0.1 } }}
-                  style={{
-                    position: 'relative',
-                    width: `${settings.cardWidth}px`,
-                    height: `${settings.cardHeight}px`,
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    zIndex: isSelected ? 100 : i,
-                    pointerEvents: 'auto'
-                  }}
               >
                 <div>
                   <AthleteCardComponent

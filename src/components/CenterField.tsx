@@ -112,8 +112,8 @@ export const CenterField: React.FC<Props> = ({
             rotation={rotation}
             shootMode={shootMode}
             selectedShootPlayer={selectedShootPlayer}
-            onCompleteIconsCalculated={onCompleteIconsCalculated}
-            onIconClick={onIconClick}
+            {...(onCompleteIconsCalculated && { onCompleteIconsCalculated })}
+            {...(onIconClick && { onIconClick })}
           />
         </div>
       </div>
