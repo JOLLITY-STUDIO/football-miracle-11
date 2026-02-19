@@ -118,19 +118,19 @@ export class TacticalIconMatcher {
         processedPairs.add(pairKey);
 
         // 根据卡片图标的位置调整插槽索引
-        // 对于右侧位置的图标，使用 slotIndex + 1
         let adjustedSlotIndex = slotIndex;
-        if (cardIcon.position.includes('Right')) {
-          adjustedSlotIndex = slotIndex + 1;
-        }
-        // 对于AI卡片，由于使用了rotatedTactics（水平翻转后的数据），需要调整位置
-        // 左侧位置的图标应该显示在右侧插槽，右侧位置的图标应该显示在左侧插槽
-        const isAIZone = zoneNum < 4;
         if (isAIZone) {
+          // 对于AI卡片，由于使用了rotatedTactics（水平翻转后的数据），需要调整位置
+          // 左侧位置的图标应该显示在右侧插槽，右侧位置的图标应该显示在左侧插槽
           if (cardIcon.position.includes('Left')) {
             adjustedSlotIndex = slotIndex + 1;
           } else if (cardIcon.position.includes('Right')) {
             adjustedSlotIndex = slotIndex;
+          }
+        } else {
+          // 对于玩家卡片，右侧位置的图标使用 slotIndex + 1
+          if (cardIcon.position.includes('Right')) {
+            adjustedSlotIndex = slotIndex + 1;
           }
         }
 
