@@ -6,7 +6,7 @@ import { SynergyCardComponent } from './SynergyCard';
 
 interface Props {
   cards: SynergyCard[];
-  type: 'attack' | 'defense' | 'special';
+  type: 'attack' | 'defense' | 'special' | 'tackle';
   isAi?: boolean;
   onSelect?: ((card: SynergyCard) => void) | undefined;
   selectedCards?: SynergyCard[];

@@ -16,8 +16,10 @@ const getValidZones = (type: string): number[] => {
     case 'fw':
       return [2, 3, 4, 5]; // 前锋可放置在2-5区域
     case 'mf':
-      return [1, 2, 5, 6]; // 中场只能放置�?�?�?�?�?    case 'df':
-      return [0, 1, 6, 7]; // 后卫只能放置�?�?�?�?�?    default:
+      return [1, 2, 5, 6]; // 中场只能放置在1-2和5-6区域
+    case 'df':
+      return [0, 1, 6, 7]; // 后卫只能放置在0-1和6-7区域
+    default:
       return [];
   }
 };

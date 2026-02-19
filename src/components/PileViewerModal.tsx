@@ -65,7 +65,7 @@ export const PileViewerModal: React.FC<Props> = ({ isOpen, title, cards, onClose
                        
                        <SynergyCardComponent 
                          card={card} 
-                         size="normal"
+                         size="medium"
                          disabled={true} // View only
                        />
                        
