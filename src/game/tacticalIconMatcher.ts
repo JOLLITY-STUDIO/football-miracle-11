@@ -415,7 +415,9 @@ export class TacticalIconMatcher {
         
         const completeIcon = this.createHorizontalCompleteIcon(leftHalf, rightHalf);
         
-        this.completeIcons.push(completeIcon);
+        if (completeIcon) {
+          this.completeIcons.push(completeIcon);
+        }
       }
     }
   }
@@ -520,7 +522,7 @@ export class TacticalIconMatcher {
     // 重复检查会导致创建重复的图标
   }
 
-  private createHorizontalCompleteIcon(leftHalf: HalfIcon, rightHalf: HalfIcon): CompleteIcon {
+  private createHorizontalCompleteIcon(leftHalf: HalfIcon, rightHalf: HalfIcon): CompleteIcon | null {
     const CELL_WIDTH = FIELD_DIMENSIONS.BASE_CELL_WIDTH;
     const CELL_HEIGHT = FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
     
@@ -533,10 +535,23 @@ export class TacticalIconMatcher {
     const leftSlot = Math.min(slot1, slot2);
     const rightSlot = Math.max(slot1, slot2);
     
+    // 检查卡片是否真正相邻
+    if (rightSlot - leftSlot !== 2) {
+      // 卡片不相邻，不生成图标
+      return null;
+    }
+    
     // 计算中间列：左边卡片的结束位置
     // 左边卡片占据 leftSlot 和 leftSlot + 1 列
     // 中间位置在 leftSlot + 1 列的中心
     const iconColumn = leftSlot + 1;
+    
+    // 确保图标列在有效范围内（0-7）
+    if (iconColumn < 0 || iconColumn >= 8) {
+      // 图标列超出范围，不生成图标
+      return null;
+    }
+    
     const centerX = iconColumn * CELL_WIDTH + CELL_WIDTH / 2;
     const centerY = leftHalf.zone * CELL_HEIGHT + CELL_HEIGHT / 2;
 

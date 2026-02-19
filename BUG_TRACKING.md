@@ -868,6 +868,7 @@
 
 ## Version History
 - **0.2.90**: Fixed AI horizontal icon parameter order issue by updating checkHorizontalMatch method to ensure correct parameter order when calling createHorizontalCompleteIcon, always passing the left card as leftHalf and right card as rightHalf regardless of check order
+- **0.2.91**: Fixed two issues with tactical icons: 1) Attack icons were only showing as blank circles instead of displaying the actual icon content, fixed by updating SVG image tag to use 'href' attribute instead of 'xlinkHref'; 2) Unnecessary 7-column icons were being created when they shouldn't exist, fixed by adding validation in createHorizontalCompleteIcon method to check if cards are truly adjacent and if icon column is within valid range (0-7)
 - **0.2.89**: Fixed AI horizontal icon position issue by updating createHorizontalCompleteIcon method to ensure icons display in the center between two cards, and modifying calculateAICoordinates in CompleteIconsOverlay.tsx to remove unnecessary horizontal flipping of x coordinates for AI icons
 - **0.2.88**: Fixed AI icon position adjustment issue by removing duplicate isAIZone variable declaration and restructuring position adjustment logic to use different rules for AI half and player half, ensuring icons display in correct positions
 - **0.2.87**: Fixed AI card icon rotation issue by updating horizontal matching logic to use reversed position pairs for AI half (zone < 4), ensuring correct left-right matching logic for rotated AI cards

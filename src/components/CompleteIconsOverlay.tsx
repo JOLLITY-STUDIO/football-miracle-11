@@ -192,7 +192,7 @@ export const CompleteIconsOverlay: React.FC<CompleteIconsOverlayProps> = ({
           y={finalY - 20}
           width="40"
           height="40"
-          xlinkHref={iconImage}
+          href={iconImage}
           transform={transform}
           style={{
             filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.3))`
