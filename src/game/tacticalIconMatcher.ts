@@ -76,8 +76,8 @@ export class TacticalIconMatcher {
 
     // 定义不同zone中需要匹配的卡片图标位置
     const positionMap: Record<number, string[]> = {
-      0: ['slot-topLeft', 'slot-topRight', 'slot-bottomLeft', 'slot-bottomRight'],    // AI半场顶部：卡片顶部和底部图标
-      3: ['slot-bottomLeft', 'slot-bottomRight'], // AI半场底部：卡片底部图标
+      0: ['slot-bottomLeft', 'slot-bottomRight', 'slot-topLeft', 'slot-topRight'],    // AI半场顶部：卡片底部和顶部图标（因为AI卡片被旋转了180度）
+      3: ['slot-topLeft', 'slot-topRight'], // AI半场底部：卡片顶部图标（因为AI卡片被旋转了180度）
       4: ['slot-topLeft', 'slot-topRight', 'slot-bottomLeft', 'slot-bottomRight'],    // 玩家半场顶部：卡片顶部和底部图标
       7: ['slot-bottomLeft', 'slot-bottomRight']  // 玩家半场底部：卡片底部图标
     };
@@ -88,12 +88,15 @@ export class TacticalIconMatcher {
     // 获取适合当前区域的战术图标结构（考虑旋转）
     const tactics = RotationUtils.getTacticsForZone(card.tactics, card.rotatedTactics, zoneNum);
 
+    // 检查是否在AI半场（zone < 4），因为AI卡片被旋转了180度
+    const isAIZone = zoneNum < 4;
+    
     // 检查卡片是否有对应位置和类型的图标
     for (const position of positions) {
       // 从tactics中检查对应位置的图标
       let cardIcon = null;
       
-      // 统一检查逻辑，不再区分AI和玩家半场
+      // 统一检查逻辑，使用旋转后的战术图标结构
       if (position === 'slot-topLeft' && tactics.left?.top === fieldIcon.type) {
         cardIcon = { type: fieldIcon.type, position };
       } else if (position === 'slot-topRight' && tactics.right?.top === fieldIcon.type) {
@@ -316,12 +319,25 @@ export class TacticalIconMatcher {
     const adjacentCardTactics = RotationUtils.getTacticsForZone(adjacentCard.tactics, adjacentCard.rotatedTactics, zoneNum);
     
     // 定义所有可能的水平匹配位置对
-    const horizontalPositionPairs = [
-      // 当前卡片右侧位置与相邻卡片左侧位置匹配
-      { currentCardPos: 'slot-middleRight', adjacentCardPos: 'slot-middleLeft' },
-      // 当前卡片左侧位置与相邻卡片右侧位置匹配
-      { currentCardPos: 'slot-middleLeft', adjacentCardPos: 'slot-middleRight' }
-    ];
+    let horizontalPositionPairs;
+    
+    if (isAIZone) {
+      // AI半场：卡片被旋转180度，所以位置对需要调整
+      horizontalPositionPairs = [
+        // 当前卡片左侧位置与相邻卡片右侧位置匹配（因为旋转后左右互换）
+        { currentCardPos: 'slot-middleLeft', adjacentCardPos: 'slot-middleRight' },
+        // 当前卡片右侧位置与相邻卡片左侧位置匹配（因为旋转后左右互换）
+        { currentCardPos: 'slot-middleRight', adjacentCardPos: 'slot-middleLeft' }
+      ];
+    } else {
+      // 玩家半场：正常位置对
+      horizontalPositionPairs = [
+        // 当前卡片右侧位置与相邻卡片左侧位置匹配
+        { currentCardPos: 'slot-middleRight', adjacentCardPos: 'slot-middleLeft' },
+        // 当前卡片左侧位置与相邻卡片右侧位置匹配
+        { currentCardPos: 'slot-middleLeft', adjacentCardPos: 'slot-middleRight' }
+      ];
+    }
     
     // 检查每个位置对的匹配
     for (const pair of horizontalPositionPairs) {

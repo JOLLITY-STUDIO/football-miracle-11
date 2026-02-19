@@ -2,6 +2,8 @@ import type { GameState } from '../game/gameLogic';
 import { placeCard } from './cardPlacement';
 import { performEndTurn } from './endTurn';
 import { RuleValidator } from '../game/ruleValidator';
+import { performShot } from './shotActions';
+import { calculateAttackPower } from './gameUtils';
 
 // Helper function to get valid zones based on player type
 const getValidZones = (type: string): number[] => {
@@ -15,6 +17,79 @@ const getValidZones = (type: string): number[] => {
     default:
       return [];
   }
+};
+
+// Helper function to check if a card has available shot icons
+const hasAvailableShotIcons = (card: any, usedShotIcons: number[]): boolean => {
+  const iconPositions = getIconPositionsFromTactics(card);
+  const attackIconPositions = iconPositions
+    .map((pos, index) => ({ pos, index }))
+    .filter(({ pos }) => pos.type === 'attack');
+  
+  const availableShotIcons = attackIconPositions
+    .filter(({ index }) => !usedShotIcons.includes(index));
+  
+  return availableShotIcons.length > 0;
+};
+
+// Helper function to get icon positions from tactics
+const getIconPositionsFromTactics = (card: any) => {
+  const iconPositions = [];
+  if (card.tactics?.left) {
+    if (card.tactics.left.left) {
+      iconPositions.push({ type: card.tactics.left.left, position: 'slot-middleLeft' });
+    }
+    if (card.tactics.left.top) {
+      iconPositions.push({ type: card.tactics.left.top, position: 'slot-topLeft' });
+    }
+    if (card.tactics.left.down) {
+      iconPositions.push({ type: card.tactics.left.down, position: 'slot-bottomLeft' });
+    }
+  }
+  if (card.tactics?.right) {
+    if (card.tactics.right.top) {
+      iconPositions.push({ type: card.tactics.right.top, position: 'slot-topRight' });
+    }
+    if (card.tactics.right.down) {
+      iconPositions.push({ type: card.tactics.right.down, position: 'slot-bottomRight' });
+    }
+    if (card.tactics.right.right) {
+      iconPositions.push({ type: card.tactics.right.right, position: 'slot-middleRight' });
+    }
+  }
+  return iconPositions;
+};
+
+// Helper function to find best player for shooting
+const findBestShootingPlayer = (state: GameState) => {
+  let bestPlayer = null;
+  let bestSlot = -1;
+  let bestZone = -1;
+  let highestPower = 0;
+  
+  // Check all AI players on the field
+  for (let zone of [3, 2, 1, 0]) { // Priority: forward zones first
+    const fieldZone = state.aiField[zone];
+    if (fieldZone && fieldZone.cards) {
+      for (let slot = 0; slot < fieldZone.cards.length; slot++) {
+        const card = fieldZone.cards[slot];
+        if (card) {
+          const usedShotIcons = state.aiUsedShotIcons[card.id] || [];
+          if (hasAvailableShotIcons(card, usedShotIcons)) {
+            const power = calculateAttackPower(card, state.aiField, usedShotIcons);
+            if (power > highestPower) {
+              highestPower = power;
+              bestPlayer = card;
+              bestSlot = slot;
+              bestZone = zone;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return { player: bestPlayer, slot: bestSlot, zone: bestZone, power: highestPower };
 };
 
 export const aiTurn = (state: GameState): GameState => {
@@ -56,7 +131,15 @@ export const aiTurn = (state: GameState): GameState => {
     }
   }
   
-  // 3. End AI turn
+  // 3. Check if AI should attempt a shot
+  const bestShootingOption = findBestShootingPlayer(newState);
+  if (bestShootingOption.player && bestShootingOption.power >= 5) { // Only shoot if power is decent
+    newState = performShot(newState, bestShootingOption.player, bestShootingOption.slot, bestShootingOption.zone);
+    newState.message = `AI attempts shot with ${bestShootingOption.player.name}!`;
+    return newState;
+  }
+  
+  // 4. End AI turn
   newState.currentTurn = 'player';
   newState.turnPhase = 'teamAction';
   newState.message = 'Your turn!';
@@ -110,7 +193,19 @@ export const processAiActionStep = (state: GameState): GameState => {
           }
         }
       }
-      newState.aiActionStep = 'endTurn';
+      newState.aiActionStep = 'shot';
+      break;
+      
+    case 'shot':
+      // AI 射门决策
+      const bestShootingOption = findBestShootingPlayer(newState);
+      if (bestShootingOption.player && bestShootingOption.power >= 5) { // Only shoot if power is decent
+        newState = performShot(newState, bestShootingOption.player, bestShootingOption.slot, bestShootingOption.zone);
+        newState.message = `AI attempts shot with ${bestShootingOption.player.name}!`;
+        newState.aiActionStep = 'none'; // Shot will trigger duel phase
+      } else {
+        newState.aiActionStep = 'endTurn';
+      }
       break;
       
     case 'endTurn':
