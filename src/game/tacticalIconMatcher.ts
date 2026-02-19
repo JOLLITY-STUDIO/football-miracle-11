@@ -528,14 +528,10 @@ export class TacticalIconMatcher {
     const CELL_WIDTH = FIELD_DIMENSIONS.BASE_CELL_WIDTH;
     const CELL_HEIGHT = FIELD_DIMENSIONS.BASE_CELL_HEIGHT;
     
-    // 计算图标位置为两张卡片之间的中心位置
-    // 找到两张卡片的起始slot，计算中间位置
-    const slot1 = leftHalf.slot;
-    const slot2 = rightHalf.slot;
-    
-    // 确定左边和右边的卡片
-    const leftSlot = Math.min(slot1, slot2);
-    const rightSlot = Math.max(slot1, slot2);
+    // 使用leftHalf的slot作为左边球员的起始位置
+    // 确保leftHalf始终是左侧的卡片
+    const leftSlot = leftHalf.slot;
+    const rightSlot = rightHalf.slot;
     
     // 检查卡片是否真正相邻
     if (rightSlot - leftSlot !== 2) {
