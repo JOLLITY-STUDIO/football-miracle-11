@@ -46,7 +46,7 @@ export const MainMenu: React.FC<Props> = ({ onStartGame3D, onViewRecords, onCard
 
     // Play random sound effect periodically (every 10-20 seconds)
     const randomSoundInterval = setInterval(() => {
-      const randomSound = soundEffects[Math.floor(Math.random() * soundEffects.length)];
+      const randomSound = soundEffects[Math.floor(Math.random() * soundEffects.length)] || 'whistle';
       playSound(randomSound);
     }, 10000 + Math.random() * 10000);
 

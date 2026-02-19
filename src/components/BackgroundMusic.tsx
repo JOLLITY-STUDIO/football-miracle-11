@@ -158,7 +158,7 @@ export const BackgroundMusic: React.FC<Props> = ({ variant = 'default' }) => {
     let nextTrack = pickRandomTrack(currentTrack);
     // Ensure we get a valid track
     if (!nextTrack && PLAYLIST.length > 0) {
-      nextTrack = PLAYLIST[Math.floor(Math.random() * PLAYLIST.length)];
+      nextTrack = PLAYLIST[Math.floor(Math.random() * PLAYLIST.length)] || '';
     }
     if (nextTrack) {
       setCurrentTrack(nextTrack);

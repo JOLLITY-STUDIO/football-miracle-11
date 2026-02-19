@@ -1,14 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { TacticalIcon } from '../data/cards';
+import type { TacticalIcon, SkillIconType } from '../data/cards';
 
 interface Props {
-  icons: TacticalIcon[];
+  icons: SkillIconType[];
   size?: number;
   showConnectionLines?: boolean;
 }
 
-const getIconEmoji = (icon: TacticalIcon): string => {
+const getIconEmoji = (icon: SkillIconType): string => {
   switch (icon) {
     case 'attack': return '⚔️';
     case 'defense': return '🛡️';
@@ -19,7 +19,7 @@ const getIconEmoji = (icon: TacticalIcon): string => {
   }
 };
 
-const getIconColor = (icon: TacticalIcon): string => {
+const getIconColor = (icon: SkillIconType): string => {
   switch (icon) {
     case 'attack': return '#ef4444';
     case 'defense': return '#3b82f6';
@@ -30,7 +30,7 @@ const getIconColor = (icon: TacticalIcon): string => {
   }
 };
 
-const getIconBgColor = (icon: TacticalIcon): string => {
+const getIconBgColor = (icon: SkillIconType): string => {
   return '#ffffff'; // 统一为纯白底色
 };
 

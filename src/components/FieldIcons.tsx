@@ -92,10 +92,10 @@ const getAdjacentSlots = (field: FieldZone[], zoneIndex: number, slotIndex: numb
   
   // Check adjacent zones, same slot
   if (zoneIndex > 0 && field[zoneIndex - 1]) {
-    adjacent.push(field[zoneIndex - 1].slots[slotIndex]);
+    adjacent.push(field[zoneIndex - 1]!.slots[slotIndex]);
   }
   if (zoneIndex < field.length - 1 && field[zoneIndex + 1]) {
-    adjacent.push(field[zoneIndex + 1].slots[slotIndex]);
+    adjacent.push(field[zoneIndex + 1]!.slots[slotIndex]);
   }
   
   return adjacent;

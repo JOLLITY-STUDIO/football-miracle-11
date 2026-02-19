@@ -94,8 +94,8 @@ export const MatchLog: React.FC<MatchLogProps> = ({ logs }) => {
 
     let detailedLogs = '=== MAGIC NUMBER ELEVEN - MATCH LOGS ===\n';
     detailedLogs += '=====================================\n\n';
-    detailedLogs += `Match Start: ${formatDetailedTimestamp(logs[0].timestamp)}\n`;
-    detailedLogs += `Match End: ${formatDetailedTimestamp(logs[logs.length - 1].timestamp)}\n`;
+    detailedLogs += `Match Start: ${formatDetailedTimestamp(logs[0]!.timestamp)}\n`;
+    detailedLogs += `Match End: ${formatDetailedTimestamp(logs[logs.length - 1]!.timestamp)}\n`;
     detailedLogs += `Total Entries: ${logs.length}\n\n`;
     detailedLogs += '=====================================\n\n';
 

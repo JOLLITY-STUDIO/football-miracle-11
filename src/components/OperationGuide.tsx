@@ -23,7 +23,7 @@ export const OperationGuide: React.FC<OperationGuideProps> = ({
 }) => {
   if (currentTurn !== 'player') return null;
 
-  const getGuideContent = () => {
+  const getGuideContent = (): { title: string; message: string; icon: string; color: 'blue' | 'green' | 'yellow' | 'red'; pulse?: boolean } | null => {
     // 团队行动阶段
     if (turnPhase === 'teamAction') {
       if (isFirstTurn) {

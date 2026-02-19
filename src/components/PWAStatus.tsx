@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+// @ts-ignore - PWA register module is a virtual module
 import { registerSW } from 'virtual:pwa-register';
 import { logger } from '../utils/logger';
 
@@ -15,7 +16,7 @@ export function PWAStatus() {
       onOfflineReady() {
         setOfflineReady(true);
       },
-      onRegistered(registration) {
+      onRegistered(registration: ServiceWorkerRegistration) {
         logger.info('Service Worker registered:', registration);
         setSWReady(true);
       },
