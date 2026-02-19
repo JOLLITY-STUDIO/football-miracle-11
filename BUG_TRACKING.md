@@ -1,5 +1,15 @@
 # Bug Tracking
 
+## Version History
+
+### Version 0.2.100 (2026-02-20)
+- **Changes**: Renamed and moved delivery documents to docs directory
+- **Files Modified**:
+  - `神奇十一人·微信小游戏 补充交付文档（PDF+UI+Excel+开发对接）.md` → `docs/Football Miracle 11 WeChat Mini Game Supplementary Delivery Document (PDF+UI+Excel+Development Integration).md`
+  - `神奇十一人·微信小游戏 补充交付文档（PDF+UI+Excel+开发对接）.docx` → `docs/Football Miracle 11 WeChat Mini Game Supplementary Delivery Document (PDF+UI+Excel+Development Integration).docx`
+  - `package.json` (version updated)
+- **Description**: Renamed Chinese delivery documents to English and moved them to the docs directory for better organization.
+
 ## Fixed Bugs
 
 ### BUG-2026-02-18-001: AI Draft Card Storage Inconsistency
