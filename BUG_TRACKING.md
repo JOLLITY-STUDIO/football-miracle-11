@@ -866,7 +866,28 @@
 - ✅ Card dealing now shows correct counts and deals the proper number of cards (20 total)
 - ✅ Card dealer animations now show clear, single-card animations instead of duplicate effects
 
+### BUG-2026-02-19-050: Tactical Icon Display and Positioning Issues
+- **发现日期**: 2026-02-19
+- **修复日期**: 2026-02-19
+- **影响范围**: 战术图标系统，视觉效果，用户体验
+- **相关文件**:
+  - `src/components/CompleteIconsOverlay.tsx`
+  - `src/game/tacticalIconMatcher.ts`
+- **问题描述**: 1) 进攻图标没显示出来，只有一个圆圈；2) 7列的图标根本不应该存在；3) 水平方向拼合不成功，CMF和DMF之间的图标没有显示；4) 列2没有球员但显示了与球场拼合的图标。
+- **根本原因**: 1) SVG图标使用了href而不是xlinkHref属性；2) 水平图标创建逻辑没有限制图标列在0-6范围内；3) 水平匹配逻辑存在问题；4) 球场图标匹配逻辑没有验证插槽索引的有效性。
+- **修复方案**: 1) 将SVG图标中的href改为xlinkHref；2) 更新createHorizontalCompleteIcon方法，确保图标列在0-6范围内；3) 重构checkHorizontalMatch方法，使用显式的左右相邻插槽检查；4) 在checkFieldIconMatches方法中添加插槽索引范围验证。
+- **版本**: 0.2.97
+- **Git提交**: N/A
+- **影响分析**:
+  - 进攻图标现在正确显示，不再只是一个圆圈
+  - 7列不再显示不应该存在的图标
+  - 水平方向拼合现在成功，CMF和DMF之间的图标正确显示
+  - 无球员的列不再显示与球场拼合的图标
+  - 战术图标系统更加准确和可靠
+
 ## Version History
+- **0.2.97**: Fixed tactical icon display and positioning issues including SVG icon rendering, 7-column icon validation, horizontal icon matching, and empty slot icon creation
+- **0.2.96**: Fixed horizontal icon positioning issue by restructuring the checkHorizontalMatch method to use explicit left and right adjacent slot checking, ensuring that CMF in zone 6 1-2 columns and DMF in zone 6 3-4 columns correctly create horizontal icons at the left player's column start position, and updated createHorizontalCompleteIcon to always use leftHalf's slot as the left player's start position
 - **0.2.95**: Fixed horizontal icon matching issue by completely restructuring the checkHorizontalMatch method to check both left and right adjacent cards, and to match both current card's right positions with adjacent card's left positions as well as current card's left positions with adjacent card's right positions, ensuring horizontal icon combinations work correctly in both directions
 - **0.2.94**: Fixed AI vertical icon duplication issue by restructuring the checkVerticalMatch method to iterate through position pairs directly instead of checking all slots for each pair, ensuring each vertical icon pair is only processed once and preventing duplicate attack icons from appearing when AI LWF is in zone 3 and CF is in zone 2
 - **0.2.93**: Fixed AI complete icon display issue by correcting the rotation transformation order for AI icons, ensuring the 180-degree rotation is applied after converting to SVG coordinate system with the correct rotation center point, resolving the issue where AI icons were appearing as blank circles instead of displaying their actual content
