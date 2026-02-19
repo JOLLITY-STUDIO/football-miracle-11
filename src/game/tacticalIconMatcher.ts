@@ -123,6 +123,16 @@ export class TacticalIconMatcher {
         if (cardIcon.position.includes('Right')) {
           adjustedSlotIndex = slotIndex + 1;
         }
+        // 对于AI卡片，由于使用了rotatedTactics（水平翻转后的数据），需要调整位置
+        // 左侧位置的图标应该显示在右侧插槽，右侧位置的图标应该显示在左侧插槽
+        const isAIZone = zoneNum < 4;
+        if (isAIZone) {
+          if (cardIcon.position.includes('Left')) {
+            adjustedSlotIndex = slotIndex + 1;
+          } else if (cardIcon.position.includes('Right')) {
+            adjustedSlotIndex = slotIndex;
+          }
+        }
 
         const completeIcon = this.createFieldIconCompleteIcon(
           {
