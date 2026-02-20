@@ -2,6 +2,305 @@
 
 ## Version History
 
+### Version 0.3.37 (2026-02-20)
+- **Changes**: Regenerated all player images with updated specifications
+- **Files Modified**:
+  - `src/data/cards.ts` (updated all player image URLs with new specifications)
+  - `package.json` (version updated)
+- **Description**: Regenerated all player images with the following specifications: 1) Red backgrounds for all players, 2) White jerseys with black lines for home team, 3) Black jerseys with white lines for away team, 4) Different shoe colors for each player, 5) Green jersey with white lines for home goalkeeper, 6) Blue jersey with white lines for away goalkeeper, 7) Golden jerseys with white lines for star players, 8) Flat anime style with adult proportions, 9) No facial features (completely faceless), 10) Different hairstyles and hair colors for each player. This ensures a consistent visual style across all player cards with clear position differentiation.
+
+### Version 0.3.36 (2026-02-20)
+- **Changes**: Removed position color overlay entirely, ensuring all player images display with pure red backgrounds
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (removed position color overlay)
+  - `package.json` (version updated)
+- **Description**: Removed the position color overlay completely to ensure all player images display with their original pure red backgrounds. This eliminates any color tinting and ensures consistent red background appearance across all player cards.
+
+### Version 0.3.35 (2026-02-20)
+- **Changes**: Increased position color overlay opacity for better visibility
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (increased position color overlay opacity from 20% to 35%)
+  - `package.json` (version updated)
+- **Description**: Increased the position color overlay opacity to 35% to make position-specific colors more noticeable while still maintaining clear red backgrounds and avoiding hazy white jerseys. This ensures position colors are clearly visible as subtle tints over the red backgrounds.
+
+### Version 0.3.34 (2026-02-20)
+- **Changes**: Added low-opacity position color overlay to tint red backgrounds with position-specific colors
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (added position color overlay layer with 20% opacity)
+  - `package.json` (version updated)
+- **Description**: Added back the position color overlay layer but with reduced opacity (20%) to ensure: 1) Red backgrounds remain clearly visible, 2) Position-specific colors subtly tint the backgrounds, 3) White jerseys no longer appear hazy, and 4) Both black and white jerseys maintain consistent red background depth while showing position-specific color variations.
+
+### Version 0.3.33 (2026-02-20)
+- **Changes**: Removed position color overlay to fix hazy white jerseys and inconsistent red background depths
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (removed position color overlay layer)
+  - `package.json` (version updated)
+- **Description**: Removed the position color overlay layer with 50% opacity that was causing two issues: 1) White jerseys appearing hazy due to the semi-transparent white overlay, and 2) Inconsistent red background depths between black and white jerseys due to the color overlay affecting the image appearance. Now both white and black jerseys display with clear, consistent red backgrounds as intended.
+
+### Version 0.3.32 (2026-02-20)
+- **Changes**: Updated team color scheme to white vs black contrast
+- **Files Modified**:
+  - `src/data/cards.ts` (updated all player card colors and image URLs)
+  - `src/components/AthleteCard.tsx` (updated card back colors)
+  - `package.json` (version updated)
+- **Description**: Changed the team color scheme to white vs black contrast: Home Team now uses white jerseys and backgrounds, Away Team uses black jerseys and backgrounds, while Star Cards maintain their golden appearance. This creates a classic and clear visual distinction between the two teams.
+
+### Version 0.3.31 (2026-02-20)
+- **Changes**: Redesigned star card flash effect for smoother linear animation
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (simplified flash effect with linear gradient)
+  - `tailwind.config.js` (reverted animation to horizontal movement)
+  - `package.json` (version updated)
+- **Description**: Redesigned star card flash effect to use a single smooth linear gradient animation instead of diagonal gradients, creating a cleaner and more fluid shimmer effect that moves horizontally across the card. Added radial glow effect for additional visual depth and removed complex diagonal animations that were creating box-like movements.
+
+### Version 0.3.30 (2026-02-20)
+- **Changes**: Updated star card shimmer animation direction to diagonal
+- **Files Modified**:
+  - `tailwind.config.js` (updated shimmer keyframe animation to use diagonal movement)
+  - `package.json` (version updated)
+- **Description**: Changed the shimmer animation from horizontal (translateX) to diagonal (translate) movement to match the 45-degree gradient angles, ensuring the star card flash effect moves diagonally across the card for a more cohesive visual effect.
+
+### Version 0.3.29 (2026-02-20)
+- **Changes**: Updated star card flash effect angles and removed lightning drop shadow
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (updated gradient angles and removed drop shadow)
+  - `package.json` (version updated)
+- **Description**: Changed star card flash effect gradient angles to 45 degrees (using bg-gradient-to-br and bg-gradient-to-tr) for a diagonal shimmer effect, and removed the lightning drop shadow from skill icons as requested.
+
+### Version 0.3.28 (2026-02-20)
+- **Changes**: Updated skill system to associate immediate effects with lightning skills
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (updated skill display logic to show immediate effects only for lightning skills)
+  - `package.json` (version updated)
+- **Description**: Modified the skill system to only display immediate effects for skills with lightning effect (hasLightning: true). Now immediate effects are directly linked to their corresponding lightning skills, ensuring that only cards with lightning skills can trigger immediate effects.
+
+### Version 0.3.27 (2026-02-20)
+- **Changes**: Added lightning icons for immediate effects
+- **Files Modified**:
+  - `src/components/SkillEffectBadge.tsx` (updated all immediate effect icons to lightning bolts)
+  - `src/components/AthleteCard.tsx` (added lightning glow effect for immediate effects)
+  - `package.json` (version updated)
+- **Description**: Changed all immediate effect icons to lightning bolts (⚡) to represent their instant nature, and added additional lightning glow effects to make immediate effects visually distinctive as quick-action skills.
+
+### Version 0.3.26 (2026-02-20)
+- **Changes**: Fixed home team color display and enhanced star card flash effects
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (fixed home/away team colors and enhanced star card effects)
+  - `package.json` (version updated)
+- **Description**: Fixed the home/away team color display issue where home team was showing blue instead of red. Enhanced star card flash effects by increasing opacity, improving z-index, and adding more prominent golden glow animations to make star cards visually distinctive.
+
+### Version 0.3.25 (2026-02-20)
+- **Changes**: Added star card flash effect decoration layer
+- **Files Modified**:
+  - `src/components/AthleteCard.tsx` (added star card flash effect decoration layer)
+  - `tailwind.config.js` (added shimmer animation keyframes)
+  - `package.json` (version updated)
+- **Description**: Enhanced star cards with flash card effects including golden border, shimmering gradients, and animated glow, creating a premium visual effect that distinguishes star players from regular cards.
+
+### Version 0.3.24 (2026-02-20)
+- **Changes**: Added two star goalkeeper cards
+- **Files Modified**:
+  - `src/data/cards.ts` (added SG1 and SG2 star goalkeeper cards)
+  - `package.json` (version updated)
+- **Description**: Added two star goalkeeper cards: SG1 "Wall" with all defense icons, and SG2 "Sweeper Keeper" with defense and pass icons, providing goalkeeper options in the star card pool.
+
+### Version 0.3.23 (2026-02-20)
+- **Changes**: Added away team goalkeeper to complete 11-player teams
+- **Files Modified**:
+  - `src/data/cards.ts` (added A11 away team goalkeeper card)
+  - `package.json` (version updated)
+- **Description**: Added away team goalkeeper card (A11) to match the existing home team goalkeeper (H11), ensuring both home and away teams now have 11 players each, including a dedicated goalkeeper position.
+
+### Version 0.3.22 (2026-02-20)
+- **Changes**: Enhanced reverse prompt words to ensure completely faceless player images
+- **Files Modified**:
+  - `src/data/cards.ts` (updated all player image URLs to include comprehensive faceless prompts)
+  - `package.json` (version updated)
+- **Description**: Updated all player image prompts to include more comprehensive reverse prompt words: "no facial features, no eyes, no nose, no mouth, no ears, faceless" to ensure player images are completely faceless, with no hidden facial features even if blocked by white areas.
+
+### Version 0.3.21 (2026-02-20)
+- **Changes**: Updated victory screen team colors to match jersey colors
+- **Files Modified**:
+  - `src/components/RockPaperScissors.tsx` (updated team colors in victory screen)
+  - `package.json` (version updated)
+- **Description**: Modified the victory screen team selection colors to match the jersey colors: Home Team now uses red (matching their red jerseys), and Away Team now uses blue (matching their blue jerseys). This ensures consistent color coding throughout the game.
+
+### Version 0.3.20 (2026-02-20)
+- **Changes**: Added reverse prompt words to prevent eyes in player images
+- **Files Modified**:
+  - `src/data/cards.ts` (updated all player image URLs to include "no eyes" in the prompt)
+  - `package.json` (version updated)
+- **Description**: Added "no eyes" to all player image prompts to ensure no facial features, including eyes, appear in player images.
+
+### Version 0.3.19 (2026-02-20)
+- **Changes**: Updated team selection UI with color coding and fixed player preview
+- **Files Modified**:
+  - `src/components/PreGame.tsx` (updated team selection UI with color coding and nickname display)
+  - `package.json` (version updated)
+- **Description**: Enhanced team selection interface by adding color coding for home (red) and away (blue) teams, including border colors, background colors, and badge colors. Also fixed player preview to display nicknames instead of real names for better consistency with the rest of the game.
+
+### Version 0.3.18 (2026-02-20)
+- **Changes**: Updated player images to flat anime style with position-based backgrounds
+- **Files Modified**:
+  - `src/data/cards.ts` (updated all player image URLs to use flat anime style with position-based backgrounds, adult age, different hairstyles, and no facial features)
+  - `package.json` (version updated)
+- **Description**: Updated all player images to use flat anime style with position-based backgrounds, ensuring each player has a unique appearance based on their attributes, while maintaining consistency with the game's visual design.
+
+### Version 0.3.13 (2026-02-20)
+- **Changes**: Fixed camera controls panel movement issue
+- **Files Modified**:
+  - `src/components/GameBoard.tsx` (removed drag functionality from camera controls)
+  - `package.json` (version updated)
+- **Description**: Fixed camera controls panel (Camera Engine) movement issue by removing the drag functionality. The panel now stays fixed in position at top-left corner, ensuring it doesn't move around when adjusting zoom or other camera settings, making it easier to use the controls consistently.
+
+### Version 0.3.12 (2026-02-20)
+- **Changes**: Updated synergy slot icons to use consistent SVG resources
+- **Files Modified**:
+  - `src/components/SynergySlot.tsx` (updated left and right indicator icons)
+  - `package.json` (version updated)
+- **Description**: Updated synergy slot icons to use consistent SVG resources: 1) Changed left indicator squares to always display attack icon (/icons/icon-shoot.svg) regardless of slot type, 2) Updated right indicator squares to use defense icon (/icons/icon-defense.svg) for defense and special slots instead of emoji icon, ensuring visual consistency across the game.
+
+### Version 0.3.11 (2026-02-20)
+- **Changes**: Updated synergy slot left icons to be consistent attack icons
+- **Files Modified**:
+  - `src/components/SynergySlot.tsx` (updated left indicator icons)
+  - `package.json` (version updated)
+- **Description**: Updated synergy slot left indicator squares to always display attack icon regardless of slot type, ensuring consistent visual presentation across all synergy slots.
+
+### Version 0.3.10 (2026-02-20)
+- **Changes**: Fixed AI icon counting to use existing TacticalIconMatcher
+- **Files Modified**:
+  - `src/utils/ai.ts` (updated icon counting logic to use TacticalIconMatcher)
+  - `package.json` (version updated)
+- **Description**: Updated AI's icon counting logic to use the existing TacticalIconMatcher class instead of reimplementing counting logic. Now AI gets accurate complete icon counts (pass and press) directly from the same system that renders the icons on screen, ensuring perfect consistency between what's displayed visually and what the AI uses for team actions. This prevents the AI from performing press actions when no press icons are actually activated on the field.
+
+### Version 0.3.9 (2026-02-20)
+- **Changes**: Fixed AI icon counting logic for team actions
+- **Files Modified**:
+  - `src/utils/ai.ts` (updated icon counting logic)
+  - `package.json` (version updated)
+- **Description**: Fixed the AI's icon counting logic to only count activated complete icons instead of all icons on player cards. Now AI will only perform pass or press actions when icons are properly activated through adjacent card combinations, matching the same logic used for player team actions. This ensures the game rules are consistently applied to both AI and player.
+
+### Version 0.3.8 (2026-02-20)
+- **Changes**: Enhanced AI intelligence and skill usage
+- **Files Modified**:
+  - `src/utils/ai.ts` (added team action logic and icon counting)
+  - `src/utils/cardPlacement.ts` (added immediate effect triggering)
+  - `package.json` (version updated)
+- **Description**: Improved AI behavior to perform team actions (pass and press), use player skills and immediate effects, and make more intelligent tactical decisions based on game state. AI now: 1) Executes pass actions to draw synergy cards when hand is low, 2) Performs press actions to gain control when behind, 3) Triggers player skills and immediate effects when placing cards, 4) Makes tactical decisions based on available icons and game state.
+
+### Version 0.3.4 (2026-02-20)
+- **Changes**: Removed regular synergy card icon
+- **Files Modified**:
+  - `src/components/SynergyCard.tsx` (updated getIcon function)
+  - `package.json` (version updated)
+- **Description**: Removed icon from regular synergy cards, leaving only tackle cards with their unique icon (🔄). This creates a cleaner design focused on star ratings for regular synergy cards.
+
+### Version 0.3.3 (2026-02-20)
+- **Changes**: Updated synergy card icon
+- **Files Modified**:
+  - `src/components/SynergyCard.tsx` (updated getIcon function)
+  - `package.json` (version updated)
+- **Description**: Changed regular synergy card icon from star (⭐) to lightning bolt (⚡) to avoid confusion with star rating display, while keeping tackle cards with their unique icon (🔄).
+
+### Version 0.3.2 (2026-02-20)
+- **Changes**: Optimized synergy card star display
+- **Files Modified**:
+  - `src/components/SynergyCard.tsx` (updated renderStars function)
+  - `package.json` (version updated)
+- **Description**: Modified star display to use maximum 2 rows instead of 3, calculated stars per row based on total count, and added size-based star scaling to ensure stars fit within card boundaries for all card sizes.
+
+### Version 0.3.1 (2026-02-20)
+- **Changes**: Further simplified synergy card code
+- **Files Modified**:
+  - `src/components/SynergyCard.tsx` (removed unused type variables and simplified color functions)
+  - `package.json` (version updated)
+- **Description**: Removed unused type variables (isAttack, isDefense, isSpecial, isSetPiece, isVAR) and simplified color functions (getBgGradient, getBorderColor, getGlowColor) to only distinguish tackle cards from regular synergy cards, resulting in cleaner and more maintainable code.
+
+### Version 0.3.0 (2026-02-20)
+- **Changes**: Simplified synergy card icons
+- **Files Modified**:
+  - `src/components/SynergyCard.tsx` (updated getIcon function)
+  - `package.json` (version updated)
+- **Description**: Removed attack and defense icons from synergy cards, showing only star icon for all non-tackle synergy cards. Only tackle cards retain their special icon, making all synergy cards visually consistent except for tackle cards which remain distinct.
+
+### Version 0.2.110 (2026-02-20)
+- **Changes**: Simplified vertical icon matching logic
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (removed AI-specific vertical position pairs)
+  - `package.json` (version updated)
+- **Description**: Simplified vertical icon matching logic by removing AI-specific vertical position pairs. Since we already use `rotatedTactics` to handle AI card rotation, we can use the same vertical position pairs for both AI and player cards, ensuring consistent icon matching logic across both halves.
+
+### Version 0.2.109 (2026-02-20)
+- **Changes**: Fixed AI vertical icon position calculation
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (updated vertical icon matching logic)
+  - `package.json` (version updated)
+- **Description**: Fixed AI vertical icon position calculation by considering the 180-degree rotation of AI cards. Updated the vertical position pairs for AI half to ensure that left-side icons match with right-side icons of the card below, and right-side icons match with left-side icons of the card below, resulting in correct icon placement for AI cards.
+
+### Version 0.2.108 (2026-02-20)
+- **Changes**: Fixed field icon matching logic for attack icons
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (updated field icon matching logic)
+  - `package.json` (version updated)
+- **Description**: Fixed field icon matching logic to use top icons for attack icons in player half (zone 4) and bottom icons for attack icons in AI half (zone 3). This ensures that CF cards properly match with the field attack icons using their top icon positions, resulting in more consistent and expected icon activation behavior.
+
+### Version 0.2.107 (2026-02-20)
+- **Changes**: Further simplified horizontal icon matching logic
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (simplified horizontal match logic)
+  - `package.json` (version updated)
+- **Description**: Further simplified horizontal icon matching logic by removing complex position pair structures and conditional checks. Now directly compares icon types between adjacent cards, making the code more straightforward and easier to understand. The logic now simply checks if the right middle icon of the current card matches the left middle icon of the adjacent card.
+
+### Version 0.2.106 (2026-02-20)
+- **Changes**: Simplified horizontal icon matching logic
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (removed redundant position checks)
+  - `package.json` (version updated)
+- **Description**: Simplified horizontal icon matching logic by removing redundant position checks, keeping only middle position matching as requested. Updated both right and left horizontal match checks to only consider middle positions (MIDDLE_RIGHT and MIDDLE_LEFT), removing top and bottom position checks that were no longer needed.
+
+### Version 0.2.105 (2026-02-20)
+- **Changes**: Fixed tactical icon position calculation and removed string matching
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (updated column position calculation and removed string matching)
+  - `package.json` (version updated)
+- **Description**: Fixed tactical icon position calculation by updating vertical position pairs to use bottomSlotOffset instead of hardcoded positions, updated field icon matching to use correct slot indices based on icon position, and removed all string matching in favor of direct property comparison for better performance and maintainability.
+
+### Version 0.2.104 (2026-02-20)
+- **Changes**: Refactored field icon matching logic
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (refactored field icon matching to use Tactics interface directly)
+  - `package.json` (version updated)
+- **Description**: Refactored field icon matching logic to directly use the Tactics interface instead of position strings, simplifying the code structure while maintaining the same functionality: AI uses rotatedTactics, while player uses tactics.
+
+### Version 0.2.103 (2026-02-20)
+- **Changes**: Enhanced match log details for card placement
+- **Files Modified**:
+  - `src/game/gameLogic.ts` (updated card placement log message)
+  - `package.json` (version updated)
+- **Description**: Updated card placement log messages to include both line (zone) and column positions, providing more detailed information about where players are placed on the field.
+
+### Version 0.2.103 (2026-02-20)
+- **Changes**: Fixed vertical icon matching logic
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (added more vertical position pairs)
+  - `package.json` (version updated)
+- **Description**: Fixed vertical icon matching logic by adding more vertical position pairs, ensuring that DMF and LWF can properly match pressure icons.
+
+### Version 0.2.102 (2026-02-20)
+- **Changes**: Fixed field icon matching logic
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (adjusted field icon position mapping)
+  - `package.json` (version updated)
+- **Description**: Updated field icon matching logic to use different icon positions for AI and player sides: AI uses top icon positions for defense matching, while player uses bottom icon positions. Simplified slot index adjustment by removing horizontal position judgment.
+
+### Version 0.2.101 (2026-02-20)
+- **Changes**: Fixed tactical icon matching issues
+- **Files Modified**:
+  - `src/game/tacticalIconMatcher.ts` (fixed vertical and horizontal icon matching)
+  - `package.json` (version updated)
+- **Description**: Fixed pressure icon activation between CMF and LWF cards, and corrected horizontal complete icon positioning to ensure icons display between adjacent cards.
+
 ### Version 0.2.100 (2026-02-20)
 - **Changes**: Renamed and moved delivery documents to docs directory
 - **Files Modified**:
@@ -955,6 +1254,14 @@
 - **0.2.40**: Fixed background music playback error, card dealing logic issue, and duplicate card dealer animations
 - **0.2.39**: Fixed duplicate star cards issue by updating DraftPhase to use game state's draft logic and adding duplicate checking in draft functions
 - **0.2.38**: Updated SquadSelection component to use mask overlay instead of full page, providing a modal-like experience
+- **0.3.15**: Updated PASS and PRESS buttons to maintain their original colors when disabled instead of changing to gray
+- **0.3.14**: Updated PASS and PRESS button colors to use specified hex values (#13A740 for PASS, #E11D48 for PRESS)
+- **0.3.13**: Updated version number
+- **0.3.11**: Fixed immediate effect modal issue where synergy choice window appeared before confirming effect use
+- **0.3.10**: Updated version number
+- **0.3.7**: Updated ActionButtons component to use button elements instead of SVG for Team Action buttons, matching Shoot/End Turn style
+- **0.3.6**: Simplified Team Action UI to match Shoot/End Turn button style - removed descriptions, kept only buttons
+- **0.3.5**: Updated Team Action UI to always show Pass and Press buttons (even when disabled) with a SKIP button below
 - **0.2.37**: Fixed player card distribution issue after draft, ensuring hand contains exactly 10 starters and remaining cards go to bench
 - **0.2.36**: Fixed draft round progression issue and duplicate key warnings
 - **0.2.35**: Initial bug fixes for AI draft card storage and bench population

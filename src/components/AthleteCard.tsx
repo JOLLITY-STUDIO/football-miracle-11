@@ -47,7 +47,7 @@ const getRoleName = (type: string) => {
 };
 
 const getCardBgColor = (type: string): string => {
-  return 'bg-gradient-to-br from-gray-800 to-gray-900';
+  return 'bg-transparent';
 };
 
 const getIconImage = (icon: SkillIconType): string => {
@@ -256,12 +256,16 @@ const AthleteCardComponent: React.FC<Props> = ({
           className={clsx(
             "relative preserve-3d cursor-pointer transition-shadow overflow-hidden rounded-lg",
             selected ? "z-20 shadow-[0_15px_30px_rgba(0,0,0,0.4)]" : "z-20 shadow-lg",
-            disabled && "cursor-not-allowed"
+            disabled && "cursor-not-allowed",
+            card.isStar && "border-2 border-yellow-400"
           )}
           style={{
             width: '100%',
             height: '100%',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            ...(card.isStar && {
+              boxShadow: '0 0 15px rgba(251, 191, 36, 0.6), 0 0 30px rgba(251, 191, 36, 0.3)'
+            })
           }}
           onClick={() => {
             logger.debug('Player card clicked:', card.nickname, 'ID:', card.id);
@@ -284,7 +288,19 @@ const AthleteCardComponent: React.FC<Props> = ({
               <span className="text-yellow-400 text-4xl drop-shadow-lg">⭐</span>
             </div>
           )}
-          {/* 左边1/2：背景色区域 */}
+          
+          {/* 明星卡闪卡效果装饰层 */}
+          {card.isStar && (
+            <div className="absolute inset-0 z-30 pointer-events-none">
+              {/* 主闪烁效果 - 线性对角线渐变 */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent animate-shimmer"></div>
+              {/* 辅助光晕效果 */}
+              <div className="absolute inset-0 bg-gradient-radial from-yellow-400/10 via-transparent to-transparent animate-pulse"></div>
+              {/* 金色边框 */}
+              <div className="absolute inset-0 border-2 border-yellow-400/70 rounded-lg"></div>
+            </div>
+          )}
+          {/* 左边1/2：透明背景 + 位置颜色叠加 */}
           <div className={clsx("relative w-1/2 h-full border-r border-black/30 rounded-l-lg", cardBg)}>
             {card.imageUrl ? (
               <img 
@@ -298,13 +314,15 @@ const AthleteCardComponent: React.FC<Props> = ({
                 <span className="text-3xl">👤</span>
               </div>
             )}
+            
+            {/* 位置颜色叠加层 - 已移除，保持红色背景纯净 */}
 
             {/* 移除攻击力显示，因为游戏规则中没有 power 概念 */}
           </div>
 
-          {/* 右边1/2：纯白色信息区域 */}
+          {/* 右边1/2：信息区域 */}
           <div 
-            className="relative w-1/2 h-full bg-white flex flex-col justify-center items-center rounded-r-lg"
+            className="relative w-1/2 h-full bg-white/90 backdrop-blur-sm flex flex-col justify-center items-center rounded-r-lg"
             style={{ padding: `${iconRadius}px` }} // 使用半圆图标半径作为边距
           >
             <div className="flex flex-col items-center justify-center space-y-1 w-full">
@@ -338,29 +356,37 @@ const AthleteCardComponent: React.FC<Props> = ({
 
               {/* 技能图标区域- 与文字信息紧凑排列*/}
               <div className="flex items-center justify-center space-x-1 pt-1">
-                {/* 技能效果徽章*/}
-                {card.immediateEffect !== 'none' && (
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <SkillEffectBadge 
-                      effect={card.immediateEffect} 
-                      size="small"
-                      showLabel={false}
-                    />
-                  </div>
-                )}
-                
                 {/* 技能图标*/}
                 {card.skills?.map((skill, index) => (
-                  <div key={`skill-${index}`} className="w-5 h-5 flex items-center justify-center">
-                    <img
-                      src={getIconImage(skill.type)}
-                      alt={skill.description || skill.type}
-                      className="w-full h-full object-contain"
-                      style={{
-                        filter: skill.hasLightning ? 'drop-shadow(0 0 2px #fbbf24)' : 'none'
-                      }}
-                    />
-                  </div>
+                  <React.Fragment key={`skill-${index}`}>
+                    {/* 技能图标*/}
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <img
+                        src={getIconImage(skill.type)}
+                        alt={skill.description || skill.type}
+                        className="w-full h-full object-contain"
+                        style={{
+                          filter: 'none'
+                        }}
+                      />
+                    </div>
+                    {/* 技能效果徽章 - 只有带闪电效果的技能才显示*/}
+                    {skill.hasLightning && skill.effect && skill.effect !== 'none' && (
+                      <div className="w-5 h-5 flex items-center justify-center">
+                        <div className="relative">
+                          <SkillEffectBadge 
+                            effect={skill.effect} 
+                            size="small"
+                            showLabel={false}
+                          />
+                          {/* 闪电效果 - 模拟速攻技能的视觉效果 */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-full h-full rounded-full bg-yellow-400/30 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
@@ -410,10 +436,10 @@ const AthleteCardComponent: React.FC<Props> = ({
                   <span className="text-6xl" style={{ color: '#fbbf24' }}>👕</span>
                 )}
                 {!card.isStar && variant === 'home' && (
-                  <span className="text-6xl" style={{ color: '#3b82f6' }}>👕</span>
+                  <span className="text-6xl" style={{ color: '#FFFFFF' }}>👕</span>
                 )}
                 {!card.isStar && variant === 'away' && (
-                  <span className="text-6xl" style={{ color: '#ef4444' }}>👕</span>
+                  <span className="text-6xl" style={{ color: '#000000' }}>👕</span>
                 )}
               </div>
             </div>

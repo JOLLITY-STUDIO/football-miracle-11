@@ -138,7 +138,7 @@ export function clearAllGameRecords(): void {
 
 export function formatAction(action: GameAction, athleteCards: athleteCard[], synergyCards: SynergyCard[]): string {
   const actor = action.actor === 'player' ? 'You' : 'AI';
-  const cardById = (id: string) => athleteCards.find(c => c.id === id)?.name || id;
+  const cardById = (id: string) => athleteCards.find(c => c.id === id)?.nickname || id;
   const synergyById = (id: string) => synergyCards.find(c => c.id === id)?.name || id;
 
   switch (action.type) {

@@ -4,6 +4,14 @@ import type { athleteCard } from '../data/cards';
 import type { Team } from '../data/teams';
 import type { FieldZone } from '../types/game';
 
+// Sort players by position: forwards (fw) first, then midfielders (mf), then defenders (df)
+const sortPlayersByPosition = (players: athleteCard[]): athleteCard[] => {
+  const positionOrder = { fw: 0, mf: 1, df: 2 };
+  return [...players].sort((a, b) => {
+    return positionOrder[a.type] - positionOrder[b.type];
+  });
+};
+
 interface SquadSelectionProps {
   team: Team;
   draftedStars: athleteCard[];
@@ -210,7 +218,7 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
   onComplete,
 }) => {
   const [step, setStep] = useState<'select' | 'formation' | 'animating'>('select');
-  const allPlayers = [...team.basePlayers, ...draftedStars];
+  const allPlayers = sortPlayersByPosition([...team.basePlayers, ...draftedStars]);
   const [selectedStarters, setSelectedStarters] = useState<athleteCard[]>([]);
   const [selectedSubstitutes, setSelectedSubstitutes] = useState<athleteCard[]>([]);
   const [animatingSubstitutes, setAnimatingSubstitutes] = useState<athleteCard[]>([]);
@@ -221,29 +229,29 @@ export const SquadSelection: React.FC<SquadSelectionProps> = ({
     const isSubstitute = selectedSubstitutes.some(p => p.id === player.id);
 
     if (isStarter) {
-      setSelectedStarters(prev => prev.filter(p => p.id !== player.id));
+      setSelectedStarters(prev => sortPlayersByPosition(prev.filter(p => p.id !== player.id)));
     } else if (isSubstitute) {
-      setSelectedSubstitutes(prev => prev.filter(p => p.id !== player.id));
+      setSelectedSubstitutes(prev => sortPlayersByPosition(prev.filter(p => p.id !== player.id)));
     } else {
       if (selectedStarters.length < 10) {
-        setSelectedStarters(prev => [...prev, player]);
+        setSelectedStarters(prev => sortPlayersByPosition([...prev, player]));
       } else if (selectedSubstitutes.length < 3) {
-        setSelectedSubstitutes(prev => [...prev, player]);
+        setSelectedSubstitutes(prev => sortPlayersByPosition([...prev, player]));
       }
     }
   };
 
   const handleSetAsStarter = (player: athleteCard) => {
     if (selectedStarters.length < 10) {
-      setSelectedSubstitutes(prev => prev.filter(p => p.id !== player.id));
-      setSelectedStarters(prev => [...prev, player]);
+      setSelectedSubstitutes(prev => sortPlayersByPosition(prev.filter(p => p.id !== player.id)));
+      setSelectedStarters(prev => sortPlayersByPosition([...prev, player]));
     }
   };
 
   const handleSetAsSubstitute = (player: athleteCard) => {
     if (selectedSubstitutes.length < 3) {
-      setSelectedStarters(prev => prev.filter(p => p.id !== player.id));
-      setSelectedSubstitutes(prev => [...prev, player]);
+      setSelectedStarters(prev => sortPlayersByPosition(prev.filter(p => p.id !== player.id)));
+      setSelectedSubstitutes(prev => sortPlayersByPosition([...prev, player]));
     }
   };
 

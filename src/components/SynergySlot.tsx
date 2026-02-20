@@ -48,10 +48,7 @@ export const SynergySlot: React.FC<Props> = ({
             backgroundColor: colorMap[type] || colorMap.special,
           }}
         >
-          {type === 'attack' && <img src="/icons/icon-shoot.svg" alt="Attack" className="w-6 h-6" />}
-          {type === 'defense' && <img src="/icons/icon-defense.svg" alt="Defense" className="w-6 h-6" />}
-          {type === 'special' && <img src="/icons/icon-pass.png" alt="Special" className="w-6 h-6" />}
-          {type === 'tackle' && <img src="/icons/icon-press.svg" alt="Tackle" className="w-6 h-6" />}
+          <img src="/icons/icon-shoot.svg" alt="Attack" className="w-6 h-6" />
         </div>
         
         {/* Card Slot */}
@@ -134,7 +131,7 @@ export const SynergySlot: React.FC<Props> = ({
             opacity: type === 'attack' ? 0 : 1,
           }}
         >
-          {type === 'defense' || type === 'special' ? '🛡️' : ''}
+          {(type === 'defense' || type === 'special') && <img src="/icons/icon-defense.svg" alt="Defense" className="w-6 h-6" />}
         </div>
       </div>
     </div>

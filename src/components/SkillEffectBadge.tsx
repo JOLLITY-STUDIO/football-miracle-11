@@ -13,7 +13,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
   switch (effect) {
     case 'move_control_1':
       return {
-        icon: '🎯',
+        icon: '⚡',
         label: '控制+1',
         description: '移动1张卡片',
         color: '#8b5cf6',
@@ -21,7 +21,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
       };
     case 'move_control_2':
       return {
-        icon: '🎯',
+        icon: '⚡',
         label: '控制+2',
         description: '移动2张卡片',
         color: '#8b5cf6',
@@ -29,7 +29,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
       };
     case 'draw_synergy_1':
       return {
-        icon: '🎴',
+        icon: '⚡',
         label: '抽卡+1',
         description: '抽1张协同卡',
         color: '#f59e0b',
@@ -37,7 +37,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
       };
     case 'draw_synergy_2_choose_1':
       return {
-        icon: '🎴',
+        icon: '⚡',
         label: '二选一',
         description: '抽2张选1张',
         color: '#f59e0b',
@@ -45,7 +45,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
       };
     case 'draw_synergy_plus_1':
       return {
-        icon: '🎴',
+        icon: '⚡',
         label: '抽卡+1',
         description: '抽1张协同卡',
         color: '#f59e0b',
@@ -53,7 +53,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
       };
     case 'steal_synergy':
       return {
-        icon: '🗡️',
+        icon: '⚡',
         label: '窃取',
         description: '偷取对手协同卡',
         color: '#ef4444',
@@ -61,7 +61,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
       };
     case 'instant_shot':
       return {
-        icon: '⚽',
+        icon: '⚡',
         label: '射门',
         description: '立即射门',
         color: '#ef4444',
@@ -69,7 +69,7 @@ const getEffectInfo = (effect: SkillEffectType) => {
       };
     case 'ignore_defense':
       return {
-        icon: '💨',
+        icon: '⚡',
         label: '突破',
         description: '无视防守进行攻击',
         color: '#9333ea',

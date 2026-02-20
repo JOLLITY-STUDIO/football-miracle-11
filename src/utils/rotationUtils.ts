@@ -21,6 +21,15 @@ export class RotationUtils {
   }
 
   /**
+   * 调试方法：打印旋转前后的战术图标结构
+   */
+  public static debugRotatedTactics(tactics: Tactics): void {
+    const rotated = this.generateRotatedTactics(tactics);
+    console.log('Original tactics:', tactics);
+    console.log('Rotated tactics:', rotated);
+  }
+
+  /**
    * 根据区域获取正确的战术图标结构
    * AI半场（zone < 4）使用旋转后的战术图标
    * 玩家半场（zone >= 4）使用原始战术图标

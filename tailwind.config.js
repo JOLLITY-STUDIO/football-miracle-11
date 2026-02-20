@@ -37,6 +37,16 @@ export default {
       backgroundImage: {
         'grass-pattern': "url('/assets/grass_texture.png')", // Placeholder
         'card-texture': "linear-gradient(to bottom right, #ffffff 0%, #f3f4f6 100%)",
+      },
+      animation: {
+        'shimmer': 'shimmer 2s ease-in-out infinite',
+        'shimmer-delay': 'shimmer 3s ease-in-out infinite 1s',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        }
       }
     },
   },

@@ -1,0 +1,20 @@
+<svg width="300" height="400" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="300" height="400" fill="#FF5252" rx="10" ry="10"/>
+  <!-- 球员头部 -->
+  <circle cx="150" cy="120" r="20" fill="white" stroke="#E53935" stroke-width="2"/>
+  <!-- 球员身体 -->
+  <rect x="135" y="140" width="30" height="60" fill="white" stroke="#E53935" stroke-width="2"/>
+  <!-- 球员手臂 -->
+  <rect x="110" y="140" width="25" height="10" fill="white" stroke="#E53935" stroke-width="2" transform="rotate(-30 110 140)"/>
+  <rect x="165" y="140" width="25" height="10" fill="white" stroke="#E53935" stroke-width="2" transform="rotate(30 165 140)"/>
+  <!-- 球员腿部 -->
+  <rect x="135" y="200" width="10" height="40" fill="white" stroke="#E53935" stroke-width="2"/>
+  <rect x="155" y="200" width="10" height="40" fill="white" stroke="#E53935" stroke-width="2"/>
+  <!-- 足球 -->
+  <circle cx="150" cy="260" r="15" fill="white" stroke="#E53935" stroke-width="2"/>
+  <path d="M135 260 L165 260 M150 245 L150 275" stroke="#E53935" stroke-width="2"/>
+  <!-- 文字 -->
+  <text x="150" y="320" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Goal Machine</text>
+  <text x="150" y="350" font-family="Arial" font-size="14" fill="white" text-anchor="middle">CF</text>
+</svg>

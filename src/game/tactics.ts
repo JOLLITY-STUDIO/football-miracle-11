@@ -316,7 +316,7 @@ export function getTacticalBonus(effects: Map<TacticalIcon, number>, iconType: T
 
 export function calculateAttackBonus(zones: TacticalZone[]): number {
   const effects = calculateTacticalEffects(zones);
-  return (effects.get('attack') || 0) + (effects.get('breakthrough') || 0) * 2;
+  return effects.get('attack') || 0;
 }
 
 export function calculateDefenseBonus(zones: TacticalZone[]): number {

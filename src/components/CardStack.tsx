@@ -56,7 +56,7 @@ export const CardStack: React.FC<CardStackProps> = ({
                     tactics: {},
                     rotatedTactics: {},
                     immediateEffect: 'none' 
-                  }} as athleteCard
+                  } as athleteCard}
                   size="large"
                   faceDown={true}
                   variant={type === 'away' ? 'away' : 'home'}

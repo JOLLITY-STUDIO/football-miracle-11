@@ -6,9 +6,9 @@ import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
 export const calculateAttackPower = (card: athleteCard, zones: FieldZone[], usedShotIcons: number[] = []): number => {
   let power = card.power || 0;
   
-  // 使用 TacticalIconMatcher 计算激活的进攻图标数量
+  // 使用 TacticalIconMatcher 计算激活的进攻图标数量，只计算玩家半场的
   const matcher = new TacticalIconMatcher(zones);
-  const iconCounts = matcher.getIconCounts();
+  const iconCounts = matcher.getPlayerIconCounts();
   const activatedAttackIcons = iconCounts.attack;
   
   power += activatedAttackIcons;
@@ -22,9 +22,9 @@ export const calculateAttackPower = (card: athleteCard, zones: FieldZone[], used
 export const calculateDefensePower = (card: athleteCard, zones: FieldZone[]): number => {
   let power = card.power || 0;
   
-  // 使用 TacticalIconMatcher 计算激活的防守图标数量
+  // 使用 TacticalIconMatcher 计算激活的防守图标数量，只计算 AI 半场的
   const matcher = new TacticalIconMatcher(zones);
-  const iconCounts = matcher.getIconCounts();
+  const iconCounts = matcher.getAIIconCounts();
   const activatedDefenseIcons = iconCounts.defense;
   
   power += activatedDefenseIcons;

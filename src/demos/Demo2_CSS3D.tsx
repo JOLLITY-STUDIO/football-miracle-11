@@ -100,7 +100,7 @@ export const Demo2_CSS3D: React.FC<Demo2Props> = ({ onCellClick }) => {
     
     const nearestCell = findNearestCell(x, y);
     
-    if (nearestCell) {
+    if (nearestCell && 'zone' in nearestCell && 'col' in nearestCell) {
       onCellClick?.(nearestCell.zone, nearestCell.col);
     }
   }, [findNearestCell, onCellClick]);

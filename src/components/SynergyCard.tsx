@@ -24,68 +24,50 @@ export const SynergyCardComponent: React.FC<Props> = ({
   faceDown = false,
   size = 'large'
 }) => {
-  const isAttack = card.type === 'attack';
-  const isDefense = card.type === 'defense';
   const isTackle = card.type === 'tackle';
-  const isSpecial = card.type === 'special';
-  const isSetPiece = card.type === 'setpiece';
-  const isVAR = card.name.includes('VAR');
 
   const getBgGradient = () => {
-    if (isAttack) return 'bg-gradient-to-br from-red-100 to-red-200';
-    if (isDefense) return 'bg-gradient-to-br from-blue-100 to-blue-200';
     if (isTackle) return 'bg-gradient-to-br from-green-100 to-green-200';
-    if (isSpecial) return 'bg-gradient-to-br from-purple-100 to-purple-200';
-    if (isSetPiece) return 'bg-gradient-to-br from-yellow-100 to-yellow-200';
     return 'bg-gradient-to-br from-gray-50 to-gray-100';
   };
 
   const getBorderColor = () => {
-    if (isAttack) return 'border-red-500';
-    if (isDefense) return 'border-blue-500';
     if (isTackle) return 'border-green-500';
-    if (isSpecial) return 'border-purple-500';
-    if (isSetPiece) return 'border-yellow-500';
     return 'border-gray-400';
   };
 
   const getGlowColor = () => {
-    if (isAttack) return 'from-red-500/30 to-red-700/30';
-    if (isDefense) return 'from-blue-500/30 to-blue-700/30';
     if (isTackle) return 'from-green-500/30 to-green-700/30';
-    if (isSpecial) return 'from-purple-500/30 to-purple-700/30';
-    if (isSetPiece) return 'from-yellow-500/30 to-yellow-700/30';
     return 'from-gray-500/30 to-gray-700/30';
   };
 
   const getIcon = () => {
-    if (isAttack) return '⚽';
-    if (isDefense) return '🛡️';
     if (isTackle) return '🔄';
-    if (isSpecial) return '✨';
-    if (isSetPiece) return '🎯';
-    return '⭐';
+    return '';
   };
 
   // 渲染星级评分
   const renderStars = (stars: number) => {
-    const starElements = Array.from({ length: stars }, (_, i) => (
-      <span key={i} className="text-yellow-500 text-2xl">⭐</span>
-    ));
+    const starElements = Array.from({ length: stars }, (_, i) => {
+      // 根据卡片大小调整星星大小
+      const starSize = size === 'large' ? 'text-2xl' : size === 'medium' ? 'text-xl' : 'text-lg';
+      return <span key={i} className={`text-yellow-500 ${starSize}`}>⭐</span>;
+    });
     
-    // 如果星星数量 <= 3，显示在一行
-    if (stars <= 3) {
-      return <div className="flex items-center justify-center gap-1">{starElements}</div>;
-    }
+    // 所有星星都分成最多2行显示
+    // 计算每行星星数量
+    const starsPerRow = Math.ceil(stars / 2);
     
-    // 如果星星数量 > 3，需要换行显示
-    const firstRow = starElements.slice(0, 3);
-    const secondRow = starElements.slice(3);
+    // 分割星星到两行
+    const firstRow = starElements.slice(0, starsPerRow);
+    const secondRow = starElements.slice(starsPerRow);
     
     return (
       <div className="flex flex-col items-center justify-center gap-1">
         <div className="flex items-center justify-center gap-1">{firstRow}</div>
-        <div className="flex items-center justify-center gap-1">{secondRow}</div>
+        {secondRow.length > 0 && (
+          <div className="flex items-center justify-center gap-1">{secondRow}</div>
+        )}
       </div>
     );
   };

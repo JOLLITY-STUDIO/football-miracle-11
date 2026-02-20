@@ -2,6 +2,7 @@ import type { GameState } from '../game/gameLogic';
 import type { athleteCard } from '../data/cards';
 import type { FieldZone } from '../types/game';
 import { logger } from './logger';
+import { performImmediateEffect } from './immediateEffects';
 
 /**
  * Efficiently clone field zones using structured cloning
@@ -100,7 +101,7 @@ export const placeCard = (
   logger.debug('New hand size:', newHand.length);
   
   // Return new state with only modified fields
-  const newState = {
+  let newState = {
     ...state,
     ...(isPlayerTurn ? {
       playerField: newField,

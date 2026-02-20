@@ -7,6 +7,8 @@ import { performRockPaperScissors } from '../utils/rockPaperScissors';
 import { startDraftRound, pickDraftCard, aiPickDraftCard, discardDraftCard } from '../utils/draft';
 import { performTeamAction } from '../utils/teamActions';
 import { placeCard } from '../utils/cardPlacement';
+import type { athleteCard, SynergyCard } from '../data/cards';
+import { starathleteCards, baseathleteCards } from '../data/cards';
 import { performShot } from '../utils/shotActions';
 import { shuffleArray } from '../data/teams';
 import { useSynergy } from '../utils/synergyActions';
@@ -15,10 +17,17 @@ import { performImmediateEffect } from '../utils/immediateEffects';
 import { performPenalty } from '../utils/penalty';
 import { performEndTurn } from '../utils/endTurn';
 import { aiTurn, processAiActionStep } from '../utils/ai';
-import { starathleteCards, baseathleteCards } from '../data/cards';
 import { getSynergyDeckFixed } from '../data/synergyConfig';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps';
 import { TurnPhaseService } from './turnPhaseService';
+
+// Sort players by position: forwards (fw) first, then midfielders (mf), then defenders (df)
+const sortPlayersByPosition = (players: athleteCard[]): athleteCard[] => {
+  const positionOrder = { fw: 0, mf: 1, df: 2 };
+  return [...players].sort((a, b) => {
+    return positionOrder[a.type] - positionOrder[b.type];
+  });
+};
 
 export interface GameState {
   phase: GamePhase;
@@ -77,10 +86,13 @@ export interface GameState {
   playerUsedShotIcons: { [cardId: string]: number[] };
   aiUsedShotIcons: { [cardId: string]: number[] };
   defenderSynergySelection: boolean;
+  attackerSynergySelection: boolean;
   tutorialStep: number;
   showTutorial: boolean;
   defenderAvailableSynergyCards: SynergyCard[];
   defenderSelectedSynergyCards: SynergyCard[];
+  attackerAvailableSynergyCards: SynergyCard[];
+  attackerSelectedSynergyCards: SynergyCard[];
   selectedShotIcon: number | null;
   draftTurn: 'player' | 'ai';
   aiDraftHand: athleteCard[];
@@ -90,6 +102,12 @@ export interface GameState {
   dealingDirection: 'player' | 'ai';  // 当前抽卡方向
   playerDraftDeck: athleteCard[];  // 玩家选秀卡组
   aiDraftDeck: athleteCard[];  // AI选秀卡组
+  // 射门准备阶段相关状态
+  shotPreparationPhase: 'none' | 'attacker_synergy_selection' | 'defender_synergy_selection' | 'ready_for_duel';
+  tempAttackerSynergy: SynergyCard[];
+  tempDefenderSynergy: SynergyCard[];
+  attackerDrawnSynergyCard: SynergyCard | null;
+  defenderDrawnSynergyCard: SynergyCard | null;
 }
 
 export interface MatchLogEntry {
@@ -188,8 +206,11 @@ export const createInitialState = (
     playerUsedShotIcons: {},
     aiUsedShotIcons: {},
     defenderSynergySelection: false,
+    attackerSynergySelection: false,
     defenderAvailableSynergyCards: [],
     defenderSelectedSynergyCards: [],
+    attackerAvailableSynergyCards: [],
+    attackerSelectedSynergyCards: [],
     selectedShotIcon: null,
     // 选秀相关状态
     draftTurn: 'player',
@@ -199,11 +220,17 @@ export const createInitialState = (
     showTutorial: false,
     // 过渡状态
     isTransitioning: false,
-    // 抽卡相关状态
-    dealingProgress: 0,
-    dealingDirection: 'player',
-    playerDraftDeck: [],
-    aiDraftDeck: []
+  // 抽卡相关状态
+  dealingProgress: 0,
+  dealingDirection: 'player',
+  playerDraftDeck: [],
+  aiDraftDeck: [],
+  // 射门准备阶段相关状态
+  shotPreparationPhase: 'none',
+  tempAttackerSynergy: [],
+  tempDefenderSynergy: [],
+  attackerDrawnSynergyCard: null,
+  defenderDrawnSynergyCard: null
   };
 
   return initialState;
@@ -248,10 +275,20 @@ export type GameAction =
   | { type: 'SELECT_DEFENDER_SYNERGY_CARD'; cardIndex: number }
   | { type: 'CONFIRM_DEFENDER_SYNERGY' }
   | { type: 'AI_DEFENDER_SYNERGY_PICK' }
+  | { type: 'START_ATTACKER_SYNERGY_SELECTION' }
+  | { type: 'SELECT_ATTACKER_SYNERGY_CARD'; cardIndex: number }
+  | { type: 'CONFIRM_ATTACKER_SYNERGY' }
+  | { type: 'AI_ATTACKER_SYNERGY_PICK' }
   | { type: 'START_SUBSTITUTION'; card: athleteCard }
   | { type: 'PENALTY_COMPLETE'; playerPoints: number; aiPoints: number }
-  | { type: 'SELECT_DRAFT_DECK'; deckType: 'star' | 'home' | 'away' } // 新添加的action类型
-  | { type: 'DRAW_CARD' }; // 抽卡动作
+  | { type: 'SELECT_DRAFT_DECK'; deckType: 'star' | 'home' | 'away' }
+  | { type: 'DRAW_CARD' }
+  | { type: 'START_SHOT_PREPARATION' }
+  | { type: 'SELECT_ATTACKER_PREPARATION_SYNERGY'; card: SynergyCard }
+  | { type: 'CONFIRM_ATTACKER_PREPARATION_SYNERGY' }
+  | { type: 'SELECT_DEFENDER_PREPARATION_SYNERGY'; card: SynergyCard }
+  | { type: 'CONFIRM_DEFENDER_PREPARATION_SYNERGY' }
+  | { type: 'START_DUEL_FROM_PREPARATION' };
 
 export const isHalfTime = (state: GameState): boolean => {
   // Half-time occurs when stoppage time is active and the turn is ending
@@ -279,7 +316,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
   switch (action.type) {
     case 'ADVANCE_DUEL': {
       if (state.duelPhase === 'none') return state;
-      const phases: DuelPhase[] = ['init', 'select_shot_icon', 'reveal_attacker', 'reveal_defender', 'defender_synergy_selection', 'reveal_synergy', 'reveal_skills', 'summary', 'result'];
+      const phases: DuelPhase[] = ['init', 'select_shot_icon', 'reveal_attacker', 'reveal_defender', 'attacker_synergy_selection', 'defender_synergy_selection', 'reveal_synergy', 'reveal_skills', 'summary', 'result'];
       const currentIndex = phases.indexOf(state.duelPhase);
       const nextPhase = phases[currentIndex + 1] || 'none';
       
@@ -307,6 +344,16 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               message: `Defender revealed: ${defender?.card.nickname || 'Empty'}`
             });
             break;
+          case 'attacker_synergy_selection':
+            newState.matchLogs = addLog(newState, {
+              type: 'action',
+              phase: 'Duel',
+              step: 'Attacker Synergy Selection',
+              message: 'Attacker is selecting synergy cards to enhance the attack'
+            });
+            // 触发进攻方协同卡选择
+            newState = gameReducer(newState, { type: 'START_ATTACKER_SYNERGY_SELECTION' });
+            break;
           case 'defender_synergy_selection':
             newState.matchLogs = addLog(newState, {
               type: 'action',
@@ -314,6 +361,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               step: 'Defender Synergy Selection',
               message: 'Defender is selecting synergy cards to counter the attack'
             });
+            // 触发防守方协同卡选择
+            newState = gameReducer(newState, { type: 'START_DEFENDER_SYNERGY_SELECTION' });
             break;
           case 'reveal_synergy':
             newState.matchLogs = addLog(newState, {
@@ -448,11 +497,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         skipTeamAction: false,
         isFirstMatchTurn: true,
         currentAction: 'none' as PlayerActionType,
-        playerAthleteHand: action.starters,
-        playerBench: action.subs,
+        playerAthleteHand: sortPlayersByPosition(action.starters),
+        playerBench: sortPlayersByPosition(action.subs),
         // 保持AI手牌不变，因为已经在ROCK_PAPER_SCISSORS阶段分发了
-        aiAthleteHand: state.aiAthleteHand,
-        aiBench: state.aiBench
+        aiAthleteHand: sortPlayersByPosition(state.aiAthleteHand),
+        aiBench: sortPlayersByPosition(state.aiBench)
       };      
       newState.currentTurn = newState.isHomeTeam ? 'player' : 'ai';
       // Use TurnPhaseService to determine initial phase
@@ -504,7 +553,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newState.currentAction = 'organizeAttack';
       newState.matchLogs = addLog(newState, {
         type: 'action',
-        message: `${actor} placed ${action.card.nickname} at line ${action.zone}`
+        message: `${actor} placed ${action.card.nickname} at line ${action.zone}, column ${Math.floor(action.slot / 2) + 1}`
       });
 
       if (action.card.immediateEffect !== 'none') {
@@ -782,6 +831,47 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       };
     }
     
+    case 'START_ATTACKER_SYNERGY_SELECTION': {
+      if (!state.pendingShot) return state;
+      
+      const isPlayerAttacking = state.currentTurn === 'player';
+      const attackerHand = isPlayerAttacking ? state.playerSynergyHand : state.aiSynergyHand;
+      
+      let availableCards: SynergyCard[] = [];
+      let isStoppageTime = state.isStoppageTime;
+      let message = isPlayerAttacking ? 'Select synergy cards to attack' : 'AI is selecting attack synergy cards...';
+      let newSynergyDeck = [...state.synergyDeck];
+      
+      // 计算可使用的最大协同卡数量
+      const controlState = getControlState(state.controlPosition);
+      const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
+      
+      if (maxSynergyCards > 0) {
+        // 首先从牌库抽取一张协同卡（规则要求）
+        if (newSynergyDeck.length > 0) {
+          const drawnCard = newSynergyDeck.shift();
+          if (drawnCard) {
+            availableCards.push(drawnCard);
+          }
+        }
+        
+        // 然后添加手牌中的协同卡（如果有）
+        if (attackerHand.length > 0) {
+          availableCards = [...availableCards, ...attackerHand];
+        }
+      }
+      
+      return {
+        ...state,
+        attackerSynergySelection: true,
+        attackerAvailableSynergyCards: availableCards,
+        attackerSelectedSynergyCards: [],
+        synergyDeck: newSynergyDeck,
+        isStoppageTime,
+        message
+      };
+    }
+    
     case 'SELECT_DEFENDER_SYNERGY_CARD': {
       if (!state.defenderSynergySelection) return state;
       
@@ -803,6 +893,34 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return {
         ...state,
         defenderSelectedSynergyCards: newSelectedCards
+      };
+    }
+    
+    case 'SELECT_ATTACKER_SYNERGY_CARD': {
+      if (!state.attackerSynergySelection) return state;
+      
+      const card = state.attackerAvailableSynergyCards[action.cardIndex];
+      if (!card) return state;
+      
+      const isAlreadySelected = state.attackerSelectedSynergyCards.some(c => c.id === card.id);
+      let newSelectedCards: SynergyCard[];
+      
+      // 计算可使用的最大协同卡数量
+      const controlState = getControlState(state.controlPosition);
+      const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
+      
+      if (isAlreadySelected) {
+        newSelectedCards = state.attackerSelectedSynergyCards.filter(c => c.id !== card.id);
+      } else {
+        if (state.attackerSelectedSynergyCards.length >= maxSynergyCards) {
+          return state;
+        }
+        newSelectedCards = [...state.attackerSelectedSynergyCards, card];
+      }
+      
+      return {
+        ...state,
+        attackerSelectedSynergyCards: newSelectedCards
       };
     }
     
@@ -870,6 +988,47 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       };
     }
     
+    case 'CONFIRM_ATTACKER_SYNERGY': {
+      if (!state.attackerSynergySelection) return state;
+      
+      const isPlayerAttacking = state.currentTurn === 'player';
+      const attackerHand = isPlayerAttacking ? state.playerSynergyHand : state.aiSynergyHand;
+      
+      let newAttackerHand = [...attackerHand];
+      let newSynergyDeck = [...state.synergyDeck];
+      let newSynergyDiscard = [...state.synergyDiscard];
+      
+      state.attackerSelectedSynergyCards.forEach(card => {
+        const handIndex = newAttackerHand.findIndex(c => c.id === card.id);
+        if (handIndex >= 0) {
+          newAttackerHand.splice(handIndex, 1);
+        } else {
+          const deckIndex = newSynergyDeck.findIndex(c => c.id === card.id);
+          if (deckIndex >= 0) {
+            newSynergyDeck.splice(deckIndex, 1);
+          }
+        }
+        newSynergyDiscard.push(card);
+      });
+      
+      const newPlayerActiveSynergy = isPlayerAttacking ? state.attackerSelectedSynergyCards : state.playerActiveSynergy;
+      const newAiActiveSynergy = isPlayerAttacking ? state.aiActiveSynergy : state.attackerSelectedSynergyCards;
+      
+      return {
+        ...state,
+        attackerSynergySelection: false,
+        attackerAvailableSynergyCards: [],
+        attackerSelectedSynergyCards: [],
+        playerSynergyHand: isPlayerAttacking ? newAttackerHand : state.playerSynergyHand,
+        aiSynergyHand: isPlayerAttacking ? state.aiSynergyHand : newAttackerHand,
+        synergyDeck: newSynergyDeck,
+        synergyDiscard: newSynergyDiscard,
+        playerActiveSynergy: newPlayerActiveSynergy,
+        aiActiveSynergy: newAiActiveSynergy,
+        message: 'Attack synergy cards confirmed'
+      };
+    }
+    
     case 'AI_DEFENDER_SYNERGY_PICK': {
       if (!state.defenderSynergySelection) return state;
       
@@ -883,6 +1042,24 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return {
         ...state,
         defenderSelectedSynergyCards: selectedCards
+      };
+    }
+    
+    case 'AI_ATTACKER_SYNERGY_PICK': {
+      if (!state.attackerSynergySelection) return state;
+      
+      let selectedCards: SynergyCard[] = [];
+      const controlState = getControlState(state.controlPosition);
+      const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
+      
+      if (state.attackerAvailableSynergyCards.length > 0) {
+        state.attackerAvailableSynergyCards.sort((a, b) => b.stars - a.stars);
+        selectedCards = state.attackerAvailableSynergyCards.slice(0, Math.min(maxSynergyCards, state.attackerAvailableSynergyCards.length));
+      }
+      
+      return {
+        ...state,
+        attackerSelectedSynergyCards: selectedCards
       };
     }
     
@@ -1038,6 +1215,137 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newState.message = `Dealing cards... ${totalCards}/${maxCards}`;
       
       return newState;
+    }
+    
+    case 'START_SHOT_PREPARATION': {
+      // 开始射门准备阶段
+      return {
+        ...state,
+        shotPreparationPhase: 'attacker_synergy_selection',
+        tempAttackerSynergy: [],
+        tempDefenderSynergy: [],
+        attackerDrawnSynergyCard: null,
+        defenderDrawnSynergyCard: null,
+        message: 'Shot preparation - attacker synergy selection'
+      };
+    }
+    
+    case 'SELECT_ATTACKER_PREPARATION_SYNERGY': {
+      // 选择进攻方准备阶段的协同卡
+      if (state.shotPreparationPhase !== 'attacker_synergy_selection') return state;
+      
+      const isPlayerAttacking = state.currentTurn === 'player';
+      const attackerHand = isPlayerAttacking ? state.playerSynergyHand : state.aiSynergyHand;
+      
+      // 检查是否可以选择这张卡
+      const canSelect = attackerHand.some(card => card.id === action.card.id);
+      if (!canSelect) return state;
+      
+      // 检查是否已经达到最大协同卡数量
+      const controlState = getControlState(state.controlPosition);
+      const maxSynergyCards = getMaxSynergyCardsForAttack(controlState);
+      if (state.tempAttackerSynergy.length >= maxSynergyCards) return state;
+      
+      // 检查是否已经选择了这张卡
+      const isAlreadySelected = state.tempAttackerSynergy.some(card => card.id === action.card.id);
+      if (isAlreadySelected) return state;
+      
+      // 添加到临时进攻协同卡
+      return {
+        ...state,
+        tempAttackerSynergy: [...state.tempAttackerSynergy, action.card],
+        message: `Selected synergy card: ${action.card.name}`
+      };
+    }
+    
+    case 'CONFIRM_ATTACKER_PREPARATION_SYNERGY': {
+      // 确认进攻方准备阶段的协同卡选择
+      if (state.shotPreparationPhase !== 'attacker_synergy_selection') return state;
+      
+      // 进入防守方协同卡选择阶段
+      return {
+        ...state,
+        shotPreparationPhase: 'defender_synergy_selection',
+        message: 'Shot preparation - defender synergy selection'
+      };
+    }
+    
+    case 'SELECT_DEFENDER_PREPARATION_SYNERGY': {
+      // 选择防守方准备阶段的协同卡
+      if (state.shotPreparationPhase !== 'defender_synergy_selection') return state;
+      
+      const isPlayerDefending = state.currentTurn === 'ai';
+      const defenderHand = isPlayerDefending ? state.playerSynergyHand : state.aiSynergyHand;
+      
+      // 检查是否可以选择这张卡
+      const canSelect = defenderHand.some(card => card.id === action.card.id);
+      if (!canSelect) return state;
+      
+      // 检查是否已经达到最大协同卡数量（防守方最多2张）
+      if (state.tempDefenderSynergy.length >= 2) return state;
+      
+      // 检查是否已经选择了这张卡
+      const isAlreadySelected = state.tempDefenderSynergy.some(card => card.id === action.card.id);
+      if (isAlreadySelected) return state;
+      
+      // 添加到临时防守协同卡
+      return {
+        ...state,
+        tempDefenderSynergy: [...state.tempDefenderSynergy, action.card],
+        message: `Selected defense synergy card: ${action.card.name}`
+      };
+    }
+    
+    case 'CONFIRM_DEFENDER_PREPARATION_SYNERGY': {
+      // 确认防守方准备阶段的协同卡选择
+      if (state.shotPreparationPhase !== 'defender_synergy_selection') return state;
+      
+      // 进入准备就绪阶段
+      return {
+        ...state,
+        shotPreparationPhase: 'ready_for_duel',
+        message: 'Shot preparation complete - ready for duel'
+      };
+    }
+    
+    case 'START_DUEL_FROM_PREPARATION': {
+      // 从准备阶段开始对决
+      if (state.shotPreparationPhase !== 'ready_for_duel') return state;
+      if (!state.pendingShot) return state;
+      
+      // 将临时协同卡应用到活动协同卡中
+      const isPlayerAttacking = state.currentTurn === 'player';
+      const newPlayerActiveSynergy = isPlayerAttacking ? state.tempAttackerSynergy : state.tempDefenderSynergy;
+      const newAiActiveSynergy = isPlayerAttacking ? state.tempDefenderSynergy : state.tempAttackerSynergy;
+      
+      // 从手牌中移除使用的协同卡
+      const isPlayer = state.currentTurn === 'player';
+      const playerSynergyHand = isPlayer ? 
+        state.playerSynergyHand.filter(card => !newPlayerActiveSynergy.some(s => s.id === card.id)) :
+        state.playerSynergyHand.filter(card => !newAiActiveSynergy.some(s => s.id === card.id));
+      
+      const aiSynergyHand = isPlayer ? 
+        state.aiSynergyHand.filter(card => !newAiActiveSynergy.some(s => s.id === card.id)) :
+        state.aiSynergyHand.filter(card => !newPlayerActiveSynergy.some(s => s.id === card.id));
+      
+      // 添加到弃牌堆
+      const newSynergyDiscard = [...state.synergyDiscard, ...newPlayerActiveSynergy, ...newAiActiveSynergy];
+      
+      return {
+        ...state,
+        shotPreparationPhase: 'none',
+        duelPhase: 'init',
+        playerActiveSynergy: newPlayerActiveSynergy,
+        aiActiveSynergy: newAiActiveSynergy,
+        playerSynergyHand,
+        aiSynergyHand,
+        synergyDiscard: newSynergyDiscard,
+        tempAttackerSynergy: [],
+        tempDefenderSynergy: [],
+        attackerDrawnSynergyCard: null,
+        defenderDrawnSynergyCard: null,
+        message: 'Starting duel...'
+      };
     }
     
     default:

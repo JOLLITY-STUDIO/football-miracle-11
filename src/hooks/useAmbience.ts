@@ -9,26 +9,26 @@ import {
 } from '../utils/audio';
 
 /**
- * 环境音控�?Hook
+ * 环境音控�?Hook
  * 用于在组件中方便地控制环境音
  */
 export const useAmbience = () => {
   /**
    * 播放指定类型的环境音
    */
-  const startAmbient = useCallback((type: AmbientType, fadeIn?: number) => {
-    playAmbient(type, fadeIn);
+  const startAmbient = useCallback((type: AmbientType) => {
+    playAmbient(type);
   }, []);
 
   /**
    * 停止指定类型的环境音
    */
-  const endAmbient = useCallback((type: AmbientType, fadeOut?: number) => {
-    stopAmbient(type, fadeOut);
+  const endAmbient = useCallback((type: AmbientType) => {
+    stopAmbient(type);
   }, []);
 
   /**
-   * 启动完整的比赛氛围（所有球场环境音�?
+   * 启动完整的比赛氛围（所有球场环境音�?
    */
   const startMatchAtmosphere = useCallback(() => {
     startMatchAmbience();
@@ -65,7 +65,7 @@ export const useAmbience = () => {
 
 /**
  * 自动管理比赛环境音的 Hook
- * 根据游戏阶段自动启动/停止环境�?
+ * 根据游戏阶段自动启动/停止环境�?
  */
 export const useAutoAmbience = (phase: string) => {
   const prevPhaseRef = useRef<string>('');
@@ -73,7 +73,7 @@ export const useAutoAmbience = (phase: string) => {
   useEffect(() => {
     const prevPhase = prevPhaseRef.current;
     
-    // 比赛开始时启动环境�?
+    // 比赛开始时启动环境�?
     if ((phase === 'firstHalf' || phase === 'secondHalf') && 
         prevPhase !== 'firstHalf' && prevPhase !== 'secondHalf') {
       startMatchAmbience();

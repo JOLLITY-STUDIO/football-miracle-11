@@ -67,23 +67,23 @@ export const PreGame: React.FC<PreGameProps> = ({ onComplete, onComplete3D, onBa
           <h2>Select Your Team</h2>
           <p>Choose which team to manage</p>
           <div className="team-options">
-            <div className="team-option home" onClick={() => handleTeamSelect(homeTeam)}>
-              <div className="team-badge">HOME</div>
+            <div className="team-option home" onClick={() => handleTeamSelect(homeTeam)} style={{ borderColor: '#FF5252', backgroundColor: 'rgba(255, 82, 82, 0.1)' }}>
+              <div className="team-badge" style={{ backgroundColor: '#FF5252' }}>HOME</div>
               <h3>{homeTeam.name}</h3>
               <p>{homeTeam.basePlayers.length} base players</p>
               <div className="team-preview">
                 {homeTeam.basePlayers.slice(0, 5).map(p => (
-                  <span key={p.id} className="mini-player">{p.realName}</span>
+                  <span key={p.id} className="mini-player">{p.nickname}</span>
                 ))}
               </div>
             </div>
-            <div className="team-option away" onClick={() => handleTeamSelect(awayTeam)}>
-              <div className="team-badge">AWAY</div>
+            <div className="team-option away" onClick={() => handleTeamSelect(awayTeam)} style={{ borderColor: '#2196F3', backgroundColor: 'rgba(33, 150, 243, 0.1)' }}>
+              <div className="team-badge" style={{ backgroundColor: '#2196F3' }}>AWAY</div>
               <h3>{awayTeam.name}</h3>
               <p>{awayTeam.basePlayers.length} base players</p>
               <div className="team-preview">
                 {awayTeam.basePlayers.slice(0, 5).map(p => (
-                  <span key={p.id} className="mini-player">{p.realName}</span>
+                  <span key={p.id} className="mini-player">{p.nickname}</span>
                 ))}
               </div>
             </div>

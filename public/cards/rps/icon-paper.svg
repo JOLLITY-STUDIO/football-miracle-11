@@ -1,19 +1,12 @@
-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- 布 -->
-  <circle cx="50" cy="50" r="45" fill="#FFE66D" stroke="black" stroke-width="3"/>
-  
-  <!-- 手掌形状 -->
-  <path d="M35 80 L35 55 L30 50 L35 45 L38 40 L42 35 L47 32 L52 30 L57 32 L62 35 L65 40 L68 45 L70 50 L65 55 L65 80 Z" fill="#FFF3B0" stroke="black" stroke-width="2"/>
-  
-  <!-- 手指 -->
-  <rect x="38" y="35" width="4" height="15" rx="2" fill="#FFE66D" stroke="black" stroke-width="1"/>
-  <rect x="44" y="32" width="4" height="18" rx="2" fill="#FFE66D" stroke="black" stroke-width="1"/>
-  <rect x="50" y="30" width="4" height="20" rx="2" fill="#FFE66D" stroke="black" stroke-width="1"/>
-  <rect x="56" y="32" width="4" height="18" rx="2" fill="#FFE66D" stroke="black" stroke-width="1"/>
-  <rect x="62" y="35" width="4" height="15" rx="2" fill="#FFE66D" stroke="black" stroke-width="1"/>
-  
-  <!-- 手掌纹理 -->
-  <circle cx="50" cy="60" r="8" fill="#FFD93D" opacity="0.3"/>
-  <circle cx="45" cy="70" r="5" fill="#FFD93D" opacity="0.3"/>
-  <circle cx="55" cy="70" r="5" fill="#FFD93D" opacity="0.3"/>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="100" height="100" fill="#4CAF50" rx="10" ry="10"/>
+  <!-- 布形状 -->
+  <rect x="25" y="30" width="50" height="40" fill="white" stroke="#388E3C" stroke-width="2" rx="5" ry="5"/>
+  <!-- 手指细节 -->
+  <rect x="30" y="30" width="8" height="40" fill="white" stroke="#388E3C" stroke-width="1" rx="2" ry="2"/>
+  <rect x="46" y="30" width="8" height="40" fill="white" stroke="#388E3C" stroke-width="1" rx="2" ry="2"/>
+  <rect x="62" y="30" width="8" height="40" fill="white" stroke="#388E3C" stroke-width="1" rx="2" ry="2"/>
+  <!-- 文字 -->
+  <text x="50" y="85" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Paper</text>
 </svg>

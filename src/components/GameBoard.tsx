@@ -23,6 +23,7 @@ import { ActionButtons } from './ActionButtons';
 import { AthleteCardGroup } from './AthleteCardGroup';
 import { AmbientControls } from './AmbientControls';
 import { ShooterSelector } from './ShooterSelector';
+import { ShotPreparationOverlay } from './ShotPreparationOverlay';
 import {
   gameReducer,
   createInitialState,
@@ -245,7 +246,7 @@ const {
       // Start dealing cards with animation
       dealingInterval = setInterval(() => {
         dispatch({ type: 'DRAW_CARD' });
-      }, 200); // Draw a card every 200ms to complete dealing within 5 seconds
+      }, 100); // Draw a card every 100ms to complete dealing within 2 seconds
       
       // 移除强制超时，由DRAW_CARD逻辑自动停止
       // 当所有卡片都被抽取后，isDealing会自动设为false
@@ -851,7 +852,7 @@ const {
       {/* 1. Main Game Field (Center) - Maximize Space with 3D Perspective */}
       <div className="absolute inset-0 flex items-center justify-center z-10 perspective-1000 overflow-hidden" style={{ perspectiveOrigin: '50% 50%' }}>
         <div 
-          className={clsx("relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center pointer-events-auto")}
+          className={clsx("relative transition-transform duration-700 ease-out transform-style-3d transform-gpu flex items-center justify-center pointer-events-none")}
           style={{
             width: `${BASE_WIDTH}px`,
             height: `${BASE_HEIGHT}px`,
@@ -977,7 +978,15 @@ const {
                     dispatch({ type: 'TEAM_ACTION', action: type, iconCount });
                     playSound('click');
                   }}
-
+                  onSkipTeamAction={() => {
+                    // Directly set turnPhase to athleteAction instead of executing pass
+                    setGameState(prev => ({
+                      ...prev,
+                      turnPhase: 'athleteAction',
+                      message: 'Turn phase set to athlete action'
+                    }));
+                    playSound('click');
+                  }}
                   onShoot={handleShoot}
                   canShoot={hasShootablePlayers()}
                 />
@@ -1097,12 +1106,10 @@ const {
       <AnimatePresence>
         {showViewControls && gameState.phase !== 'coinToss' && (
           <motion.div 
-            drag
-            dragMomentum={false}
             initial={{ opacity: 0, scale: 0.9, x: -20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9, x: -20 }}
-            className="fixed top-[145px] left-4 w-64 bg-stone-900/95 border border-white/20 rounded-2xl p-5 z-[100] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t-white/30 cursor-move"
+            className="fixed top-[145px] left-4 w-64 bg-stone-900/95 border border-white/20 rounded-2xl p-5 z-[100] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t-white/30"
             style={{ backgroundColor: 'rgba(15, 23, 42, 0.95)' }}
           >
             <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2 pointer-events-none">
@@ -1322,78 +1329,49 @@ const {
               </div>
           </div>
 
-          {/* Team Action Modal - Centered */}
-          {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' && (passCount > 0 || pressCount > 0) && (
-            <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-md">
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                className="bg-[#1a1a1a] p-8 rounded-2xl border-2 border-gray-600 max-w-md w-full shadow-2xl"
-              >
-                <h2 className="text-3xl font-['Russo_One'] text-white mb-6 text-center">Team Action</h2>
-                <div className="mb-8 text-center">
-                  <p className="text-yellow-400 font-bold mb-4">Choose Team Action</p>
-                  <div className="flex flex-col gap-2 text-sm text-gray-300">
-                    <p><strong className="text-green-400">PASS:</strong> Draw synergy cards based on icons on field.</p>
-                    <p><strong className="text-amber-400">PRESS:</strong> Move control marker towards opponent.</p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-4">
-                  <button
-                      data-testid="team-action-pass"
-                      onClick={() => handleTeamAction('pass', passCount)}
-                      disabled={passCount === 0}
-                      className="w-full h-24 bg-gradient-to-br from-green-600 to-green-800 hover:from-green-500 hover:to-green-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                    >
-                      <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
-                      <span className="text-sm tracking-widest group-hover:scale-110 transition-transform">PASS</span>
-                      <span className="text-[10px] font-bold text-green-200/80 mt-1">DRAW SYNERGY</span>
-                      <div className="mt-2 flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
-                        <span className="text-[9px] font-black">{Math.max(0, Math.min(passCount, 5 - gameState.playerSynergyHand.length))}</span>
-                        <span className="text-[8px] opacity-60">CARDS</span>
-                      </div>
-                    </button>
-                    <button
-                        data-testid="team-action-press"
-                        onClick={() => handleTeamAction('press', pressCount)}
-                        disabled={pressCount === 0}
-                        className="w-full h-24 bg-gradient-to-br from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 disabled:from-stone-800 disabled:to-stone-900 disabled:opacity-50 text-white font-['Russo_One'] rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                      >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
-                        <span className="text-sm tracking-widest group-hover:scale-110 transition-transform">PRESS</span>
-                        <span className="text-[10px] font-bold text-red-200/80 mt-1">PUSH CONTROL</span>
-                        <div className="mt-2 flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
-                          <span className="text-[9px] font-black">{pressCount}</span>
-                          <span className="text-[8px] opacity-60">STEPS</span>
-                        </div>
-                      </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
+          {/* Team Action functionality moved to Action Buttons Panel below */}
 
           {/* Action Buttons Panel */}
           <div className="flex gap-3">
                 {gameState.turnPhase === 'teamAction' && gameState.currentTurn === 'player' ? (
-                  passCount === 0 && pressCount === 0 ? (
-                    <div className="flex flex-col gap-3 p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
-                      {/* Auto-skip hint if both are 0 */}
+                  <div className="flex flex-col gap-3">
                       <button
-                        onClick={() => {
-                          // Directly set turnPhase to athleteAction instead of executing pass
-                          setGameState(prev => ({
-                            ...prev,
-                            turnPhase: 'athleteAction',
-                            message: 'Turn phase set to athlete action'
-                          }));
-                          playSound('click');
-                        }}
-                        className="mt-2 py-2 text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-tighter transition-colors"
-                      >
-                        No actions available - Skip Team Action                    </button>
-                    </div>
-                  ) : null
+                          data-testid="team-action-pass"
+                          onClick={() => handleTeamAction('pass', passCount)}
+                          disabled={passCount === 0}
+                          className="py-3 px-4 bg-gradient-to-br from-[#13A740] to-[#13A740] hover:from-[#16B84A] hover:to-[#16B84A] disabled:from-[#13A740] disabled:to-[#13A740] disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(19,167,64,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                        >
+                          <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
+                          <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">PASS</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                        </button>
+                        <button
+                            data-testid="team-action-press"
+                            onClick={() => handleTeamAction('press', pressCount)}
+                            disabled={pressCount === 0}
+                            className="py-3 px-4 bg-gradient-to-br from-[#E11D48] to-[#E11D48] hover:from-[#F43F6A] hover:to-[#F43F6A] disabled:from-[#E11D48] disabled:to-[#E11D48] disabled:opacity-50 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(225,29,72,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
+                            <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">PRESS</span>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Directly set turnPhase to athleteAction instead of executing pass
+                              setGameState(prev => ({
+                                ...prev,
+                                turnPhase: 'athleteAction',
+                                message: 'Turn phase set to athlete action'
+                              }));
+                              playSound('click');
+                            }}
+                            className="py-3 px-4 bg-gradient-to-br from-gray-600/90 to-gray-800/90 hover:from-gray-500 hover:to-gray-700 text-white font-['Russo_One'] text-lg rounded-xl shadow-[0_8px_20px_rgba(75,85,99,0.2)] border border-white/10 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20" />
+                            <span className="relative z-10 tracking-widest group-hover:scale-110 transition-transform inline-block">SKIP</span>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                          </button>
+                  </div>
                 ) : (
                   gameState.turnPhase === 'athleteAction' && gameState.currentTurn === 'player' ? (
                     <div className="flex flex-col gap-3">
@@ -1778,6 +1756,13 @@ const {
           isPlayerDefending={gameState.currentTurn === 'ai'}
         />
       )}
+      
+      {/* Shot Preparation Overlay */}
+      <ShotPreparationOverlay 
+        gameState={gameState}
+        dispatch={dispatch}
+        playSound={playSound}
+      />
 
       {/* AI Card Play Notification */}
       <AnimatePresence>

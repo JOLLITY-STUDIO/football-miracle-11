@@ -4,6 +4,9 @@ import { performEndTurn } from './endTurn';
 import { RuleValidator } from '../game/ruleValidator';
 import { performShot } from './shotActions';
 import { calculateAttackPower } from './gameUtils';
+import { performTeamAction } from './teamActions';
+import { countIcons } from './gameUtils';
+import { TacticalIconMatcher } from '../game/tacticalIconMatcher';
 
 // Helper function to get valid zones based on player type
 const getValidZones = (type: string): number[] => {
@@ -58,6 +61,19 @@ const getIconPositionsFromTactics = (card: any) => {
     }
   }
   return iconPositions;
+};
+
+// Helper function to calculate AI's pass and press icons (only activated complete icons)
+const calculateAIIconCounts = (state: GameState) => {
+  // Use TacticalIconMatcher to get accurate complete icon counts for AI half
+  const matcher = new TacticalIconMatcher(state.aiField);
+  const iconCounts = matcher.getAIIconCounts();
+  
+  // Return only the pass and press counts needed for team actions
+  return {
+    passCount: iconCounts.pass || 0,
+    pressCount: iconCounts.press || 0
+  };
 };
 
 // Helper function to find best player for shooting
@@ -156,8 +172,35 @@ export const processAiActionStep = (state: GameState): GameState => {
   
   switch (newState.aiActionStep) {
     case 'teamAction':
-      // AI 战术阶段 - 模拟思考
-      newState.message = 'AI is planning...';
+      // AI 战术阶段 - 执行球队行动
+      const iconCounts = calculateAIIconCounts(newState);
+      const { passCount, pressCount } = iconCounts;
+      
+      // 决策逻辑：
+      // 1. 如果有传球图标且手牌不足，优先传球抽卡
+      // 2. 如果有压迫图标且控制权落后，优先压迫
+      // 3. 否则选择图标数量多的行动
+      if (passCount > 0 && newState.aiSynergyHand.length < 3) {
+        // 优先传球抽卡
+        newState = performTeamAction(newState, 'pass', passCount);
+        newState.message = `AI performed Pass action. Drew ${passCount} synergy card(s).`;
+      } else if (pressCount > 0 && newState.controlPosition < 50) {
+        // 优先压迫争夺控制权
+        newState = performTeamAction(newState, 'press', pressCount);
+        newState.message = `AI performed Press action. Moved control position.`;
+      } else if (passCount > pressCount && passCount > 0) {
+        // 传球图标更多
+        newState = performTeamAction(newState, 'pass', passCount);
+        newState.message = `AI performed Pass action. Drew ${passCount} synergy card(s).`;
+      } else if (pressCount > 0) {
+        // 压迫图标更多
+        newState = performTeamAction(newState, 'press', pressCount);
+        newState.message = `AI performed Press action. Moved control position.`;
+      } else {
+        // 无可用图标，直接进入球员行动阶段
+        newState.turnPhase = 'athleteAction';
+        newState.message = 'AI has no team action options.';
+      }
       newState.aiActionStep = 'placeCard';
       break;
       

@@ -88,7 +88,7 @@ export const CenterField: React.FC<Props> = ({
         <FieldVisuals shootMode={shootMode} onCloseShootMode={onCloseShootMode} />
         
         {/* Game Field Content - Positioned inside the green area */}
-        <div className="absolute z-40 pointer-events-none" style={{ 
+        <div className="absolute z-40" style={{ 
           top: `${FIELD_CONFIG.FIELD_PADDING}px`,
           left: `${FIELD_CONFIG.FIELD_PADDING}px`,
           width: `${PITCH_WIDTH}px`,

@@ -339,7 +339,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                 transition={{ type: "spring", stiffness: 150, delay: 0.3 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex flex-col items-center gap-2 bg-gradient-to-br from-green-600 to-green-800 p-3 rounded-lg border-2 border-green-400 shadow-lg hover:shadow-green-500/50 transition-all min-w-[100px]"
+                className="flex flex-col items-center gap-2 bg-gradient-to-br from-red-600 to-red-800 p-3 rounded-lg border-2 border-red-400 shadow-lg hover:shadow-red-500/50 transition-all min-w-[100px]"
                 onClick={() => handleSideSelect('home')}
               >
                 <span className="text-3xl">🏠</span>
@@ -354,7 +354,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                 transition={{ type: "spring", stiffness: 150, delay: 0.4 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex flex-col items-center gap-2 bg-gradient-to-br from-red-600 to-red-800 p-3 rounded-lg border-2 border-red-400 shadow-lg hover:shadow-red-500/50 transition-all min-w-[100px]"
+                className="flex flex-col items-center gap-2 bg-gradient-to-br from-blue-600 to-blue-800 p-3 rounded-lg border-2 border-blue-400 shadow-lg hover:shadow-blue-500/50 transition-all min-w-[100px]"
                 onClick={() => handleSideSelect('away')}
               >
                 <span className="text-3xl">🏟️</span>
@@ -397,7 +397,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                 transition={{ duration: 1, repeat: selectedSide ? 0 : Infinity }}
                 className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 shadow-lg transition-all min-w-[100px] ${
                   selectedSide === 'home' 
-                    ? 'bg-gradient-to-br from-green-600 to-green-800 border-green-400 shadow-green-500/50' 
+                    ? 'bg-gradient-to-br from-red-600 to-red-800 border-red-400 shadow-red-500/50' 
                     : 'bg-gradient-to-br from-gray-700 to-gray-900 border-gray-500'
                 }`}
               >
@@ -416,7 +416,7 @@ export const RockPaperScissors: React.FC<Props> = ({ onComplete }) => {
                 transition={{ duration: 1, repeat: selectedSide ? 0 : Infinity }}
                 className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 shadow-lg transition-all min-w-[100px] ${
                   selectedSide === 'away' 
-                    ? 'bg-gradient-to-br from-red-600 to-red-800 border-red-400 shadow-red-500/50' 
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-400 shadow-blue-500/50' 
                     : 'bg-gradient-to-br from-gray-700 to-gray-900 border-gray-500'
                 }`}
               >

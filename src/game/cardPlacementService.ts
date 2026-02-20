@@ -13,7 +13,7 @@
 
 import type { AthleteCard } from '../data/cards';
 import type { FieldZone } from '../types/game';
-import { RuleValidator } from './ruleValidator';
+import { RuleValidator, type FieldState } from './ruleValidator';
 import { 
   VALID_ZONES, 
   COLUMN_CONSTRAINTS, 
@@ -29,8 +29,8 @@ import {
  */
 export interface PlacementValidationResult {
   valid: boolean;
-  reason?: string;
-  canHighlight?: boolean;
+  reason: string | undefined;
+  canHighlight: boolean | undefined;
 }
 
 /**
